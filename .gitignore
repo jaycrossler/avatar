@@ -1,0 +1,16 @@
+CACHE/*
+.cache
+.cache/*
+
+.idea
+.idea/*
+*.log
+*.pot
+*.pyc
+*.pyo
+geoq/local_settings.py
+local_settings.py
+dev-geoq-django
+dev-geoq-django/*
+*.DS_Store
+*.swp

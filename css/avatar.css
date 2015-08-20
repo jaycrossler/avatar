@@ -1,0 +1,28 @@
+body {
+    padding-top: 50px;
+}
+
+.starter-template {
+    padding: 10px 15px;
+    text-align: center;
+}
+
+.col-centered {
+    float: none;
+    text-align: center;
+    margin: 0 auto;
+}
+
+.input-field {
+    margin:10px;
+    padding: 10px;
+    width: 800px;
+    background-color: darkgrey;
+    border: 3px solid #000000;
+    font-family: "Tahoma";
+    font-size: 12px;
+}
+
+#demoCanvas {
+    /*border: 3px solid #8AC007;*/
+}
