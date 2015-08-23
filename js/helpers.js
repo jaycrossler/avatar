@@ -26,6 +26,23 @@ Helpers.between = function(s, prefix, suffix, suffixAtEnd, prefixAtEnd) {
     return s;
 };
 
+Helpers.randomSetSeed = function(seed){
+    Helpers._randseed = seed || 42;
+};
+Helpers.random = function(){
+    Helpers._randseed = Helpers._randseed || 42;
+    var x = Math.sin(Helpers._randseed++) * 10000;
+    return x - Math.floor(x);
+};
+Helpers.randInt = function(max){
+    max = max || 100;
+    return parseInt(Helpers.random() * max +1);
+};
+Helpers.randOption = function(options){
+    var len = options.length;
+    return options[Helpers.randInt(len)-1];
+};
+
 Helpers.dateFromPythonDate=function(date,defaultVal){
     //Requires moment.js
 
@@ -64,14 +81,21 @@ Helpers.invertColor=function(hexTripletColor) {
     return color;
 };
 Helpers.rgb2hex=function(rgb) {
-    if (  rgb.search("rgb") == -1 ) {
-        return rgb;
-    } else {
-        rgb = rgb.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*(\d+))?\)$/);
-        function hex(x) {
-            return ("0" + parseInt(x).toString(16)).slice(-2);
+    if (typeof rgb != "string") return rgb;
+    function hex(x) {
+        return ("0" + parseInt(x).toString(16)).slice(-2);
+    }
+    if (rgb && rgb.search("rgb") == -1 ) {
+        rgb = rgb.split(',');
+        if (rgb.length>=3) {
+            return "#" + hex(rgb[0]) + hex(rgb[1]) + hex(rgb[2]);
         }
+        return rgb;
+    } else if (rgb) {
+        rgb = rgb.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*(\d+))?\)$/);
         return "#" + hex(rgb[1]) + hex(rgb[2]) + hex(rgb[3]);
+    } else {
+        return rgb;
     }
 };
 Helpers.getRGBComponents=function(color) {
