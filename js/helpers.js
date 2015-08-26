@@ -247,8 +247,6 @@ Helpers.buildBootstrapInputDropdown=function(title,items,$input){
         $('<span>')
             .text(dd.title||"Item")
             .appendTo($a);
-
-
     });
     return $group;
 };
@@ -262,19 +260,348 @@ Helpers.tryToMakeDate=function(val,fieldName){
             returnVal = val + " <b>("+testDate.calendar()+")</b>";
         }
     }
-
     return (returnVal || val);
 };
-Helpers.extractCSRF=function(returnAppendedPostText){
-    var ret_form_val = "";
-    if (typeof event_pages!="undefined" && event_pages.options && event_pages.options.csrf){
-        var csrf = event_pages.options.csrf;
-        var pieces = csrf.split("'");
-        ret_form_val = pieces[6] || "";
-        if (returnAppendedPostText) ret_form_val = "&csrfmiddlewaretoken="+ret_form_val;
+Helpers.randomLetters=function(n){
+    var out = "";
+    n = n || 1;
+    for (var i=0;i<n;i++){
+        out+=String.fromCharCode("a".charCodeAt(0)+(Math.random()*26)-1)
     }
-    return ret_form_val;
+    return out;
 };
+Helpers.pluralize=function(str){
+    var uncountable_words= [
+        'equipment', 'information', 'rice', 'money', 'species', 'series',
+        'fish', 'sheep', 'moose', 'deer', 'news'
+    ];
+    var plural_rules= [
+        [new RegExp('(m)an$', 'gi'),                 '$1en'],
+        [new RegExp('(pe)rson$', 'gi'),              '$1ople'],
+        [new RegExp('(child)$', 'gi'),               '$1ren'],
+        [new RegExp('^(ox)$', 'gi'),                 '$1en'],
+        [new RegExp('(ax|test)is$', 'gi'),           '$1es'],
+        [new RegExp('(octop|vir)us$', 'gi'),         '$1i'],
+        [new RegExp('(alias|status)$', 'gi'),        '$1es'],
+        [new RegExp('(bu)s$', 'gi'),                 '$1ses'],
+        [new RegExp('(buffal|tomat|potat)o$', 'gi'), '$1oes'],
+        [new RegExp('([ti])um$', 'gi'),              '$1a'],
+        [new RegExp('sis$', 'gi'),                   'ses'],
+        [new RegExp('(?:([^f])fe|([lr])f)$', 'gi'),  '$1$2ves'],
+        [new RegExp('(hive)$', 'gi'),                '$1s'],
+        [new RegExp('([^aeiouy]|qu)y$', 'gi'),       '$1ies'],
+        [new RegExp('(x|ch|ss|sh)$', 'gi'),          '$1es'],
+        [new RegExp('(matr|vert|ind)ix|ex$', 'gi'),  '$1ices'],
+        [new RegExp('([m|l])ouse$', 'gi'),           '$1ice'],
+        [new RegExp('(quiz)$', 'gi'),                '$1zes'],
+        [new RegExp('s$', 'gi'),                     's'],
+        [new RegExp('$', 'gi'),                      's']
+    ];
+    var ignore = _.indexOf(uncountable_words,str.toLowerCase()) > -1;
+    if (!ignore){
+        for (var x = 0; x < plural_rules.length; x++){
+            if (str.match(plural_rules[x][0])){
+                str = str.replace(plural_rules[x][0], plural_rules[x][1]);
+                break;
+            }
+        }
+    }
+    return str;
+};
+Helpers.stringAfterString=function(string,after,valIfNotFound){
+    var inLoc = string.indexOf(after);
+    if (Helpers.exists(inLoc) && inLoc > -1){
+        return string.substr(inLoc+after.length);
+    } else {
+        return valIfNotFound || string;
+    }
+};
+Helpers.isNumeric=function(n){
+    return !isNaN(parseFloat(n)) && isFinite(n);
+};
+Helpers.nameOfUSState=function(code, withComma){
+    var lookup=  {AL: 'Alabama', AK: 'Alaska', AZ: 'Arizona', AR: 'Arkansas', CA: 'California', CO: 'Colorado', CT: 'Connecticut', DE: 'Delaware', DC: 'District of Columbia', FL: 'Florida', GA: 'Georgia', HI: 'Hawaii', ID: 'Idaho', IL: 'Illinois', IN: 'Indiana', IA: 'Iowa', KS: 'Kansas', KY: 'Kentucky', LA: 'Louisiana', ME: 'Maine', MD: 'Maryland', MA: 'Massachusetts', MI: 'Michigan', MN: 'Minnesota', MO: 'Missouri', MT: 'Montana', NE: 'Nebraska', NV: 'Nevada', NH: 'New Hampshire', NJ: 'New Jersey', NM: 'New Mexico', NY: 'New York', NC: 'North Carolina', ND: 'North Dakota', OH: 'Ohio', OK: 'Oklahoma', OR: 'Oregon', PA: 'Pennsylvania', RI: 'Rhode Island', SC: 'South Carolina', SD: 'South Dakota', TN: 'Tennessee', TX: 'Texas', UT: 'Utah', VT: 'Vermont', VA: 'Virginia', WA: 'Washington', WV: 'West Virginia', WI: 'Wisconsin', WY: 'Wyoming'};
+    var state = lookup[code.toUpperCase()];
+    var output = "";
+    if (state) output = withComma? ", "+state : state;
+    return output;
+};
+Helpers.getQueryVariable = function(variable) {
+    var query = window.location.search.substring(1);
+    var output = query;
+    var vars = query.split("&");
+    for (var i=0;i<vars.length;i++) {
+        var pair = vars[i].split("=");
+        if (pair[0] == variable) {
+            output = pair[1];
+            break;
+        }
+    }
+    return output;
+};
+Helpers.createCSSClass=function(selector, style) {
+//FROM: http://stackoverflow.com/questions/1720320/how-to-dynamically-create-css-class-in-javascript-and-apply
+    if (!document.styleSheets) {
+        return;
+    }
+
+    if (document.getElementsByTagName("head").length == 0) {
+        return;
+    }
+
+    var styleSheet;
+    var mediaType;
+    var media;
+    if (document.styleSheets.length > 0) {
+        for (i = 0; i < document.styleSheets.length; i++) {
+            if (document.styleSheets[i].disabled) {
+                continue;
+            }
+            media = document.styleSheets[i].media;
+            mediaType = typeof media;
+
+            if (mediaType == "string") {
+                if (media == "" || (media.indexOf("screen") != -1)) {
+                    styleSheet = document.styleSheets[i];
+                }
+            } else if (mediaType == "object" && media.mediaText) {
+                if (media.mediaText == "" || (media.mediaText.indexOf("screen") != -1)) {
+                    styleSheet = document.styleSheets[i];
+                }
+            }
+
+            if (Helpers.exists(styleSheet)) {
+                break;
+            }
+        }
+    }
+
+    if (Helpers.exists(styleSheet)) {
+        var styleSheetElement = document.createElement("style");
+        styleSheetElement.type = "text/css";
+
+        document.getElementsByTagName("head")[0].appendChild(styleSheetElement);
+
+        for (i = 0; i < document.styleSheets.length; i++) {
+            if (document.styleSheets[i].disabled) {
+                continue;
+            }
+            styleSheet = document.styleSheets[i];
+        }
+
+        media = styleSheet.media;
+        mediaType = typeof media;
+    }
+
+    var i;
+    if (mediaType == "string") {
+        for (i = 0; i < styleSheet.rules.length; i++) {
+            if (styleSheet.rules[i].selectorText.toLowerCase() == selector.toLowerCase()) {
+                styleSheet.rules[i].style.cssText = style;
+                return;
+            }
+        }
+        styleSheet.addRule(selector, style);
+    } else if (mediaType == "object") {
+        for (i = 0; i < styleSheet.cssRules.length; i++) {
+            if (styleSheet.cssRules[i].selectorText && styleSheet.cssRules[i].selectorText.toLowerCase() == selector.toLowerCase()) {
+                styleSheet.cssRules[i].style.cssText = style;
+                return;
+            }
+        }
+        styleSheet.insertRule(selector + "{" + style + "}", 0);
+    }
+};
+Helpers.loadCSSFiles = function(cssArray){
+    if (typeof(cssArray)=='string') cssArray = [cssArray];
+    if (!_.isArray(cssArray)) cssArray=[];
+
+    for (var c=0;c<cssArray.length;c++){
+        var link = document.createElement("link");
+        link.setAttribute("rel","stylesheet");
+        link.setAttribute("type","text/css");
+        link.setAttribute("href",cssArray[c]);
+        document.getElementsByTagName("head")[0].appendChild(link);
+    }
+};
+Helpers.directoryOfPage=function(url){
+    url = url || document.location.href;
+    var lio = url.lastIndexOf("/");
+    return url.substr(0,lio+1);
+};
+Helpers.randomcolor = function(brightness){
+    if (!Helpers.exists(brightness)) return '#'+Math.floor(Math.random()*16777215).toString(16);
+
+    //6 levels of brightness from 0 to 5, 0 being the darkest
+    var rgb = [Math.random() * 256, Math.random() * 256, Math.random() * 256];
+    var mix = [brightness*51, brightness*51, brightness*51]; //51 => 255/5
+    var mixed_rgb = [rgb[0] + mix[0], rgb[1] + mix[1], rgb[2] + mix[2]].map(function(x){ return Math.round(x/2.0)});
+    return "rgb(" + mixed_rgb.join(",") + ")";
+};
+Helpers.randRange = function (minVal,maxVal,floatVal){
+    //From: JSEDI
+    //optional Floatval specifies number of decimal points
+    var randVal = minVal+(Math.random()*(maxVal-minVal+1));
+    return (Helpers.exists(floatVal))?Math.round(randVal-.5):randVal.toFixed(floatVal);
+};
+Helpers.round = function(num,dec){
+    return (Math.round(num * (Math.pow(10,dec)))/Math.pow(10,dec));
+};
+Helpers.hexFromDec =function(decimal){
+    var code = Math.round(decimal).toString(16);
+    (code.length > 1) || (code = '0' + code);
+    return code;
+};
+Helpers.randomcolor_basedon = function(colorrgb){
+    colorrgb = colorrgb || "#505050";
+    if (colorrgb.indexOf("#") == 0) colorrgb = colorrgb.substr(1);
+    if (colorrgb.length && colorrgb.length==3)
+        colorrgb = colorrgb.substr(0,1) + "0" + colorrgb.substr(1,1) + "0" + colorrgb.substr(2,1) + "0";
+    var r = parseInt(colorrgb.substr(0,2),16);
+    var g = parseInt(colorrgb.substr(2,2),16);
+    var b = parseInt(colorrgb.substr(4,2),16);
+    var range=16;
+    r = Helpers.hexFromDec(r+Helpers.randRange(0,range)-(range/2));
+    g = Helpers.hexFromDec(g+Helpers.math.randRange(0,range)-(range/2));
+    b = Helpers.hexFromDec(b+Helpers.math.randRange(0,range)-(range/2));
+    return "#"+r+g+b;
+};
+Helpers.color_transparency = function(colorrgb,trans){
+    colorrgb = colorrgb || "#505050";
+    if (colorrgb.indexOf("#") == 0) colorrgb = colorrgb.substr(1);
+    if (colorrgb.length && colorrgb.length==3)
+        colorrgb = colorrgb.substr(0,1) + "0" + colorrgb.substr(1,1) + "0" + colorrgb.substr(2,1) + "0";
+    var r = parseInt(colorrgb.substr(0,2),16);
+    var g = parseInt(colorrgb.substr(2,2),16);
+    var b = parseInt(colorrgb.substr(4,2),16);
+    return "rgba("+r+","+g+","+b+","+trans+")";
+};
+
+Helpers.steppedGYR=function(percentage){
+    percentage = percentage || 0;
+    var ret;
+    if (percentage<=.5){
+        ret = Helpers.blendColors("#00ff00",'#ffff00',percentage*2);
+    } else {
+        ret = Helpers.blendColors('#ffff00',"#ff0000",(percentage -.5)*2);
+    }
+    return ret;
+};
+Helpers.blendColors=function(c1,c2,percentage){
+    if (typeof Colors == 'undefined') {
+        throw "Requires colors.min.js library";
+    }
+    c1 = Colors.hex2rgb(c1).a;
+    c2 = Colors.hex2rgb(c2).a;
+
+    var rDiff = (c2[0]-c1[0]) * percentage;
+    var gDiff = (c2[1]-c1[1]) * percentage;
+    var bDiff = (c2[2]-c1[2]) * percentage;
+
+    var cNew = [parseInt(c1[0]+rDiff),parseInt(c1[1]+gDiff),parseInt(c1[2]+bDiff)];
+
+    return Colors.rgb2hex(cNew);
+};Helpers.bw=function(color){
+//r must be an rgb color array of 3 integers between 0 and 255.
+    if (typeof Colors == 'undefined') {
+        throw "Requires colors.min.js library";
+    }
+
+    var r = Colors.hex2rgb(color).a;
+
+    var contrast= function(B, F){
+        var abs= Math.abs,
+            BG= (B[0]*299 + B[1]*587 + B[2]*114)/1000,
+            FG= (F[0]*299 + F[1]*587 + F[2]*114)/1000,
+            bright= Math.round(Math.abs(BG - FG)),
+            diff= abs(B[0]-F[0])+abs(B[1]-F[1])+abs(B[2]-F[2]);
+        return [bright, diff];
+    };
+    var c, w= [255, 255, 255], b= [0, 0, 0];
+    if(r[1]> 200 && (r[0]+r[2])<50) c= b;
+    else{
+        var bc= contrast(b, r);
+        var wc= contrast(w, r);
+        if((bc[0]*4+bc[1])> (wc[0]*4+wc[1])) c= b;
+        else if((wc[0]*4+wc[1])> (bc[0]*4+bc[1])) c= w;
+        else c= (bc[0]< wc[0])? w:b;
+    }
+    return 'rgb('+c.join(',')+')';
+};
+Helpers.removeMobileAddressBar = function(doItNow) {
+    function fixSize(){
+        // Get rid of address bar on iphone/ipod
+        window.scrollTo(0, 0);
+        document.body.style.height = '100%';
+        if (!(/(iphone|ipod)/.test(navigator.userAgent.toLowerCase()))) {
+            if (document.body.parentNode) {
+                document.body.parentNode.style.height = '100%';
+            }
+        }
+    }
+    if (doItNow){
+        fixSize();
+    } else {
+        setTimeout(fixSize, 700);
+        setTimeout(fixSize, 1500);
+    }
+};
+
+Helpers.orientationInfo=function(x,y){
+    x = x || $(window).width();
+    y = y || $(window).height();
+    var layout = (x>y)?'horizontal':'vertical';
+
+    return {layout:layout,ratio:x/y};
+};
+Helpers.dots= function(num){
+        var output = "";
+        for(var i=0;i<num;i++) {
+            if (i%5 ==0) output += " ";
+            output+="&#149;";
+        }
+        if (num == 0){
+            output="0";
+        }
+        return output;
+    };
+Helpers.isIOS= function(){
+    navigator.userAgent.toLowerCase().match(/(iphone|ipod|ipad)/);
+};
+Helpers.exists= function() {
+    //Check if variables exist
+    var allExist = true;
+    for( var i = 0; i < arguments.length; i++ ) {
+        if (typeof arguments[i] == "undefined" ) { allExist = false; break;}
+    }
+    return allExist;
+};
+Helpers.isInArray=function(searchFor,searchIn,ignoreCase){
+    if (!Helpers.exists(searchFor) || !Helpers.exists(searchIn)) return false;
+    if (!Helpers.isArray(searchFor)) searchFor = [searchFor];
+    if (!Helpers.isArray(searchIn)) searchIn = [searchIn];
+    var found = false;
+    for (var i=0;i<searchFor.length;i++){
+        for (var j=0;j<searchIn.length;j++){
+            var s_f = searchFor[i];
+            var s_i = searchIn[j];
+            if (ignoreCase && typeof s_f=='string' && typeof s_i=='string') {
+                if (s_f.toLowerCase() == s_i.toLowerCase()) {
+                    found=true;
+                    break;
+                }
+            } else {
+                if (s_f == s_i) {
+                    found=true;
+                    break;
+                }
+            }
+        }
+    }
+    return found;
+};
+
+
 (function($){
     // eventType - "click", "mouseover" etc.
     // destination - either jQuery object, dom element or selector
