@@ -1,20 +1,10 @@
-var Avatar = (function ($, _, net, createjs) {
-    //Uses jquery and Underscore and colors.js and createjs's easel.js
+var Avatar = (function ($, _) {
+    //Uses jquery and Underscore
 
-    //TODO: Right eye inner jig
-
-    //TODO: Hair Peak have multiple shapes, apply more than one peak
-    //TODO: Hair and beard use variables
-    //TODO: Beard weird on right side
+    //TODO: Hair
     //TODO: Eye spacing as fraction of face width
     //TODO: Eye lines shifted, jagged in the middle
-    //TODO: Ear lines
-    //TODO: Cheekbones
-    //TODO: Wrinkles
-    //TODO: Age progression
-    //TODO: Scars and Jewlery
-    //TODO: Background images on canvas
-    //TODO: Click areas are off when big?
+    //TODO: Eye jig up in bottom inner
 
     //-----------------------------
     //Private Global variables
@@ -30,20 +20,17 @@ var Avatar = (function ($, _, net, createjs) {
         //'Living' settings that can change over time
         age: 30,
         era: 'Industrial',
+        scars: 0,
         thickness: 0,
         cleanliness: 0,
         hair_style: 'Scruffy',
         hair_color: null,
-        beard_color: null,
-        beard_style: null,
+        beard_style: 'none',
+        tattoo_style: 'none',
+        glasses_style: 'none',
         skin_texture: 'Normal',
         teeth_condition: 'Normal',
-
         emotionality: 0,
-        emotion_shown: 'none',
-        tattoos: [],
-        jewelry: [],
-        scars: [],
 
         //DNA settings that don't change easily
         gender: null,
@@ -68,7 +55,9 @@ var Avatar = (function ($, _, net, createjs) {
         eye_spacing: 0.02,
         forehead_height: 0.1,
         nose_height: 0,
-        mouth_height: 0.05
+        mouth_height: 0.05,
+
+        face_width_proportion: 0.67
     };
     var _stage_options = {
         percent_height: 1,
@@ -90,14 +79,11 @@ var Avatar = (function ($, _, net, createjs) {
         gender_options: "Male,Female".split(","),
         face_shape_options: "Oblong,Oval,Round,Rectangular,Square,Triangular,Diamond,Inverted Triangle,Heart".split(","),
         hair_color_options: "Yellow,Brown,Black,White,Gray,Dark Brown,Dark Yellow,Red".split(","),
-        beard_color_options: "Hair,Yellow,Brown,Black,White,Gray,Dark Brown,Dark Yellow,Red".split(","),
-        beard_style_options: "None,Full Chin,Chin Warmer,Soup Catcher,Thin Chin Wrap".split(","),
         hairiness_options: "Bald,Thin Hair,Thick Hair,Hairy,Fuzzy,Bearded,Covered in Hair,Fury".split(","), //TODO
         nose_shape_options: "Flat,Wide,Thin,Turned up/perky,Normal,Hooked down,Bulbous,Giant Nostrils".split(","),
         nose_size_options: "Tiny,Small,Normal,Large,Big,Giant,Huge".split(","),
         eye_color_options: "Hazel,Amber,Green,Blue,Gray,Brown,Dark Brown,Black,Red,Violet".split(","),
         eye_lids_options: "None,Smooth,Folded,Thick".split(","), //TODO
-        thickness_options: [-1, .5, 0, .5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6],
         eye_shape_options: "Almond".split(",")
     };
 
@@ -105,19 +91,23 @@ var Avatar = (function ($, _, net, createjs) {
     //-----------------------------
     //Initialization
     function AvatarClass(face_options, stage_options, canvas_name) {
-        this.drawOrRedraw(face_options, stage_options, canvas_name);
-    }
+        var rand_seed = face_options.rand_seed || Math.floor(Math.random() * 10000);
+        randomSetSeed(rand_seed);
 
-    AvatarClass.prototype.drawOrRedraw = function (face_options, stage_options, canvas_name) {
-        this.face_options = $.extend({}, this.face_options || _face_options, face_options || {});
-        this.stage_options = $.extend({}, this.stage_options || _stage_options, stage_options || {});
-
-        var rand_seed = this.face_options.rand_seed || Math.floor(Math.random() * 100000);
-        this.randomSetSeed(rand_seed);
+        this.face_options = $.extend({}, _face_options, face_options || {});
+        this.stage_options = $.extend({}, _stage_options, stage_options || {});
 
         for (var key in _data) {
-            this.randomFaceOption(key, true, true);
+            var val = _data[key];
+            var option_name = '';
+            if (_.str.endsWith(key, '_options')) {
+                option_name = key.split('_options')[0];
+                if (!this.face_options[option_name]) this.face_options[option_name] = randOption(val);
+            }
         }
+
+        //TODO: Improve thickness management
+        this.face_options.face_width_proportion = 0.55 + ((this.face_options.thickness || random()) / 7);
 
         if (canvas_name) {
             this.stage_options.canvas_name = canvas_name;
@@ -139,18 +129,10 @@ var Avatar = (function ($, _, net, createjs) {
         expandFaceColors(this.face_options);
 
         if (this.stage) {
-            if (this.faceShapeCollection) {
-                this.faceShapeCollection.removeAllChildren();
-                this.faceShapeCollection.visible = false;
-            }
             var face = this.buildFace(this.face_options, this.stage_options, this.stage);
             this.drawOnStage(face, this.stage);
-            this.faceShapeCollection = face;
-            this.stage.enableMouseOver();
-
-            this.stage.update();
         }
-    };
+    }
 
     AvatarClass.prototype.version = function () {
         return file_name + ' (version ' + VERSION + ') - ' + summary + ' by ' + author;
@@ -159,120 +141,44 @@ var Avatar = (function ($, _, net, createjs) {
 
     //-----------------------------
     //Supporting functions
-    AvatarClass.prototype.removeFromStage = function () {
-        if (this.stage) {
-            if (this.faceShapeCollection) {
-                this.faceShapeCollection.removeAllChildren();
-                this.faceShapeCollection.visible = false;
-                this.stage.update();
-            }
-        }
-    };
     AvatarClass.prototype.drawOnStage = function (face, stage) {
         stage.addChild(face);
         stage.update();
     };
     AvatarClass.prototype.buildFace = function (face_options, stage_options, stage) {
+
         var container = new createjs.Container();
-        var avatar = this;
         this.lines = [];
 
         var face_zones = buildFaceZones(face_options, stage_options, stage);
         if (face_options.style == 'circles') {
             container = buildFace_Circles(container, face_options, face_zones, 'neck,ears,face,eyes,nose,mouth'.split(','));
-
         } else if (face_options.style == 'lines') {
-            var neck = buildNeck_Lines(face_zones, face_options, this.lines);
-            var face = buildFace_Lines(face_zones, face_options, this.lines);
-            var nose = buildNose_Lines(face_zones, face_options, this.lines);
-            var eyes = buildEyes_Lines(face_zones, face_options, this.lines);
-            var beard = buildBeard_Lines(face_zones, face_options, this.lines);
-            var mouth = buildMouth_Lines(face_zones, face_options, this.lines);
-            var hair = buildHair_Lines(face_zones, face_options, this.lines);
-            var ears = buildEars_Lines(face_zones, face_options, this.lines);
-            addSceneChildren(container, [neck, face, nose, eyes, beard, mouth, hair, ears]);
-
-            findShape(this.lines, 'neck').shape.addEventListener("click", function () {
-                avatar.randomFaceOption('thickness');
-            });
-            findShape(this.lines, 'face').shape.addEventListener("click", stage_options.face_click || function () {
-                avatar.randomFaceOption('face_shape');
-            });
-            findShape(this.lines, 'face').shape.addEventListener("mouseover", function () {
-                $('#avatar_name').text(avatar.face_options.name || "Avatar");
-            });
-
-            findShape(this.lines, 'nose bottom line').shape.addEventListener("click", function () {
-                avatar.randomFaceOption('nose_shape', false, true);
-                avatar.randomFaceOption('nose_size');
-            });
-            findShape(this.lines, 'right eye').shape.addEventListener("click", function () {
-                avatar.randomFaceOption('eye_color');
-            });
-            findShape(this.lines, 'left eye').shape.addEventListener("click", function () {
-                avatar.randomFaceOption('eye_color');
-            });
-            findShape(this.lines, 'right iris').shape.addEventListener("click", function () {
-                avatar.randomFaceOption('eye_color');
-            });
-            findShape(this.lines, 'left iris').shape.addEventListener("click", function () {
-                avatar.randomFaceOption('eye_color');
-            });
-            findShape(this.lines, 'lips').shape.addEventListener("click", function () {
-                avatar.randomFaceOption('gender');
-            });
-            findShape(this.lines, 'tongue').shape.addEventListener("click", function () {
-                avatar.randomFaceOption('gender');
-            });
-            findShape(this.lines, 'full hair').shape.addEventListener("click", function () {
-                avatar.randomFaceOption('hair_color');
-            });
-            var beardshape = findShape(this.lines, 'full beard');
-            if (beardshape && beardshape.shape) beardshape.shape.addEventListener("click", function () {
-                avatar.randomFaceOption('beard_color');
-            });
-
+            addSceneChildren(container, buildNeck_Lines(face_zones, face_options, this.lines));
+            buildFace_Circles(container, face_options, face_zones, 'ears'.split(','));
+            addSceneChildren(container, buildFace_Lines(face_zones, face_options, this.lines));
+            addSceneChildren(container, buildNose_Lines(face_zones, face_options, this.lines));
+            addSceneChildren(container, buildEyes_Lines(face_zones, face_options, this.lines));
+            addSceneChildren(container, buildMouth_Lines(face_zones, face_options, this.lines));
+            addSceneChildren(container, buildHair_Lines(face_zones, face_options, this.lines));
         }
         return container;
-    };
-    AvatarClass.prototype.randomFaceOption = function (key, dontForceSetting, skipRedraw) {
-        var option_name = '';
-        var result;
-        if (!_.str.endsWith(key, '_options')) {
-            key = key + "_options";
-        }
-        if (_data[key]) {
-            var options = _data[key];
-            option_name = key.split('_options')[0];
-
-            if (!dontForceSetting || (dontForceSetting && !this.face_options[option_name])) {
-                result = randOption(options, this.face_options);
-                this.face_options[option_name] = result;
-            }
-
-        }
-        if (!skipRedraw) {
-            this.drawOrRedraw();
-        }
-        return result;
     };
 
     //================
     //Private functions
     function expandFaceColors(face_options) {
 
-        if (face_options.colors) return;
-
         //Add in colors based on setting
         //TODO: Make this generic
         var skin_pigment_colors = _.find(_data.skin_type_color_options, function (skin) {
             return skin.name == face_options.skin_pigment
         });
-        if (!skin_pigment_colors) skin_pigment_colors = randOption(_data.skin_type_color_options, face_options);
+        if (!skin_pigment_colors) skin_pigment_colors = randOption(_data.skin_type_color_options);
 
         for (var key in skin_pigment_colors) {
             var val = skin_pigment_colors[key];
-            if (key != 'name' && val.substr(0, 1) != "#") {
+            if (key != 'name' && val.substr(0,1) != "#") {
                 skin_pigment_colors[key] = Helpers.rgb2hex(val);
             }
         }
@@ -292,7 +198,7 @@ var Avatar = (function ($, _, net, createjs) {
 
         var half_height = height / 2;
         stage_options.half_height = half_height;
-        face_zones.face_width = half_height * (0.55 + (face_options.thickness / 35));
+        face_zones.face_width = half_height * face_options.face_width_proportion;
 
         var x = stage_options.x;
         var y = stage_options.y;
@@ -495,36 +401,36 @@ var Avatar = (function ($, _, net, createjs) {
     // Face line makers
     function buildFace_Lines(f, face_options, lines) {
         var shapes = [];
-        var squish = 2.94; //2.9 - 3.1 (also adjust ears x offset)
+        var squish = 2.94;
 
         var zone = f.face;
         var face_line = [];
         var radius_x = 10 * (zone.right - zone.left) / squish;
         var radius_y = 10 * (zone.bottom - zone.top) / squish;
         if (face_options.face_shape == 'Oblong') {
-            face_line = transformShapeLine({type: 'oval', warp_y: 0.7}, face_options);
+            face_line = transformShapeLine({type: 'oval', warp_y: 0.7});
         } else if (face_options.face_shape == 'Oval') {
-            face_line = transformShapeLine({type: 'oval', warp_y: 0.55}, face_options);
+            face_line = transformShapeLine({type: 'oval', warp_y: 0.55});
         } else if (face_options.face_shape == 'Rectangle') {
-            face_line = transformShapeLine({type: 'oval', facet_below: 0.1, warp_y: 0.3}, face_options);
+            face_line = transformShapeLine({type: 'oval', facet_below: 0.1, warp_y: 0.3});
         } else if (face_options.face_shape == 'Square') {
-            face_line = transformShapeLine({type: 'oval', facet_below: 0.1, warp_y: 0.22}, face_options);
+            face_line = transformShapeLine({type: 'oval', facet_below: 0.1, warp_y: 0.22});
         } else if (face_options.face_shape == 'Inverted Triangle') {
-            face_line = transformShapeLine({type: 'oval', facet_below: 0.1, warp_x: 0.6, pinch_bottom: 2}, face_options);
+            face_line = transformShapeLine({type: 'oval', facet_below: 0.1, warp_x: 0.6, pinch_bottom: 2});
         } else if (face_options.face_shape == 'Diamond') {
-            face_line = transformShapeLine({type: 'oval', warp_x: 0.3}, face_options);
+            face_line = transformShapeLine({type: 'oval', warp_x: 0.3});
         } else if (face_options.face_shape == 'Triangular') {
-            face_line = transformShapeLine({type: 'oval', facet_below: 0.4, dont_face_below: 0.8, warp_x: 0.6, raise_below: 0.6, warp_y_bottom: 2, pinch_top: 2, steps: 36}, face_options);
+            face_line = transformShapeLine({type: 'oval', facet_below: 0.4, dont_face_below: 0.8, warp_x: 0.6, raise_below:0.6, warp_y_bottom:2, pinch_top: 2, steps: 36});
         } else if (face_options.face_shape == 'Heart') {
-            face_line = transformShapeLine({type: 'oval', facet_below: 0.1, warp_x: 0.3, pinch_bottom: 2}, face_options);
+            face_line = transformShapeLine({type: 'oval', facet_below: 0.1, warp_x: 0.3, pinch_bottom: 2});
         } else {
-            face_line = transformShapeLine({type: 'circle'}, face_options);
+            face_line = transformShapeLine({type: 'circle'});
         }
 
         var l = createPathFromLocalCoordinates(face_line, {close_line: true, line_color: face_options.colors.highlights, fill_color: face_options.colors.skin}, radius_x, radius_y);
         l.x = zone.x;
         l.y = zone.y;
-        lines.push({name: 'face', line: face_line, shape: l, scale_x: radius_x, scale_y: radius_y, x: zone.x, y: zone.y});
+        lines.push({name:'face', line:face_line, shape:l, scale_x:radius_x, scale_y:radius_y, x:zone.x, y:zone.y});
         shapes.push(l);
 
         return shapes;
@@ -533,10 +439,10 @@ var Avatar = (function ($, _, net, createjs) {
     function buildNeck_Lines(f, face_options, lines) {
         var shapes = [];
 
-        var neck_width = 0.75; //.5-.85
-        var neck_curvature = 0.85; //.7 - .95
-        var apple_transparency = 0.4; //.3 - .6
-        var apple_height = 1.4; //0-2
+        var neck_width = 0.75;
+        var neck_curvature = 0.9;
+        var apple_transparency = 0.4;
+        var apple_height = 1.4;
         if (face_options.gender == 'Female') {
             neck_width *= 0.9;
         }
@@ -544,16 +450,16 @@ var Avatar = (function ($, _, net, createjs) {
         var scale_x = (zone.right - zone.left) * neck_width;
         var scale_y = (zone.bottom - zone.top) / 1.5;
 
-        var neck_line = transformShapeLine({type: 'neck', radius: 5, curvature: neck_curvature}, face_options);
+        var neck_line = transformShapeLine({type: 'neck', radius: 5, curvature: neck_curvature});
         var neck = createPathFromLocalCoordinates(neck_line, {close_line: true, line_color: face_options.colors.highlights, fill_color: face_options.colors.skin}, scale_x, scale_y);
         neck.x = zone.x;
         neck.y = zone.y + (f.thick_unit * 175);
-        lines.push({name: 'neck', line: neck_line, shape: neck, scale_x: scale_x, scale_y: scale_y, x: zone.x, y: zone.y});
+        lines.push({name:'neck', line:neck_line, shape:neck, scale_x:scale_x, scale_y:scale_y, x:zone.x, y:zone.y});
         shapes.push(neck);
 
         if (face_options.gender == 'Male') {
             var darker_skin = net.brehaut.Color(face_options.colors.skin).darkenByRatio(0.2).toString();
-            var neck_apple_line = transformShapeLine({type: 'circle', radius: 0.5}, face_options);
+            var neck_apple_line = transformShapeLine({type: 'circle', radius: 0.5});
             scale_x = (zone.right - zone.left);
             scale_y = (zone.bottom - zone.top) * apple_height;
 
@@ -561,116 +467,33 @@ var Avatar = (function ($, _, net, createjs) {
             neck_apple.x = zone.x;
             neck_apple.y = zone.y + (f.thick_unit * 225);
             neck_apple.alpha = apple_transparency;
-            lines.push({name: 'neck_apple', line: neck_apple_line, shape: neck_apple, scale_x: scale_x, scale_y: scale_y, x: zone.x, y: zone.y + (f.thick_unit * 225)});
+            lines.push({name:'neck_apple', line:neck_apple_line, shape:neck_apple, scale_x:scale_x, scale_y:scale_y, x:zone.x, y:zone.y + (f.thick_unit * 225)});
             shapes.push(neck_apple);
         }
 
         return shapes;
     }
 
-    function buildEars_Lines(f, face_options, lines) {
-        var shapes = [];
-
-        var zone = f.ears;
-        var width = 0.5 * (zone.right - zone.left);
-        var height = 0.6 * (zone.bottom - zone.top);
-
-        var ear_height_adjust = 1; //.3-1.2
-        var ear_width_adjust = 1; //.7-2
-        var right_lobe_height = 0; //0-3
-        var left_lobe_height = 0; //0-3
-        var inner_cavity_size_adjust = .4; //.3-.6
-        var ear_inset_adjust = 2;  //0-5
-        var ear_head_height_adjust = 0;  //-20 - 20
-
-        ear_head_height_adjust -= 10;
-
-        var ear_line_side = [
-            {x: -3, y: -4},
-            {x: -5, y: -6},
-            {x: 3, y: -8},
-            {x: 9, y: -6},
-            {x: 3, y: -0},
-            {x: 6, y: 4},
-            {x: 3, y: 5},
-            {x: -3, y: 3}
-        ];
-        var ear_line_l = [];
-        var ear_line_r = [];
-        for (var i = 0; i < ear_line_side.length; i++) {
-            var y = ear_height_adjust * ear_line_side[i].y;
-            var l_offset = 0;
-            var r_offset = 0;
-            if (i == ear_line_side.length - 1) {
-                l_offset = left_lobe_height;
-                r_offset = right_lobe_height;
-            }
-            ear_line_l.push({x: ear_width_adjust * ear_line_side[i].x, y: y + l_offset});
-            ear_line_r.push({x: -ear_width_adjust * ear_line_side[i].x, y: y + r_offset});
-        }
-
-        var ear_r = createPathFromLocalCoordinates(ear_line_r, {close_line: true, thickness: f.thick_unit, fill_color: face_options.colors.skin, color: face_options.colors.deepshadow}, width, height);
-        var x = zone.left_x - (f.thick_unit * ear_inset_adjust);
-        var y = zone.y - (f.thick_unit * ear_head_height_adjust);
-        ear_r.x = x;
-        ear_r.y = y;
-        lines.push({name: 'ear right line', line: ear_line_r, shape: ear_r, scale_x: width, scale_y: height, x: x, y: y});
-        shapes.push(ear_r);
-
-        var ear_l = createPathFromLocalCoordinates(ear_line_l, {close_line: true, thickness: f.thick_unit, fill_color: face_options.colors.skin, color: face_options.colors.deepshadow}, width, height);
-        x = zone.right_x + (f.thick_unit * ear_inset_adjust);
-        y = zone.y - (f.thick_unit * ear_head_height_adjust);
-        ear_l.x = x;
-        ear_l.y = y;
-        lines.push({name: 'ear left line', line: ear_line_l, shape: ear_l, scale_x: width, scale_y: height, x: x, y: y});
-        shapes.push(ear_l);
-
-
-        width *= inner_cavity_size_adjust;
-        height *= inner_cavity_size_adjust;
-
-        var ear_r_in = createPathFromLocalCoordinates(ear_line_r, {close_line: true, thickness: f.thick_unit, fill_color: face_options.colors.darkflesh, color: face_options.colors.deepshadow}, width, height);
-        x = zone.left_x - (f.thick_unit * ear_inset_adjust);
-        y = zone.y - (f.thick_unit * ear_head_height_adjust);
-        ear_r_in.x = x;
-        ear_r_in.y = y;
-        lines.push({name: 'ear right line in', line: ear_line_r, shape: ear_r_in, scale_x: 1, scale_y: 1, x: x, y: y});
-        shapes.push(ear_r_in);
-
-        var ear_l_in = createPathFromLocalCoordinates(ear_line_l, {close_line: true, thickness: f.thick_unit, fill_color: face_options.colors.darkflesh, color: face_options.colors.deepshadow}, width, height);
-        x = zone.right_x + (f.thick_unit * ear_inset_adjust);
-        y = zone.y - (f.thick_unit * ear_head_height_adjust);
-        ear_l_in.x = x;
-        ear_l_in.y = y;
-        lines.push({name: 'ear left line in', line: ear_line_l, shape: ear_l_in, scale_x: 1, scale_y: 1, x: x, y: y});
-        shapes.push(ear_l_in);
-
-        return shapes;
-    }
-
     function buildEyes_Lines(f, face_options, lines) {
-        if (!face_options.eye_shape) {
-            console.error("ERROR - face_options.eye_shape not set - likely no face_options were set");
-        }
         var shapes = [];
 
-        var rotation_amount = 4; //-6 to 15, sets emotion
-        var iris_size = 2.8;  // 2.7 to 2.9
-        var pupil_transparency = 0.7; //.1 - .9 for weird eyes, but .7 works best
-        var iris_transparency = 0.5; //.1 - .9 for weird eyes, but .5 works best
-        var pupil_color = 'black'; //best dark colors, black or dark blue. red looks freaky
-        var eyebrow_thick_start = 4 * f.thick_unit;
-        var eyebrow_thick_stop = 2 * f.thick_unit;  //TODO: Still not working fully
+        var rotation_amount = 4;
+        var iris_size = 2.8;
+        var pupil_transparency = 0.7;
+        var iris_transparency = 0.6;
+        var pupil_color = 'black';
+        var eyelid_thick_start = 4 * f.thick_unit;
+        var eyelid_thick_stop = 2 * f.thick_unit;
 
-        var eyebrow_height = 20; //15 - 40
-        var eyebrow_transparency = 0.9;
+        //TODO: Have squash move right to left
+
+        var eyelid_height = 20;
+        var eyelid_transparency = 0.9;
 
         if (face_options.gender == 'Female') {
-            eyebrow_thick_start *= 1.2;
-            eyebrow_thick_stop *= 1.2;
+            eyelid_thick_start *= 1.2;
+            eyelid_thick_stop *= 1.2;
         }
-
-        //TODO: Have eyebrow patterns shift
 
         //TODO: Change this to mirror lines on each side, maybe build a builder function
 
@@ -682,16 +505,13 @@ var Avatar = (function ($, _, net, createjs) {
         var y = zone.y;
         var left_eye_line = [];
         if (face_options.eye_shape == 'Almond') {
-            left_eye_line = transformShapeLine([
-                {type: 'almond-horizontal', modifier: 'left', radius: 4.2},
-                {type: 'pinch', pinch_amount: 0.5, starting_step: -3, ending_step: 4}
-            ], face_options);
+            left_eye_line = transformShapeLine({type: 'almond-horizontal', modifier: 'left', radius: 4.2});
         }
         var left_eye = createPathFromLocalCoordinates(left_eye_line, {close_line: true, line_color: face_options.colors.darkflesh, fill_color: 'white'}, scale_x, scale_y);
         left_eye.x = x;
         left_eye.y = y;
         left_eye.rotation = rotation_amount;
-        lines.push({name: 'left eye', line: left_eye_line, shape: left_eye, scale_x: scale_x, scale_y: scale_y, x: x, y: y, rotation: rotation_amount});
+        lines.push({name:'left eye', line:left_eye_line, shape:left_eye, scale_x:scale_x, scale_y:scale_y, x:x, y:y, rotation:rotation_amount});
         shapes.push(left_eye);
 
 
@@ -699,13 +519,13 @@ var Avatar = (function ($, _, net, createjs) {
         y = zone.y - (f.thick_unit * 4);
         var left_eye_line_top = [];
         if (face_options.eye_shape == 'Almond') {
-            left_eye_line_top = transformShapeLine({type: 'almond-horizontal', modifier: 'left', radius: 4.2, starting_step: 11, ending_step: 19}, face_options);
+            left_eye_line_top = transformShapeLine({type: 'almond-horizontal', modifier: 'left', radius: 4.2, starting_step: 11, ending_step: 19});
         }
-        var left_eye_top = createPathFromLocalCoordinates(left_eye_line_top, {close_line: false, line_color: face_options.colors.cheek, thickness: f.thick_unit * 5}, scale_x, scale_y);
+        var left_eye_top = createPathFromLocalCoordinates(left_eye_line_top, {close_line: false, line_color: face_options.colors.cheek, thickness: f.thick_unit*5}, scale_x, scale_y);
         left_eye_top.x = x;
         left_eye_top.y = y;
         left_eye_top.rotation = rotation_amount;
-        lines.push({name: 'left eye top', line: left_eye_line_top, shape: left_eye_top, scale_x: scale_x, scale_y: scale_y, x: x, y: y, rotation: rotation_amount});
+        lines.push({name:'left eye top', line:left_eye_line_top, shape:left_eye_top, scale_x:scale_x, scale_y:scale_y, x:x, y:y, rotation:rotation_amount});
         shapes.push(left_eye_top);
 
 
@@ -713,39 +533,39 @@ var Avatar = (function ($, _, net, createjs) {
         y = zone.y + (f.thick_unit * 3);
         var left_eye_line_bottom = [];
         if (face_options.eye_shape == 'Almond') {
-            left_eye_line_bottom = transformShapeLine({type: 'almond-horizontal', modifier: 'left', radius: 4.2, starting_step: 1, ending_step: 7}, face_options);
+            left_eye_line_bottom = transformShapeLine({type: 'almond-horizontal', modifier: 'left', radius: 4.2, starting_step: 1, ending_step: 7});
         }
         var left_eye_bottom = createPathFromLocalCoordinates(left_eye_line_bottom, {close_line: false, line_color: face_options.colors.cheek, thickness: f.thick_unit}, scale_x, scale_y);
         left_eye_bottom.x = x;
         left_eye_bottom.y = y;
         left_eye_bottom.rotation = rotation_amount;
-        lines.push({name: 'left eye bottom', line: left_eye_line_bottom, shape: left_eye_bottom, scale_x: scale_x, scale_y: scale_y, x: x, y: y, rotation: rotation_amount});
+        lines.push({name:'left eye bottom', line:left_eye_line_bottom, shape:left_eye_bottom, scale_x:scale_x, scale_y:scale_y, x:x, y:y, rotation:rotation_amount});
         shapes.push(left_eye_bottom);
 
 
         x = zone.left_x;
-        y = zone.y - (f.thick_unit * eyebrow_height);
+        y = zone.y - (f.thick_unit * eyelid_height);
         var left_eyebrow_line_top = [];
         if (face_options.eye_shape == 'Almond') {
-            left_eyebrow_line_top = transformShapeLine({type: 'almond-horizontal', modifier: 'left', radius: 4.2, starting_step: 10, ending_step: 19}, face_options);
+            left_eyebrow_line_top = transformShapeLine({type: 'almond-horizontal', modifier: 'left', radius: 4.2, starting_step: 10, ending_step: 19});
         }
-        var left_eyebrow_top = createPathFromLocalCoordinates(left_eyebrow_line_top, {close_line: false, line_color: face_options.hair_color, thickness: eyebrow_thick_start, thickness_end: eyebrow_thick_stop}, scale_x, scale_y);
+        var left_eyebrow_top = createPathFromLocalCoordinates(left_eyebrow_line_top, {close_line: false, line_color: face_options.hair_color, thickness: eyelid_thick_start, thickness_end: eyelid_thick_stop}, scale_x, scale_y);
         left_eyebrow_top.x = x;
         left_eyebrow_top.y = y;
-        left_eyebrow_top.alpha = eyebrow_transparency;
+        left_eyebrow_top.alpha = eyelid_transparency;
         left_eyebrow_top.rotation = rotation_amount + 5;
-        lines.push({name: 'left eyebrow top', line: left_eyebrow_line_top, shape: left_eyebrow_top, scale_x: scale_x, scale_y: scale_y, x: x, y: y, rotation: rotation_amount + 5, alpha: eyebrow_transparency});
+        lines.push({name:'left eyebrow top', line:left_eyebrow_line_top, shape:left_eyebrow_top, scale_x:scale_x, scale_y:scale_y, x:x, y:y, rotation:rotation_amount + 5, alpha: eyelid_transparency});
         shapes.push(left_eyebrow_top);
 
 
         x = zone.left_x + (f.thick_unit * 4);
         y = zone.y - (f.thick_unit * 8);
-        var left_eyebrow_line_inside = transformShapeLine({type: 'almond-horizontal', modifier: 'left', radius: 4.2, starting_step: 14, ending_step: 19}, face_options);
+        var left_eyebrow_line_inside = transformShapeLine({type: 'almond-horizontal', modifier: 'left', radius: 4.2, starting_step: 14, ending_step: 19});
         var left_eyebrow_inside = createPathFromLocalCoordinates(left_eyebrow_line_inside, {close_line: false, line_color: face_options.colors.darkflesh}, scale_x, scale_y);
         left_eyebrow_inside.x = x;
         left_eyebrow_inside.y = y;
         left_eyebrow_inside.rotation = rotation_amount + 10;
-        lines.push({name: 'left eyebrow inside', line: left_eyebrow_line_inside, shape: left_eyebrow_inside, scale_x: scale_x, scale_y: scale_y, x: x, y: y, rotation: rotation_amount + 10});
+        lines.push({name:'left eyebrow inside', line:left_eyebrow_line_inside, shape:left_eyebrow_inside, scale_x:scale_x, scale_y:scale_y, x:x, y:y, rotation:rotation_amount + 10});
         shapes.push(left_eyebrow_inside);
 
 
@@ -754,12 +574,12 @@ var Avatar = (function ($, _, net, createjs) {
         scale_y = (zone.bottom - zone.top);
         x = zone.left_x;
         y = zone.y;
-        var left_iris_line = transformShapeLine({type: 'circle', radius: iris_size}, face_options);
+        var left_iris_line = transformShapeLine({type: 'circle', radius: iris_size});
         var left_iris = createPathFromLocalCoordinates(left_iris_line, {close_line: true, fill_color: face_options.eye_color}, scale_x, scale_y);
         left_iris.x = x;
         left_iris.y = y;
         left_iris.alpha = iris_transparency;
-        lines.push({name: 'left iris', line: left_iris_line, shape: left_iris, scale_x: scale_x, scale_y: scale_y, x: x, y: y, alpha: iris_transparency});
+        lines.push({name:'left iris', line:left_iris_line, shape:left_iris, scale_x:scale_x, scale_y:scale_y, x:x, y:y, alpha:iris_transparency});
         shapes.push(left_iris);
 
 
@@ -772,7 +592,7 @@ var Avatar = (function ($, _, net, createjs) {
         left_eye_round.x = x;
         left_eye_round.y = y;
         left_eye_round.rotation = rotation_amount;
-        lines.push({name: 'left eye round', line: left_eye_line, shape: left_eye_round, scale_x: scale_x, scale_y: scale_y, x: x, y: y});
+        lines.push({name:'left eye round', line:left_eye_line, shape:left_eye_round, scale_x:scale_x, scale_y:scale_y, x:x, y:y});
         shapes.push(left_eye_round);
 
 
@@ -786,7 +606,7 @@ var Avatar = (function ($, _, net, createjs) {
         left_pupil.x = x;
         left_pupil.y = y;
         left_pupil.alpha = pupil_transparency;
-        lines.push({name: 'left pupil', line: [], shape: left_pupil, scale_x: scale_x, scale_y: scale_y, x: x, y: y});
+        lines.push({name:'left pupil', line:[], shape:left_pupil, scale_x:scale_x, scale_y:scale_y, x:x, y:y});
         shapes.push(left_pupil);
 
 
@@ -798,16 +618,13 @@ var Avatar = (function ($, _, net, createjs) {
         y = zone.y;
         var right_eye_line = [];
         if (face_options.eye_shape == 'Almond') {
-            right_eye_line = transformShapeLine([
-                {type: 'almond-horizontal', modifier: 'right', radius: 4.2},
-                {type: 'pinch', pinch_amount: 0.5, starting_step: 14, ending_step: 21}
-            ], face_options);
+            right_eye_line = transformShapeLine({type: 'almond-horizontal', modifier: 'right', radius: 4.2});
         }
         var right_eye = createPathFromLocalCoordinates(right_eye_line, {close_line: true, line_color: face_options.colors.darkflesh, fill_color: 'white'}, scale_x, scale_y);
         right_eye.x = x;
         right_eye.y = y;
         right_eye.rotation = -rotation_amount;
-        lines.push({name: 'right eye', line: right_eye_line, shape: right_eye, scale_x: scale_x, scale_y: scale_y, x: x, y: y, rotation: -rotation_amount});
+        lines.push({name:'right eye', line:right_eye_line, shape:right_eye, scale_x:scale_x, scale_y:scale_y, x:x, y:y, rotation: -rotation_amount});
         shapes.push(right_eye);
 
 
@@ -817,46 +634,46 @@ var Avatar = (function ($, _, net, createjs) {
         y = zone.y - (f.thick_unit * 4);
         var right_eye_line_top = [];
         if (face_options.eye_shape == 'Almond') {
-            right_eye_line_top = transformShapeLine({type: 'almond-horizontal', modifier: 'right', radius: 4.2, starting_step: 8, ending_step: 17}, face_options);
+            right_eye_line_top = transformShapeLine({type: 'almond-horizontal', modifier: 'right', radius: 4.2, starting_step: 8, ending_step: 17});
         }
-        var right_eye_top = createPathFromLocalCoordinates(right_eye_line_top, {close_line: false, line_color: face_options.colors.cheek, thickness: f.thick_unit * 5}, scale_x, scale_y);
+        var right_eye_top = createPathFromLocalCoordinates(right_eye_line_top, {close_line: false, line_color: face_options.colors.cheek}, scale_x, scale_y);
         right_eye_top.x = x;
         right_eye_top.y = y;
         right_eye_top.rotation = -rotation_amount;
-        lines.push({name: 'right eye top', line: right_eye_line_top, shape: right_eye_top, scale_x: scale_x, scale_y: scale_y, x: x, y: y, rotation: -rotation_amount});
+        lines.push({name:'right eye top', line:right_eye_line_top, shape:right_eye_top, scale_x:scale_x, scale_y:scale_y, x:x, y:y, rotation: -rotation_amount});
         shapes.push(right_eye_top);
 
 
         scale_x = (zone.right - zone.left);
         scale_y = (zone.bottom - zone.top);
         x = zone.right_x;
-        y = zone.y + (f.thick_unit * 3);
+        y = zone.y - (f.thick_unit * 3);
         var right_eye_line_bottom = [];
         if (face_options.eye_shape == 'Almond') {
-            right_eye_line_bottom = transformShapeLine({type: 'almond-horizontal', modifier: 'right', radius: 4.2, starting_step: 3, ending_step: 9}, face_options);
+            right_eye_line_bottom = transformShapeLine({type: 'almond-horizontal', modifier: 'right', radius: 4.2, starting_step: 3, ending_step: 9});
         }
         var right_eye_bottom = createPathFromLocalCoordinates(right_eye_line_bottom, {close_line: false, line_color: face_options.colors.cheek, thickness: f.thick_unit}, scale_x, scale_y);
         right_eye_bottom.x = x;
         right_eye_bottom.y = y;
         right_eye_bottom.rotation = -rotation_amount;
-        lines.push({name: 'right eye bottom', line: right_eye_line_bottom, shape: right_eye_bottom, scale_x: scale_x, scale_y: scale_y, x: x, y: y, rotation: -rotation_amount});
+        lines.push({name:'right eye bottom', line:right_eye_line_bottom, shape:right_eye_bottom, scale_x:scale_x, scale_y:scale_y, x:x, y:y, rotation: -rotation_amount});
         shapes.push(right_eye_bottom);
 
 
         scale_x = (zone.right - zone.left);
         scale_y = (zone.bottom - zone.top);
         x = zone.right_x;
-        y = zone.y - (f.thick_unit * eyebrow_height);
+        y = zone.y - (f.thick_unit * eyelid_height);
         var right_eyebrow_line_top = [];
         if (face_options.eye_shape == 'Almond') {
-            right_eyebrow_line_top = transformShapeLine({type: 'almond-horizontal', modifier: 'right', radius: 4.2, starting_step: 9, ending_step: 18}, face_options);
+            right_eyebrow_line_top = transformShapeLine({type: 'almond-horizontal', modifier: 'right', radius: 4.2, starting_step: 9, ending_step: 18});
         }
-        var right_eyebrow_top = createPathFromLocalCoordinates(right_eyebrow_line_top, {close_line: false, line_color: face_options.hair_color, thickness: eyebrow_thick_start, thickness_end: eyebrow_thick_stop}, scale_x, scale_y);
+        var right_eyebrow_top = createPathFromLocalCoordinates(right_eyebrow_line_top, {close_line: false, line_color: face_options.hair_color, thickness: eyelid_thick_start, thickness_end: eyelid_thick_stop}, scale_x, scale_y);
         right_eyebrow_top.x = x;
         right_eyebrow_top.y = y;
-        right_eyebrow_top.alpha = eyebrow_transparency;
+        right_eyebrow_top.alpha = eyelid_transparency;
         right_eyebrow_top.rotation = -rotation_amount - 5;
-        lines.push({name: 'right eyebrow top', line: right_eyebrow_line_top, shape: right_eyebrow_top, scale_x: scale_x, scale_y: scale_y, x: x, y: y, alpha: eyebrow_transparency, rotation: -rotation_amount - 5});
+        lines.push({name:'right eyebrow top', line:right_eyebrow_line_top, shape:right_eyebrow_top, scale_x:scale_x, scale_y:scale_y, x:x, y:y, alpha: eyelid_transparency, rotation: -rotation_amount - 5});
         shapes.push(right_eyebrow_top);
 
 
@@ -864,12 +681,12 @@ var Avatar = (function ($, _, net, createjs) {
         scale_y = (zone.bottom - zone.top);
         x = zone.right_x - (f.thick_unit * 4);
         y = zone.y - (f.thick_unit * 8);
-        var right_eyebrow_line_inside = transformShapeLine({type: 'almond-horizontal', modifier: 'right', radius: 4.2, starting_step: 9, ending_step: 14}, face_options);
+        var right_eyebrow_line_inside = transformShapeLine({type: 'almond-horizontal', modifier: 'right', radius: 4.2, starting_step: 9, ending_step: 14});
         var right_eyebrow_inside = createPathFromLocalCoordinates(right_eyebrow_line_inside, {close_line: false, line_color: face_options.colors.darkflesh}, scale_x, scale_y);
         right_eyebrow_inside.x = x;
         right_eyebrow_inside.y = y;
         right_eyebrow_inside.rotation = -rotation_amount - 10;
-        lines.push({name: 'right eyebrow inside', line: right_eyebrow_line_inside, shape: right_eyebrow_inside, scale_x: scale_x, scale_y: scale_y, x: x, y: y, rotation: -rotation_amount - 10});
+        lines.push({name:'right eyebrow inside', line:right_eyebrow_line_inside, shape:right_eyebrow_inside, scale_x:scale_x, scale_y:scale_y, x:x, y:y, rotation: -rotation_amount - 10});
         shapes.push(right_eyebrow_inside);
 
 
@@ -878,12 +695,12 @@ var Avatar = (function ($, _, net, createjs) {
         scale_y = (zone.bottom - zone.top);
         x = zone.right_x;
         y = zone.y;
-        var right_iris_line = transformShapeLine({type: 'circle', radius: iris_size}, face_options);
+        var right_iris_line = transformShapeLine({type: 'circle', radius: iris_size});
         var right_iris = createPathFromLocalCoordinates(right_iris_line, {close_line: true, fill_color: face_options.eye_color}, scale_x, scale_y);
         right_iris.x = x;
         right_iris.y = y;
         right_iris.alpha = iris_transparency;
-        lines.push({name: 'right iris', line: right_iris_line, shape: right_iris, scale_x: scale_x, scale_y: scale_y, x: x, y: y, alpha: iris_transparency});
+        lines.push({name:'right iris', line:right_iris_line, shape:right_iris, scale_x:scale_x, scale_y:scale_y, x:x, y:y, alpha:iris_transparency});
         shapes.push(right_iris);
 
 
@@ -896,7 +713,7 @@ var Avatar = (function ($, _, net, createjs) {
         right_eye_round.x = x;
         right_eye_round.y = y;
         right_eye_round.rotation = -rotation_amount;
-        lines.push({name: 'right eye round', line: right_eye_line, shape: right_eye_round, scale_x: scale_x, scale_y: scale_y, x: x, y: y, rotation: -rotation_amount});
+        lines.push({name:'right eye round', line:right_eye_line, shape:right_eye_round, scale_x:scale_x, scale_y:scale_y, x:x, y:y, rotation: -rotation_amount});
         shapes.push(right_eye_round);
 
 
@@ -910,7 +727,7 @@ var Avatar = (function ($, _, net, createjs) {
         right_pupil.x = x;
         right_pupil.y = y;
         right_pupil.alpha = pupil_transparency;
-        lines.push({name: 'right pupil', line: [], shape: right_pupil, scale_x: scale_x, scale_y: scale_y, x: x, y: y, alpha: pupil_transparency});
+        lines.push({name:'right pupil', line:[], shape:right_pupil, scale_x:scale_x, scale_y:scale_y, x:x, y:y, alpha: pupil_transparency});
         shapes.push(right_pupil);
 
         return shapes;
@@ -985,7 +802,7 @@ var Avatar = (function ($, _, net, createjs) {
         var l = createPathFromLocalCoordinates(nose_line, {thickness: 2 * thickness, color: face_options.colors.deepshadow}, width, height);
         l.x = f.nose.x;
         l.y = f.nose.y;
-        lines.push({name: 'nose bottom line', line: nose_line, shape: l});
+        lines.push({name:'nose bottom line', line:nose_line, shape:l});
         shapes.push(l);
 
 
@@ -1010,13 +827,13 @@ var Avatar = (function ($, _, net, createjs) {
         var l_r = createPathFromLocalCoordinates(nose_line_r, {thickness: thickness, thickness_end: thickness * .3, color: face_options.colors.deepshadow}, width, height);
         l_r.x = f.nose.x;
         l_r.y = f.nose.y;
-        lines.push({name: 'nose right line', line: nose_line_r, shape: l_r});
+        lines.push({name:'nose right line', line:nose_line_r, shape:l_r});
         shapes.push(l_r);
 
         var l_l = createPathFromLocalCoordinates(nose_line_l, {thickness: thickness, thickness_end: thickness * .3, color: face_options.colors.deepshadow}, width, height);
         l_l.x = f.nose.x;
         l_l.y = f.nose.y;
-        lines.push({name: 'nose left line', line: nose_line_l, shape: l_l});
+        lines.push({name:'nose left line', line:nose_line_l, shape:l_l});
         shapes.push(l_l);
 
         return shapes;
@@ -1035,8 +852,6 @@ var Avatar = (function ($, _, net, createjs) {
         var head_line = transformLineToGlobalCoordinates(lines, 'face');
         var eye_line = transformLineToGlobalCoordinates(lines, 'left eye');
 
-        head_line = hydratePointsAlongLine(head_line, f.thick_unit * 350);
-
         var zone = f.face;
         var hair_line = lineSegmentCompared(head_line, eye_line, 'above', hair_line_level_adjust);
 
@@ -1044,113 +859,25 @@ var Avatar = (function ($, _, net, createjs) {
             var hair = createPathFromLocalCoordinates(hair_line, {thickness: f.thick_unit * 5, line_color: face_options.hair_color}, 1, 1); //Using 1,1 as already modified
             hair.x = zone.x * .9;  //TODO: Why .9?
             hair.y = zone.y * .9;  //Why .9?
-            lines.push({name: 'hair line', line: hair_line, shape: hair, x: zone.x * .9, y: zone.y * .9, scale_x: 1, scale_y: 1});
+            lines.push({name: 'hair line', line: hair_line, shape: hair, x: zone.x * .9, y: zone.y * .9, scale_x:1, scale_y:1});
 //            shapes.push(hair);
 
-            var hair_dots = createPathFromLocalCoordinates(hair_line, {thickness: f.thick_unit * 2, line_color: face_options.hair_color, x: zone.x * .9, y: zone.y * .9}, 1, 1); //Using 1,1 as already modified
+            var hair_dots = createPathFromLocalCoordinates(hair_line, {thickness: f.thick_unit * 2, line_color: face_options.hair_color, x: zone.x *.9, y: zone.y *.9}, 1, 1); //Using 1,1 as already modified
             shapes = shapes.concat(hair_dots);
-
-//            hair_line = hydratePointsAlongLine(hair_line, f.thick_unit * 200);
 
             var inner_hair_line = extrudeHorizontalArc(hair_line, f.thick_unit * inner_hair_x, f.thick_unit * inner_hair_y, f.thick_unit * inner_hair_peak);
             var outer_hair_line = extrudeHorizontalArc(hair_line, f.thick_unit * outer_hair_x, -f.thick_unit * outer_hair_y);
 
-//            var inner_hair_dots = createPathFromLocalCoordinates(inner_hair_line, {dot_array:true, thickness: f.thick_unit * 2, line_color: face_options.hair_color, x: zone.x *.9, y: zone.y *.9}, 1, 1); //Using 1,1 as already modified
-//            shapes = shapes.concat(inner_hair_dots);
+            var full_hair = inner_hair_line.concat(outer_hair_line.reverse());
 
-//            var outer_hair_dots = createPathFromLocalCoordinates(outer_hair_line, {dot_array:true, thickness: f.thick_unit * 2, line_color: face_options.hair_color, x: zone.x *.9, y: zone.y *.9}, 1, 1); //Using 1,1 as already modified
+//            var inner_hair_dots = createPathFromLocalCoordinates(inner_hair_line, {thickness: f.thick_unit * 2, line_color: face_options.hair_color, x: zone.x *.9, y: zone.y *.9}, 1, 1); //Using 1,1 as already modified
+//            shapes = shapes.concat(inner_hair_dots);
+//
+//            var outer_hair_dots = createPathFromLocalCoordinates(outer_hair_line, {thickness: f.thick_unit * 2, line_color: face_options.hair_color, x: zone.x *.9, y: zone.y *.9}, 1, 1); //Using 1,1 as already modified
 //            shapes = shapes.concat(outer_hair_dots);
 
-            var color = face_options.hair_color;
-            var fill_color = color;
-            if (color == 'White' || color == '#000000') color = 'gray';
-
-            var full_hair_line = inner_hair_line.concat(outer_hair_line.reverse());
-            var outer_hair = createPathFromLocalCoordinates(full_hair_line, {close_line: true, thickness: f.thick_unit * 2, color: color, fill_color: fill_color, x: zone.x * .9, y: zone.y * .9}, 1, 1); //Using 1,1 as already modified
-            lines.push({name: 'full hair', line: full_hair_line, shape: outer_hair, x: zone.x * .9, y: zone.y * .9, scale_x: 1, scale_y: 1});
-
-            shapes = shapes.concat(outer_hair);
-
-        }
-        return shapes;
-    }
-
-    function buildBeard_Lines(f, face_options, lines) {
-        var shapes = [];
-
-        if (face_options.gender == 'Female') return [];
-
-        var hair_line_level_adjust = 1; //-4 - 20, Lots of shapes from combinations of these
-        var inner_hair_x = 0;
-        var inner_hair_y = 3;
-        var outer_hair_x = .5;
-        var outer_hair_y = .5;
-        var alpha = 0.8;
-
-        if (face_options.beard_style == 'None') {
-            return []
-        } else if (face_options.beard_style == 'Full Chin') {
-            hair_line_level_adjust = 10;
-            inner_hair_x = 1;
-            inner_hair_y = 14;
-            outer_hair_x = 1;
-            outer_hair_y = 2;
-            alpha = .9;
-        } else if (face_options.beard_style == 'Chin Warmer') {
-            hair_line_level_adjust = 1;
-            inner_hair_x = 0;
-            inner_hair_y = 11;
-            outer_hair_x = .5;
-            outer_hair_y = .5;
-            alpha = .8;
-        } else if (face_options.beard_style == 'Soup Catcher') {
-            hair_line_level_adjust = 1;
-            inner_hair_x = 1;
-            inner_hair_y = 15;
-            outer_hair_x = 1;
-            outer_hair_y = 10;
-            alpha = .9;
-        } else if (face_options.beard_style == 'Thin Chin Wrap') {
-            hair_line_level_adjust = 1;
-            inner_hair_x = 1;
-            inner_hair_y = 1;
-            outer_hair_x = 0;
-            outer_hair_y = 0;
-            alpha = .2;
-        }
-
-        var head_line = transformLineToGlobalCoordinates(lines, 'face');
-        var eye_line = transformLineToGlobalCoordinates(lines, 'left eye');
-
-        var zone = f.face;
-        var beard_line = lineSegmentCompared(head_line, eye_line, 'below', hair_line_level_adjust * 100 * f.thick_unit);
-
-        if (beard_line && beard_line.length && beard_line.length > 2) {
-            var beard = createPathFromLocalCoordinates(beard_line, {thickness: f.thick_unit * 5, line_color: face_options.hair_color}, 1, 1); //Using 1,1 as already modified
-            beard.x = zone.x * .9;  //TODO: Why .9?
-            beard.y = zone.y * .9;  //Why .9?
-            lines.push({name: 'beard line', line: beard_line, shape: beard, x: zone.x * .9, y: zone.y * .9, scale_x: 1, scale_y: 1});
-//            shapes.push(beard);
-
-            var inner_hair_line = extrudeHorizontalArc(beard_line, -f.thick_unit * inner_hair_x * 100, -f.thick_unit * inner_hair_y * 100);
-            var outer_hair_line = extrudeHorizontalArc(beard_line, -f.thick_unit * outer_hair_x * 100, f.thick_unit * outer_hair_y * 100);
-
-//            var inner_hair_dots = createPathFromLocalCoordinates(inner_hair_line, {thickness: f.thick_unit * 2, line_color: face_options.hair_color, x: zone.x * .9, y: zone.y * .9}, 1, 1); //Using 1,1 as already modified
-//            shapes = shapes.concat(inner_hair_dots);
-
-//            var outer_hair_dots = createPathFromLocalCoordinates(outer_hair_line, {thickness: f.thick_unit * 2, line_color: face_options.hair_color, x: zone.x * .9, y: zone.y * .9}, 1, 1); //Using 1,1 as already modified
-//            shapes = shapes.concat(outer_hair_dots);
-
-            var color = face_options.beard_color || face_options.hair_color;
-            if (color == 'Hair') color = face_options.hair_color;
-            var fill_color = color;
-            if (color == 'White' || color == '#000000') color = 'gray';
-
-            var full_beard_line = outer_hair_line.concat(inner_hair_line.reverse());
-            var full_beard = createPathFromLocalCoordinates(full_beard_line, {close_line: true, thickness: f.thick_unit *.5, line_color: color, fill_color: fill_color, x: zone.x * .9, y: zone.y * .9}, 1, 1); //Using 1,1 as already modified
-            full_beard.alpha = alpha;
-            lines.push({name: 'full beard', line: full_beard_line, shape: full_beard, x: zone.x * .9, y: zone.y * .9, scale_x: 1, scale_y: 1, alpha: alpha});
-            shapes = shapes.concat(full_beard);
+            var outer_hair_dots = createPathFromLocalCoordinates(full_hair, {close_line:true, thickness: f.thick_unit * 2, fill_color: face_options.hair_color, x: zone.x *.9, y: zone.y *.9}, 1, 1); //Using 1,1 as already modified
+            shapes = shapes.concat(outer_hair_dots);
 
         }
         return shapes;
@@ -1159,17 +886,14 @@ var Avatar = (function ($, _, net, createjs) {
     function buildMouth_Lines(f, face_options, lines) {
         var shapes = [];
 
-        //These can change expression alot
-        var mouth_width = 1; //.6 - 1.3
-        var bottom_lip_height = 0.5; // 0 - 2
-        var bottom_lip_bottom = 3; // 1-5
-        var top_lip_height = 1; //.2 - 1.5
-        var top_lip_top = .5; //.2 - 2
-
-        top_lip_top += top_lip_height;
+        var mouth_width = 1;
+        var bottom_lip_height = 1;
+        var bottom_lip_bottom = 4;
+        var top_lip_height = 0;
+        var top_lip_top = 1;
 
         var lip_thickness = f.thick_unit * 2;
-        var width = (f.mouth.right - f.mouth.left) / 2.6 * mouth_width;
+        var width = (f.mouth.right - f.mouth.left) / 2.7 * mouth_width;
         var height = (f.mouth.bottom - f.mouth.top);
 
         if (face_options.gender == 'Female') {
@@ -1190,14 +914,13 @@ var Avatar = (function ($, _, net, createjs) {
             {x: 10, y: -1},
 
             {x: 10, y: 1},
-            {x: 0, y: bottom_lip_height + bottom_lip_bottom},
+            {x: 0, y: bottom_lip_bottom},
             {x: -10, y: 1}
         ];
         var l = createPathFromLocalCoordinates(mouth_top_line, {close_line: true, thickness: lip_thickness, color: face_options.colors.deepshadow, fill_color: face_options.lip_color}, width, height);
         l.x = f.mouth.x;
         l.y = f.mouth.y;
-        l.name = 'lips';
-        lines.push({name: 'lips', line: mouth_top_line, shape: l, x: f.mouth.x, y: f.mouth.y, scale_x: width, scale_y: height});
+        l.name = 'mouth top';
         shapes.push(l);
 
 
@@ -1214,8 +937,7 @@ var Avatar = (function ($, _, net, createjs) {
         l2.x = f.mouth.x;
         l2.y = f.mouth.y;
         l2.alpha = 0.5;
-        l2.name = 'tongue';
-        lines.push({name: 'tongue', line: mouth_mid_line, shape: l2, x: f.mouth.x, y: f.mouth.y, scale_x: width, scale_y: height});
+        l2.name = 'mouth mid';
         shapes.push(l2);
 
 
@@ -1229,7 +951,6 @@ var Avatar = (function ($, _, net, createjs) {
         l3.y = f.mouth.y + (f.thick_unit * 30);
         l3.alpha = 0.5;
         l3.name = 'chin mid line';
-        lines.push({name: 'chin mid line', line: chin_mid_line, shape: l3, x: f.mouth.x, y: f.mouth.y + (f.thick_unit * 30), scale_x: width, scale_y: height});
         shapes.push(l3);
 
         var mouth_high_line = [
@@ -1242,7 +963,6 @@ var Avatar = (function ($, _, net, createjs) {
         l4.y = f.mouth.y - (f.thick_unit * 24);
         l4.alpha = 0.5;
         l4.name = 'mouth high line';
-        lines.push({name: 'mouth high line', line: mouth_high_line, shape: l4, x: f.mouth.x, y: f.mouth.y - (f.thick_unit * 24), scale_x: width, scale_y: height});
         shapes.push(l4);
 
         return shapes;
@@ -1252,11 +972,7 @@ var Avatar = (function ($, _, net, createjs) {
     //Drawing Helpers
     function addSceneChildren(container, children) {
         _.each(children, function (c) {
-            if (_.isArray(c)) {
-                addSceneChildren(container, c);
-            } else {
-                container.addChild(c);
-            }
+            container.addChild(c);
         });
         return container;
     }
@@ -1266,7 +982,7 @@ var Avatar = (function ($, _, net, createjs) {
 
         var shape = findShape(lines, shape_name);
 
-        _.each(shape.line, function (point) {
+        _.each(shape.line, function(point){
             var new_point = _.clone(point);
             new_point.x = (shape.x || 0) + ((shape.scale_x || 1) * point.x);
             new_point.y = (shape.y || 0) + ((shape.scale_y || 1) * point.y);
@@ -1284,78 +1000,34 @@ var Avatar = (function ($, _, net, createjs) {
 
         if (method == 'above') {
             var highest_compare_point = Number.MAX_VALUE;
-            _.each(compare_line, function (point) {
+            _.each(compare_line, function(point){
                 if (point.y < highest_compare_point) {
                     highest_compare_point = point.y;
                 }
             });
 
-            _.each(source_line, function (point) {
-                if ((point.y + level_adjust) <= highest_compare_point) {
-                    return_line.push(point);
-                }
-            })
-        } else if (method == 'below') {
-            var lowest_compare_point = Number.MIN_VALUE;
-            _.each(compare_line, function (point) {
-                if (point.y > lowest_compare_point) {
-                    lowest_compare_point = point.y;
-                }
-            });
-
-            _.each(source_line, function (point) {
-                if ((point.y - level_adjust) >= lowest_compare_point) {
+            _.each(source_line, function(point){
+                if ((point.y+level_adjust) <= highest_compare_point) {
                     return_line.push(point);
                 }
             })
         }
         return return_line;
     }
-
-    function transformShapeLine(options_lists, face_options) {
+    function transformShapeLine(options_lists, existing_list) {
         if (!_.isArray(options_lists)) options_lists = [options_lists];
 
-        var existing_list = [];
+        existing_list = existing_list || [];
         _.each(options_lists, function (options) {
             var type = options.type || 'circle';
             var steps = options.steps || 18;
             options.radius = options.radius || 1;
 
             var starting_step = options.starting_step || 0;
-            var ending_step = options.ending_step || existing_list.length || steps;
+            var ending_step = options.ending_step || steps;
 
             var c, x, y;
-            if (type == 'pinch') {
-                starting_step = (existing_list.length + options.starting_step) % (existing_list.length);
-                ending_step = (existing_list.length + options.ending_step) % (existing_list.length);
-
-                if (starting_step < ending_step) {
-                    for (c = starting_step; c < ending_step; c++) {
-                        existing_list[c].y *= options.pinch_amount || .8;
-                    }
-                } else {
-                    //TODO: There's a better way to do this double loop
-                    for (c = 0; c < ending_step; c++) {
-                        existing_list[c].y *= options.pinch_amount || .8;
-                    }
-                    for (c = starting_step; c < existing_list.length; c++) {
-                        existing_list[c].y *= options.pinch_amount || .8;
-                    }
-
-                }
-            }
-            else if (type == 'randomize') {
-                starting_step = (existing_list.length + starting_step - 1) % (existing_list.length);
-                ending_step = (ending_step.length + ending_step - 1) % (existing_list.length);
-
-                for (c = starting_step; c < ending_step; c++) {
-                    var point = existing_list[c];
-                    point.x += ((random(face_options) - .5) * options.x_range || .1);
-                    point.y += ((random(face_options) - .5) * options.y_range || .1);
-                    existing_list[c] = point;
-                }
-
-            } else if (type == 'circle') {
+            if (type == 'circle') {
                 for (c = starting_step; c < ending_step; c++) {
                     x = Math.cos(c / steps * 2 * Math.PI);
                     y = Math.sin(c / steps * 2 * Math.PI);
@@ -1386,8 +1058,8 @@ var Avatar = (function ($, _, net, createjs) {
                         y *= options.raise_below_amount || .9;
                     }
                     var point = {x: x * (options.radius_x || options.radius), y: y * (options.radius_y || options.radius)};
-                    if ((typeof options.facet_below == "number") && (y > options.facet_below)) {
-                        var next_y = Math.sin((c + 1) / steps * 2 * Math.PI);
+                    if ((typeof options.facet_below =="number") && (y > options.facet_below)) {
+                        var next_y = Math.sin((c+1) / steps * 2 * Math.PI);
 
                         if ((typeof options.dont_face_below == "number") && y > options.dont_face_below && next_y > options.dont_face_below) {
                             // Don't make the lower points a line
@@ -1448,9 +1120,7 @@ var Avatar = (function ($, _, net, createjs) {
     }
 
     function findShape(lines, name) {
-        return _.find(lines, function (shape) {
-            return shape.name == name
-        });
+        return _.find(lines, function(shape){return shape.name == name});
     }
 
     function createPath(points, style) {
@@ -1459,13 +1129,10 @@ var Avatar = (function ($, _, net, createjs) {
 
         var color = style.line_color || style.color || 'black';
         var thickness = style.thickness || 1;
-        var thickness_end = style.thickness_end || thickness;
         var fill_color = style.fill_color || null;
 
         //TODO: Add Fill Color variations
         //TODO: Line color fades
-        //TODO: Line thickness changes
-        //TODO: Now, returns shape or array - standardize on one
 
         var returnedShape;
 
@@ -1475,7 +1142,7 @@ var Avatar = (function ($, _, net, createjs) {
             for (var i = 0; i < points.length; i++) {
                 var point = points[i];
                 var circle = new createjs.Shape();
-                circle.graphics.beginStroke(color).drawEllipse(point.x - (thickness / 2), point.y - (thickness / 2), thickness, thickness);
+                circle.graphics.beginStroke(color).drawEllipse(point.x - (thickness/2), point.y - (thickness/2), thickness, thickness);
 
                 if (style.x) circle.x = style.x;
                 if (style.y) circle.y = style.y;
@@ -1507,13 +1174,6 @@ var Avatar = (function ($, _, net, createjs) {
                 } else {
                     line.graphics.quadraticCurveTo(p1.x, p1.y, mid.x, mid.y);
                 }
-
-                if (thickness != thickness_end) {
-                    var current_thickness = thickness + ((i / points.length) * (thickness_end - thickness));
-//TODO: Create new Shapes if size changes by pixel integer amount?
-//                    line.graphics.setStrokeStyle(current_thickness);
-//                    console.log(i + ': ' + current_thickness + ' - ' + thickness + ' - ' + thickness_end);
-                }
             }
 
             if (style.close_line) {
@@ -1540,7 +1200,7 @@ var Avatar = (function ($, _, net, createjs) {
         var newPoints = [];
 
         var midX = 0;
-        _.each(linePoints, function (point) {
+        _.each(linePoints, function(point){
             midX += point.x;
         });
         midX /= linePoints.length;
@@ -1554,7 +1214,7 @@ var Avatar = (function ($, _, net, createjs) {
                     newX = point.x + distX;
                     newY = point.y + distY;
                     if (newX > midX) usePoint = false;
-                } else if (point.x > midX) {
+                } else if (point.x > midX){
                     newX = point.x - distX;
                     newY = point.y + distY;
                     if (newX < midX) usePoint = false;
@@ -1583,7 +1243,7 @@ var Avatar = (function ($, _, net, createjs) {
                 if (point.x < midX) {
                     newX = point.x - distX;
                     newY = point.y + distY;
-                } else if (point.x >= midX) {
+                } else if (point.x >= midX){
                     newX = point.x + distX;
                     newY = point.y + distY;
                 }
@@ -1595,47 +1255,6 @@ var Avatar = (function ($, _, net, createjs) {
 
         }
         return newPoints;
-    }
-
-    function distanceBetween(point1, point2) {
-        return Math.sqrt(Math.pow(point2.x - point1.x, 2) + Math.pow(point2.y - point1.y, 2));
-    }
-
-    function angleBetween(point1, point2) {
-        return Math.atan2(point2.x - point1.x, point2.y - point1.y);
-    }
-
-    function hydratePointsAlongLine(line, spacing) {
-        spacing = spacing || 5;
-        var newLine = [];
-        var lastPoint = line[0];
-
-        var currentPoint;
-        _.each(line, function (currentPoint, j) {
-            var dist = distanceBetween(lastPoint, currentPoint);
-            var angle = angleBetween(lastPoint, currentPoint);
-            for (var i = 0; i < dist; i += spacing) {
-                var newPoint = _.clone(currentPoint);
-                newPoint.x = lastPoint.x + (Math.sin(angle) * i);
-                newPoint.y = lastPoint.y + (Math.cos(angle) * i);
-                newLine.push(newPoint);
-            }
-            lastPoint = currentPoint;
-        });
-
-        //Do again for last-first point
-        lastPoint = line[line.length - 1];
-        currentPoint = line[0];
-        var dist = distanceBetween(lastPoint, currentPoint);
-        var angle = angleBetween(lastPoint, currentPoint);
-        for (var i = 0; i < dist; i += spacing) {
-            var newPoint = _.clone(currentPoint);
-            newPoint.x = lastPoint.x + (Math.sin(angle) * i);
-            newPoint.y = lastPoint.y + (Math.cos(angle) * i);
-            newLine.push(newPoint);
-        }
-
-        return newLine;
     }
 
     //---------------------
@@ -1685,27 +1304,27 @@ var Avatar = (function ($, _, net, createjs) {
 
     //----------------------
     //Random numbers
-    AvatarClass.prototype.randomSetSeed = function (seed) {
-        this.face_options = this.face_options || {};
-        this.face_options.rand_seed = seed || Math.random();
-    };
+    var _randseed = 0;
 
-    function random(face_options) {
-        face_options = face_options || {};
-        face_options.rand_seed = face_options.rand_seed || Math.random();
-        var x = Math.sin(face_options.rand_seed++) * 300000;
+    function randomSetSeed(seed) {
+        _randseed = seed || 42;
+    }
+
+    function random() {
+        _randseed = _randseed || 42;
+        var x = Math.sin(_randseed++) * 10000;
         return x - Math.floor(x);
     }
 
-    function randInt(max, face_options) {
+    function randInt(max) {
         max = max || 100;
-        return parseInt(random(face_options) * max + 1);
+        return parseInt(random() * max + 1);
     }
 
-    function randOption(options, face_options) {
+    function randOption(options) {
         var len = options.length;
-        return options[randInt(len, face_options) - 1];
+        return options[randInt(len) - 1];
     }
 
     return AvatarClass; //TODO: Is return all the 'this' variables, should return only version and two functions
-})($, _, net, createjs);
+})($, _);

@@ -25,4 +25,6 @@ body {
 
 #demoCanvas {
     /*border: 3px solid #8AC007;*/
+    padding: 0px;
+    spacing: 0px;
 }
