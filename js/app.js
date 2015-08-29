@@ -27,5 +27,4 @@ $(document).ready(function () {
             new Avatar({name: name}, {size: size *.9, x: x, y: y}, 'demoCanvas');
         }
     }
-
 });

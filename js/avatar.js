@@ -79,6 +79,7 @@ var Avatar = (function ($, _, net, createjs) {
 
     //-----------------------------
     var _data = {
+        race: 'Human',
         skin_type_color_options: [
             {name: 'Fair', highlights: '254,202,182', skin: '245,185,158', cheek: '246,171,142', darkflesh: '217,118,76', deepshadow: '202,168,110'},
             {name: 'Light Brown', highlights: '229,144,50', skin: '228,131,86', cheek: '178,85,44', darkflesh: '143,70,29', deepshadow: '152,57,17'},
@@ -98,7 +99,7 @@ var Avatar = (function ($, _, net, createjs) {
         eye_color_options: "Hazel,Amber,Green,Blue,Gray,Brown,Dark Brown,Black,Red,Violet".split(","),
         eye_lids_options: "None,Smooth,Folded,Thick".split(","), //TODO
         lip_color_options: "#f00,#e00,#d00,#c00,#f10,#f01,#b22,#944".split(","),
-        thickness_options: [-1, .5, 0, .5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6],
+        thickness_options: [-1, .5, 0, .5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6],  //TODO: Turn these to word options
         mouth_height_options: [.04,.05,.06,.07],
         nose_height_options: [0, .01, .01],
         forehead_height_options: [.1,.11,.12,.13,.14,.15,.16,.17],
@@ -836,7 +837,7 @@ var Avatar = (function ($, _, net, createjs) {
         y = zone.y - (f.thick_unit * 4);
         var right_eye_line_top = [];
         if (face_options.eye_shape == 'Almond') {
-            right_eye_line_top = transformShapeLine({type: 'almond-horizontal', modifier: 'right', radius: 4.2, starting_step: 8, ending_step: 17}, face_options);
+            right_eye_line_top = transformShapeLine({type: 'almond-horizontal', modifier: 'right', radius: 4.2, starting_step: 9, ending_step: 17}, face_options);
         }
         var right_eye_top = createPathFromLocalCoordinates(right_eye_line_top, {close_line: false, line_color: face_options.colors.cheek, thickness: f.thick_unit * 5}, scale_x_eye, scale_y_eye);
         right_eye_top.x = x;
