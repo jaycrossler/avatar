@@ -1,13 +1,10 @@
 var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //Uses jquery and Underscore and colors.js and createjs's easel.js
 
-    //TODO: Head sizes centered
-
     //TODO: Hair Peak have multiple shapes, apply more than one peak
     //TODO: Hair and beard use variables
     //TODO: Eye spacing as fraction of face width
     //TODO: Eye lines shifted, jagged in the middle
-    //TODO: Ear lines
     //TODO: Neck like coathanger shape
     //TODO: Cheekbones and shading
     //TODO: Wrinkles
@@ -67,6 +64,10 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         skull_thickness: 'Normal',
         eye_color: null,
 
+        ear_shape: null,
+        ear_thickness: null,
+        ear_lobe_left: null,
+        ear_lobe_right: null,
 
         //Operating settings, these should become obsolete
         eye_spacing: 0.02,
@@ -95,25 +96,37 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             {name: 'Bronzed', highlights: '236,162,113', skin: '233,132,86', cheek: '219,116,75', darkflesh: '205,110,66', deepshadow: '173,83,46'},
             {name: 'Light Brown', highlights: '242,207,175', skin: '215,159,102', cheek: '208,138,86', darkflesh: '195,134,80', deepshadow: '168,112,63'},
             {name: 'Peach', highlights: '247,168,137', skin: '221,132,98', cheek: '183,90,57', darkflesh: '165,87,51', deepshadow: '105,29,15'}
-
         ],
         gender_options: "Male,Female".split(","),
+        thickness_options: [-1, .5, 0, .5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6],  //TODO: Turn these to word options
+
         face_shape_options: "Oblong,Oval,Round,Rectangular,Square,Triangular,Diamond,Inverted Triangle,Heart".split(","),
+
         hair_color_options: "Yellow,Brown,Black,White,Gray,Dark Brown,Dark Yellow,Red".split(","),
         hair_style_options: "Bowl,Bowl with Peak,Bowl with Big Peak".split(","),
+        hairiness_options: "Bald,Thin Hair,Thick Hair,Hairy,Fuzzy,Bearded,Covered in Hair,Fury".split(","), //TODO
+
         beard_color_options: "Hair,Yellow,Brown,Black,White,Gray,Dark Brown,Dark Yellow,Red".split(","),
         beard_style_options: "None,Full Chin,Chin Warmer,Soup Catcher,Thin Chin Wrap,Thin Low Chin Wrap".split(","),
-        hairiness_options: "Bald,Thin Hair,Thick Hair,Hairy,Fuzzy,Bearded,Covered in Hair,Fury".split(","), //TODO
+
         nose_shape_options: "Flat,Wide,Thin,Turned up/perky,Normal,Hooked down,Bulbous,Giant Nostrils".split(","),
         nose_size_options: "Tiny,Small,Normal,Large,Big,Giant,Huge".split(","),
-        eye_color_options: "Hazel,Amber,Green,Blue,Gray,Brown,Dark Brown,Black,Red,Violet".split(","),
+
+        eye_shape_options: "Almond".split(","),
+        eye_color_options: "Hazel,Amber,Green,Blue,Gray,Brown,Dark Brown,Black,Violet".split(","),
         eye_lids_options: "None,Smooth,Folded,Thick".split(","), //TODO
+
+        ear_shape_options: "Round".split(","),
+        ear_thickness_options: "Wide,Normal,Big,Tall,Splayed".split(","),
+        ear_lobe_left_options: "Hanging,Attached".split(","),
+        ear_lobe_right_options: "Hanging,Attached,Same".split(","),
+
         lip_color_options: "#f00,#e00,#d00,#c00,#f10,#f01,#b22,#944".split(","),
-        thickness_options: [-1, .5, 0, .5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6],  //TODO: Turn these to word options
         mouth_height_options: [.04,.05,.06,.07],
+
         nose_height_options: [0, .01, .01],
-        forehead_height_options: [.1,.11,.12,.13,.14,.15,.16,.17],
-        eye_shape_options: "Almond".split(",")
+
+        forehead_height_options: [.1,.11,.12,.13,.14,.15,.16,.17]
     }};
 
     //-----------------------------
@@ -125,7 +138,9 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         } else if (face_options == 'copy_data_template') {
             stage_options = stage_options || getFirstRaceFromData();
             if (this.data[stage_options]) {
-                return _.clone(this.data[stage_options]);
+                var data = this.data[stage_options];
+                data = JSON.parse(JSON.stringify(data));
+                return data;
             } else {
                 return {error:'race does not exist'};
             }
@@ -235,7 +250,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             var mouth = buildMouth_Lines(face_zones, face_options, this.lines);
             var hair = buildHair_Lines(face_zones, face_options, this.lines);
             var ears = buildEars_Lines(face_zones, face_options, this.lines);
-            addSceneChildren(container, [neck, face, nose, eyes, beard, mouth, hair, ears]);
+            addSceneChildren(container, [neck, face, beard, nose, eyes, mouth, hair, ears]);
         }
         return container;
     };
@@ -347,9 +362,10 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         var face_zones = {neck: {}, face: {}, nose: {}, ears: {}, eyes: {}, chin: {}, hair: {}};
 
         var height = (stage_options.size || (stage.canvas.height * stage_options.percent_height)) * (1 - stage_options.buffer);
+        var full_height = height;
 
         var age = maths.clamp(face_options.age, 4, 25);
-        var age_size = (50 + age) / 75;
+        var age_size = (50 + age) / 75;  //TODO: Use a Height in Inches
         height *= age_size;
 
         stage_options.height = height;
@@ -361,8 +377,12 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         stage_options.half_height = half_height;
         face_zones.face_width = half_height * (0.55 + (face_options.thickness / 35));
 
-        var x = stage_options.x;  //TODO: Center these better
-        var y = stage_options.y * (1.33 - (age_size/3));
+        var x = stage_options.x;
+        var y = stage_options.y;
+        if (age_size<1) {
+            y += (full_height - height);
+            x += (full_height - height)/2;
+        }
 
         face_zones.thick_unit = face_zones.face_width * .007;
 
@@ -609,7 +629,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             neck_width *= 0.9;
         }
         if (face_options.face_shape=="Inverted Triangle") {
-            neck_width *- 0.8;
+            neck_width *= 0.9;
         }
 
         var zone = f.neck;
@@ -654,19 +674,71 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         var inner_cavity_size_adjust = .4; //.3-.6
         var ear_inset_adjust = 2;  //0-5
         var ear_head_height_adjust = 0;  //-20 - 20
-
         ear_head_height_adjust -= 10;
 
-        var ear_line_side = [
-            {x: -3, y: -4},
-            {x: -5, y: -6},
-            {x: 3, y: -8},
-            {x: 9, y: -6},
-            {x: 3, y: -0},
-            {x: 6, y: 4},
-            {x: 3, y: 5},
-            {x: -3, y: 3}
-        ];
+        if (face_options.ear_thickness == "Wide") {
+            ear_width_adjust = 1.5;
+            ear_height_adjust = 1.1;
+        } else if (face_options.ear_thickness == "Big") {
+            ear_width_adjust = 1.9;
+            ear_height_adjust = 1.3;
+
+        } else if (face_options.ear_thickness == "Tall") {
+            ear_width_adjust = 1.4;
+            ear_height_adjust = 1.2;
+            ear_head_height_adjust = 5;
+        } else if (face_options.ear_thickness == "Small") {
+            ear_width_adjust = .8;
+            ear_height_adjust = .7;
+        } else if (face_options.ear_thickness == "Tiny") {
+            ear_width_adjust = .7;
+            ear_height_adjust = .4;
+            inner_cavity_size_adjust = .4;
+        } else if (face_options.ear_thickness == "Splayed") {
+            ear_width_adjust = 2;
+            ear_height_adjust = 1.2;
+            inner_cavity_size_adjust = .5;
+        }
+
+        if (face_options.ear_lobe_left == "Hanging") {
+            left_lobe_height = 3;
+        } else if (face_options.ear_lobe_left == "Attached") {
+            left_lobe_height = 0;
+        }
+
+        if (face_options.ear_lobe_right == "Hanging") {
+            right_lobe_height = 3;
+        } else if (face_options.ear_lobe_right == "Attached") {
+            right_lobe_height = 0;
+        } else if (face_options.ear_lobe_right == "Same") {
+            right_lobe_height = left_lobe_height;
+        }
+
+
+        var ear_line_side;
+        if (face_options.ear_shape == 'Pointed'){
+            ear_line_side = [
+                {x: -3, y: -4},
+                {x: -5, y: -6, line:true},
+                {x: 3, y: -12, line:true},
+                {x: 9, y: -6, line:true},
+                {x: 3, y: -0},
+                {x: 6, y: 4},
+                {x: 3, y: 5},
+                {x: -3, y: 3}
+            ];
+        } else {
+            ear_line_side = [
+                {x: -3, y: -4},
+                {x: -5, y: -6},
+                {x: 3, y: -8},
+                {x: 9, y: -6},
+                {x: 3, y: -0},
+                {x: 6, y: 4},
+                {x: 3, y: 5},
+                {x: -3, y: 3}
+            ];
+        }
         var ear_line_l = [];
         var ear_line_r = [];
         for (var i = 0; i < ear_line_side.length; i++) {
@@ -698,20 +770,43 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         shapes.push(ear_l);
 
 
+        var in_scale = .7;
+        var in_x_offset = 2;
+        var in_y_offset = -8;
+        var darker_ear = net.brehaut.Color(face_options.colors.skin).darkenByRatio(0.2).toString();
+        var ear_r_in_top = createPathFromLocalCoordinates(ear_line_r, {close_line: true, thickness: f.thick_unit, fill_color: darker_ear, color: face_options.colors.deepshadow}, width * in_scale, height * in_scale);
+        x = zone.left_x - (f.thick_unit * ear_inset_adjust) + (f.thick_unit * in_x_offset);
+        y = zone.y - (f.thick_unit * ear_head_height_adjust) + (f.thick_unit * in_y_offset);
+        ear_r_in_top.x = x;
+        ear_r_in_top.y = y;
+        lines.push({name: 'ear right line top in', line: ear_line_r, shape: ear_r_in_top, scale_x: width * in_scale, scale_y: height * in_scale, x: x, y: y});
+        shapes.push(ear_r_in_top);
+
+        var ear_l_in_top = createPathFromLocalCoordinates(ear_line_l, {close_line: true, thickness: f.thick_unit, fill_color: darker_ear, color: face_options.colors.deepshadow}, width * in_scale, height * in_scale);
+        x = zone.right_x + (f.thick_unit * ear_inset_adjust) - (f.thick_unit * in_x_offset);
+        y = zone.y - (f.thick_unit * ear_head_height_adjust) + (f.thick_unit * in_y_offset);
+        ear_l_in_top.x = x;
+        ear_l_in_top.y = y;
+        lines.push({name: 'ear left line top in', line: ear_line_l, shape: ear_l_in_top, scale_x: width * in_scale, scale_y: height * in_scale, x: x, y: y});
+        shapes.push(ear_l_in_top);
+
+
         width *= inner_cavity_size_adjust;
         height *= inner_cavity_size_adjust;
+        in_x_offset = 1;
+        in_y_offset = 2;
 
         var ear_r_in = createPathFromLocalCoordinates(ear_line_r, {close_line: true, thickness: f.thick_unit, fill_color: face_options.colors.darkflesh, color: face_options.colors.deepshadow}, width, height);
-        x = zone.left_x - (f.thick_unit * ear_inset_adjust);
-        y = zone.y - (f.thick_unit * ear_head_height_adjust);
+        x = zone.left_x - (f.thick_unit * ear_inset_adjust) + (f.thick_unit * in_x_offset);
+        y = zone.y - (f.thick_unit * ear_head_height_adjust) + (f.thick_unit * in_y_offset);
         ear_r_in.x = x;
         ear_r_in.y = y;
         lines.push({name: 'ear right line in', line: ear_line_r, shape: ear_r_in, scale_x: 1, scale_y: 1, x: x, y: y});
         shapes.push(ear_r_in);
 
         var ear_l_in = createPathFromLocalCoordinates(ear_line_l, {close_line: true, thickness: f.thick_unit, fill_color: face_options.colors.darkflesh, color: face_options.colors.deepshadow}, width, height);
-        x = zone.right_x + (f.thick_unit * ear_inset_adjust);
-        y = zone.y - (f.thick_unit * ear_head_height_adjust);
+        x = zone.right_x + (f.thick_unit * ear_inset_adjust) - (f.thick_unit * in_x_offset);
+        y = zone.y - (f.thick_unit * ear_head_height_adjust) + (f.thick_unit * in_y_offset);
         ear_l_in.x = x;
         ear_l_in.y = y;
         lines.push({name: 'ear left line in', line: ear_line_l, shape: ear_l_in, scale_x: 1, scale_y: 1, x: x, y: y});
@@ -1081,10 +1176,29 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         ];
         var nose_line_l = [];
         var nose_line_r = [];
-        for (var i = 0; i < nose_length; i++) { //Only draw as many points as nose_size
-            nose_line_l.push({x: nose_side_offset + nose_line_side[i].x, y: nose_line_side[i].y});
-            nose_line_r.push({x: -nose_side_offset + (-1 * nose_line_side[i].x), y: nose_line_side[i].y});
+        var nose_line_l_full = [];
+        var nose_line_r_full = [];
+
+        for (var i = 0; i < nose_line_side.length; i++) { //Only draw as many points as nose_size
+            if (i < nose_length) {
+                nose_line_l.push({x: nose_side_offset + nose_line_side[i].x, y: nose_line_side[i].y});
+                nose_line_r.push({x: -nose_side_offset + (-1 * nose_line_side[i].x), y: nose_line_side[i].y});
+            }
+            nose_line_l_full.push({x: nose_side_offset + nose_line_side[i].x, y: nose_line_side[i].y});
+            nose_line_r_full.push({x: -nose_side_offset + (-1 * nose_line_side[i].x), y: nose_line_side[i].y});
         }
+
+        var nose_full_line = nose_line_l_full.concat(nose_line_r_full.reverse());
+        var full_nose_line = transformShapeLine({type: 'smooth'}, face_options, nose_full_line);
+        var alpha = 0.8;
+        var fill_color = net.brehaut.Color(face_options.colors.skin).darkenByRatio(0.05).toString();
+        var full_nose = createPathFromLocalCoordinates(full_nose_line, {close_line: true, thickness: f.thick_unit * .2, line_color: face_options.colors.deepshadow, fill_color: fill_color}, width, height);
+        full_nose.x = f.nose.x;
+        full_nose.y = f.nose.y;
+        full_nose.alpha = alpha;
+        lines.push({name: 'full nose', line: full_nose_line, shape: full_nose, x: f.nose.x, y: f.nose.y, scale_x: 1, scale_y: 1, alpha: alpha});
+        shapes = shapes.concat(full_nose);
+
 
         var l_r = createPathFromLocalCoordinates(nose_line_r, {thickness: thickness, thickness_end: thickness * .3, color: face_options.colors.deepshadow}, width, height);
         l_r.x = f.nose.x;
