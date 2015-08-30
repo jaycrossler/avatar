@@ -11,20 +11,36 @@ $(document).ready(function () {
     $canvas.width($(document).width());
     $canvas.height($(document).height() - 90);
 
-    function new_face() {
-        av1.removeFromStage();
-        var seed = av1.face_options.rand_seed++;
-        console.log(seed);
-        av1 = new Avatar({name: 'John Doe', rand_seed: seed}, {canvas_name: 'demoCanvas', face_click: new_face}, 'demoCanvas');
+    av1 = new Avatar({rand_seed: 241, name: 'John Doe'}, {canvas_name: 'demoCanvas'});
+    function setup_main_avatar() {
+        av1.unregisterEvent('all');
+        av1.registerEvent('face', function (avatar) {
+            avatar.face_options = null;
+            avatar.drawOrRedraw();
+            console.log(avatar.face_options.rand_seed);
+        });
+        av1.registerEvent('face', function (avatar) {
+            var text = avatar.face_options.name || "Avatar";
+            text += " : new Avatar({rand_seed: " + avatar.initialization_seed + "});";
+            $('#avatar_name').text(text);
+        }, 'mouseover');
     }
 
-    av1 = new Avatar({rand_seed: 241, name: 'John Doe'}, {canvas_name: 'demoCanvas', face_click: new_face});
 
     for (var x = 320; x < width - (size / 1.5); x += (size / 1.5)) {
         for (var y = 0; y < height - (size / 2); y += size) {
             var name = firstNames[Math.floor(Math.random() * firstNames.length)] + " " + lastNames[Math.floor(Math.random() * lastNames.length)];
 
-            new Avatar({name: name}, {size: size *.9, x: x, y: y}, 'demoCanvas');
+            var avatar = new Avatar({name: name}, {size: size *.9, x: x, y: y}, 'demoCanvas');
+            avatar.registerEvent('face', function(avatar){
+                av1.face_options = null;
+                av1.drawOrRedraw({rand_seed:avatar.initialization_seed});
+                setup_main_avatar();
+            });
+            avatar.registerEvent('face', function(avatar){
+                $('#avatar_name').text(avatar.face_options.name || "Avatar");
+            }, 'mouseover');
+
         }
     }
 });

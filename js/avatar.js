@@ -24,6 +24,7 @@ var Avatar = (function ($, _, net, createjs) {
 
     var _face_options = {
         style: 'lines',
+        race: 'Human',
         rand_seed: 0,
 
         //'Living' settings that can change over time
@@ -37,9 +38,10 @@ var Avatar = (function ($, _, net, createjs) {
         beard_style: null,
         skin_texture: 'Normal',
         teeth_condition: 'Normal',
+        lip_color: null,
 
         emotionality: 0,
-        emotion_shown: 'none',
+        emotion_shown: 'none', //TODO: Have an array of current emotions?
         tattoos: [],
         jewelry: [],
         scars: [],
@@ -63,7 +65,6 @@ var Avatar = (function ($, _, net, createjs) {
 
 
         //Operating settings, these should become obsolete
-        lip_color: null,
         eye_spacing: 0.02,
         forehead_height: null,
         nose_height: null,
@@ -79,14 +80,18 @@ var Avatar = (function ($, _, net, createjs) {
 
     //-----------------------------
     var _data = {
-        race: 'Human',
         skin_type_color_options: [
             {name: 'Fair', highlights: '254,202,182', skin: '245,185,158', cheek: '246,171,142', darkflesh: '217,118,76', deepshadow: '202,168,110'},
-            {name: 'Light Brown', highlights: '229,144,50', skin: '228,131,86', cheek: '178,85,44', darkflesh: '143,70,29', deepshadow: '152,57,17'},
+            {name: 'Brown', highlights: '229,144,50', skin: '228,131,86', cheek: '178,85,44', darkflesh: '143,70,29', deepshadow: '152,57,17'},
             {name: 'Tanned', highlights: '245,194,151', skin: '234,154,95', cheek: '208,110,56', darkflesh: '168,66,17', deepshadow: '147,68,27'},
             {name: 'White', highlights: '250,220,196', skin: '245,187,149', cheek: '239,165,128', darkflesh: '203,137,103', deepshadow: '168,102,68'},
-//            {name: 'Green', highlights: '250,220,196', skin: '50,187,80', cheek: '239,165,128', darkflesh: '203,137,103', deepshadow: '168,102,68'},
-            {name: 'Medium', highlights: '247,188,154', skin: '243,160,120', cheek: '213,114,75', darkflesh: '154,79,48', deepshadow: '127,67,41'}
+            {name: 'Medium', highlights: '247,188,154', skin: '243,160,120', cheek: '213,114,75', darkflesh: '154,79,48', deepshadow: '127,67,41'},
+            {name: 'Yellow', highlights: '255,218,179', skin: '250,187,134', cheek: '244,159,104', darkflesh: '189,110,46', deepshadow: '138,67,3'},
+            {name: 'Pink', highlights: '253,196,179', skin: '245,158,113', cheek: '236,134,86', darkflesh: '182,88,34', deepshadow: '143,60,18'},
+            {name: 'Bronzed', highlights: '236,162,113', skin: '233,132,86', cheek: '219,116,75', darkflesh: '205,110,66', deepshadow: '173,83,46'},
+            {name: 'Light Brown', highlights: '242,207,175', skin: '215,159,102', cheek: '208,138,86', darkflesh: '195,134,80', deepshadow: '168,112,63'},
+            {name: 'Peach', highlights: '247,168,137', skin: '221,132,98', cheek: '183,90,57', darkflesh: '165,87,51', deepshadow: '105,29,15'}
+
         ],
         gender_options: "Male,Female".split(","),
         face_shape_options: "Oblong,Oval,Round,Rectangular,Square,Triangular,Diamond,Inverted Triangle,Heart".split(","),
@@ -116,8 +121,10 @@ var Avatar = (function ($, _, net, createjs) {
     AvatarClass.prototype.drawOrRedraw = function (face_options, stage_options, canvas_name) {
         this.face_options = $.extend({}, this.face_options || _face_options, face_options || {});
         this.stage_options = $.extend({}, this.stage_options || _stage_options, stage_options || {});
+        this.event_list = this.event_list || [];
 
         var rand_seed = this.face_options.rand_seed || Math.floor(Math.random() * 100000);
+        this.initialization_seed = this.initialization_seed || rand_seed;
         this.randomSetSeed(rand_seed);
 
         for (var key in _data) {
@@ -151,7 +158,8 @@ var Avatar = (function ($, _, net, createjs) {
             var face = this.buildFace(this.face_options, this.stage_options, this.stage);
             this.drawOnStage(face, this.stage);
             this.faceShapeCollection = face;
-            this.stage.enableMouseOver();
+
+            registerEvents(this);
 
             this.stage.update();
         }
@@ -179,7 +187,6 @@ var Avatar = (function ($, _, net, createjs) {
     };
     AvatarClass.prototype.buildFace = function (face_options, stage_options, stage) {
         var container = new createjs.Container();
-        var avatar = this;
         this.lines = [];
 
         var face_zones = buildFaceZones(face_options, stage_options, stage);
@@ -196,47 +203,6 @@ var Avatar = (function ($, _, net, createjs) {
             var hair = buildHair_Lines(face_zones, face_options, this.lines);
             var ears = buildEars_Lines(face_zones, face_options, this.lines);
             addSceneChildren(container, [neck, face, nose, eyes, beard, mouth, hair, ears]);
-
-            findShape(this.lines, 'neck').shape.addEventListener("click", function () {
-                avatar.randomFaceOption('thickness');
-            });
-            findShape(this.lines, 'face').shape.addEventListener("click", stage_options.face_click || function () {
-                avatar.randomFaceOption('face_shape');
-            });
-            findShape(this.lines, 'face').shape.addEventListener("mouseover", function () {
-                $('#avatar_name').text(avatar.face_options.name || "Avatar");
-            });
-
-            findShape(this.lines, 'nose bottom line').shape.addEventListener("click", function () {
-                avatar.randomFaceOption('nose_shape', false, true);
-                avatar.randomFaceOption('nose_size');
-            });
-            findShape(this.lines, 'right eye').shape.addEventListener("click", function () {
-                avatar.randomFaceOption('eye_color');
-            });
-            findShape(this.lines, 'left eye').shape.addEventListener("click", function () {
-                avatar.randomFaceOption('eye_color');
-            });
-            findShape(this.lines, 'right iris').shape.addEventListener("click", function () {
-                avatar.randomFaceOption('eye_color');
-            });
-            findShape(this.lines, 'left iris').shape.addEventListener("click", function () {
-                avatar.randomFaceOption('eye_color');
-            });
-            findShape(this.lines, 'lips').shape.addEventListener("click", function () {
-                avatar.randomFaceOption('gender');
-            });
-            findShape(this.lines, 'tongue').shape.addEventListener("click", function () {
-                avatar.randomFaceOption('gender');
-            });
-            findShape(this.lines, 'full hair').shape.addEventListener("click", function () {
-                avatar.randomFaceOption('hair_color');
-            });
-            var beardshape = findShape(this.lines, 'full beard');
-            if (beardshape && beardshape.shape) beardshape.shape.addEventListener("click", function () {
-                avatar.randomFaceOption('beard_color');
-            });
-
         }
         return container;
     };
@@ -249,9 +215,10 @@ var Avatar = (function ($, _, net, createjs) {
         if (_data[key]) {
             var options = _data[key];
             option_name = key.split('_options')[0];
+            var currentVal = this.face_options[option_name];
 
             if (!dontForceSetting || (dontForceSetting && !this.face_options[option_name])) {
-                result = randOption(options, this.face_options);
+                result = randOption(options, this.face_options, currentVal);
                 this.face_options[option_name] = result;
             }
 
@@ -261,9 +228,59 @@ var Avatar = (function ($, _, net, createjs) {
         }
         return result;
     };
+    AvatarClass.prototype.unregisterEvent = function(shapeNames){
+        var avatar = this;
+        if (shapeNames == 'all') {
+            _.each(avatar.event_list, function(event) {
+                if (event.shape) {
+                    event.shape.removeEventListener(event.eventType || 'click');
+                }
+            });
+            avatar.event_list = [];
+        }
+
+        var newEventList = [];
+        _.each(avatar.event_list, function(event){
+            if (event.shapeNames == shapeNames && event.shape) {
+                event.shape.removeEventListener(event.eventType || 'click');
+            } else {
+                newEventList.push(event);
+            }
+        });
+        avatar.event_list = newEventList;
+    };
+
+    AvatarClass.prototype.registerEvent = function(shapeNames, functionToRun, eventType, dontRegister){
+        eventType = eventType || 'click';
+        if (!functionToRun) return;
+        var avatar = this;
+
+        if (!dontRegister) {
+            avatar.event_list.push({shapeNames: shapeNames, functionToRun: functionToRun, eventType: eventType});
+        }
+
+        _.each(shapeNames.split(","), function(shapeName){
+            var shape = findShape(avatar.lines, shapeName);
+            if (shape && shape.shape) {
+                shape.shape.addEventListener(eventType, function(){
+                    functionToRun(avatar);
+                });
+            }
+        });
+    };
 
     //================
     //Private functions
+    function registerEvents(avatar) {
+        var usesMouseOver = false;
+        _.each(avatar.event_list, function(event){
+            avatar.registerEvent(event.shapeNames, event.functionToRun, event.eventType, true);
+            if (event.eventType == 'mouseover' || event.eventType == 'mouseout') usesMouseOver = true;
+        });
+        if (usesMouseOver) {
+            avatar.stage.enableMouseOver();
+        }
+    }
     function expandFaceColors(face_options) {
 
         if (face_options.colors) return;
@@ -705,8 +722,7 @@ var Avatar = (function ($, _, net, createjs) {
             left_eye_line = transformShapeLine([
                 {type: 'almond-horizontal', modifier: 'left', radius: 4.2},
                 {type: 'pinch', pinch_amount: 0.6, starting_step: -3, ending_step: 4},
-                {type: 'pinch', pinch_amount: 0.9, starting_step: -3, ending_step: 9},
-
+                {type: 'pinch', pinch_amount: 0.9, starting_step: -3, ending_step: 9}
             ], face_options);
         }
         var left_eye = createPathFromLocalCoordinates(left_eye_line, {close_line: true, line_color: face_options.colors.darkflesh, fill_color: 'white'}, scale_x_eye, scale_y_eye);
@@ -1789,9 +1805,17 @@ var Avatar = (function ($, _, net, createjs) {
         return parseInt(random(face_options) * max + 1);
     }
 
-    function randOption(options, face_options) {
+    function randOption(options, face_options, dontUseVal) {
         var len = options.length;
-        return options[randInt(len, face_options) - 1];
+        var numChosen = randInt(len, face_options) - 1;
+        var result = options[numChosen];
+        if (dontUseVal) {
+            if (result == dontUseVal) {
+                numChosen = (numChosen+1) % len;
+                result = options[numChosen];
+            }
+        }
+        return result;
     }
 
     return AvatarClass; //TODO: Is return all the 'this' variables, should return only version and two functions
