@@ -501,7 +501,8 @@ Helpers.blendColors=function(c1,c2,percentage){
     var cNew = [parseInt(c1[0]+rDiff),parseInt(c1[1]+gDiff),parseInt(c1[2]+bDiff)];
 
     return Colors.rgb2hex(cNew);
-};Helpers.bw=function(color){
+};
+Helpers.bw=function(color){
 //r must be an rgb color array of 3 integers between 0 and 255.
     if (typeof Colors == 'undefined') {
         throw "Requires colors.min.js library";

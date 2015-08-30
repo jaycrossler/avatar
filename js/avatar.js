@@ -1,23 +1,27 @@
-var Avatar = (function ($, _, net, createjs) {
+var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //Uses jquery and Underscore and colors.js and createjs's easel.js
 
-    //TODO: Head sizes
+    //TODO: Head sizes centered
+
     //TODO: Hair Peak have multiple shapes, apply more than one peak
     //TODO: Hair and beard use variables
-    //TODO: Beard weird on right side
     //TODO: Eye spacing as fraction of face width
     //TODO: Eye lines shifted, jagged in the middle
     //TODO: Ear lines
-    //TODO: Cheekbones
+    //TODO: Neck like coathanger shape
+    //TODO: Cheekbones and shading
     //TODO: Wrinkles
     //TODO: Age progression
-    //TODO: Scars and Jewlery
+    //TODO: Scars and Jewelery
     //TODO: Background images on canvas
-    //TODO: Click areas are off when big?
+    //TODO: Sprite images
+    //TODO: Emotions
+    //TODO: Outfits
+    //TODO: Other Races
 
     //-----------------------------
     //Private Global variables
-    var VERSION = '0.0.2',
+    var VERSION = '0.0.3',
         summary = 'Functions for building and drawing a graphical character avatar on a canvas.',
         author = 'Jay Crossler - http://github.com/jaycrossler',
         file_name = 'avatar.js';
@@ -32,7 +36,7 @@ var Avatar = (function ($, _, net, createjs) {
         era: 'Industrial',
         thickness: 0,
         cleanliness: 0,
-        hair_style: 'Scruffy',
+        hair_style: null,
         hair_color: null,
         beard_color: null,
         beard_style: null,
@@ -79,7 +83,7 @@ var Avatar = (function ($, _, net, createjs) {
     var STAGES = []; //Global list of all stages used to lookup any existing ones
 
     //-----------------------------
-    var _data = {
+    var _data = {'Human':{
         skin_type_color_options: [
             {name: 'Fair', highlights: '254,202,182', skin: '245,185,158', cheek: '246,171,142', darkflesh: '217,118,76', deepshadow: '202,168,110'},
             {name: 'Brown', highlights: '229,144,50', skin: '228,131,86', cheek: '178,85,44', darkflesh: '143,70,29', deepshadow: '152,57,17'},
@@ -96,8 +100,9 @@ var Avatar = (function ($, _, net, createjs) {
         gender_options: "Male,Female".split(","),
         face_shape_options: "Oblong,Oval,Round,Rectangular,Square,Triangular,Diamond,Inverted Triangle,Heart".split(","),
         hair_color_options: "Yellow,Brown,Black,White,Gray,Dark Brown,Dark Yellow,Red".split(","),
+        hair_style_options: "Bowl,Bowl with Peak,Bowl with Big Peak".split(","),
         beard_color_options: "Hair,Yellow,Brown,Black,White,Gray,Dark Brown,Dark Yellow,Red".split(","),
-        beard_style_options: "None,Full Chin,Chin Warmer,Soup Catcher,Thin Chin Wrap".split(","),
+        beard_style_options: "None,Full Chin,Chin Warmer,Soup Catcher,Thin Chin Wrap,Thin Low Chin Wrap".split(","),
         hairiness_options: "Bald,Thin Hair,Thick Hair,Hairy,Fuzzy,Bearded,Covered in Hair,Fury".split(","), //TODO
         nose_shape_options: "Flat,Wide,Thin,Turned up/perky,Normal,Hooked down,Bulbous,Giant Nostrils".split(","),
         nose_size_options: "Tiny,Small,Normal,Large,Big,Giant,Huge".split(","),
@@ -109,28 +114,54 @@ var Avatar = (function ($, _, net, createjs) {
         nose_height_options: [0, .01, .01],
         forehead_height_options: [.1,.11,.12,.13,.14,.15,.16,.17],
         eye_shape_options: "Almond".split(",")
-    };
-
+    }};
 
     //-----------------------------
     //Initialization
     function AvatarClass(face_options, stage_options, canvas_name) {
-        this.drawOrRedraw(face_options, stage_options, canvas_name);
+        if (face_options == 'get_data_template') {
+            stage_options = stage_options || getFirstRaceFromData();
+            return this.data[stage_options] || {error:'race does not exist'};
+        } else if (face_options == 'copy_data_template') {
+            stage_options = stage_options || getFirstRaceFromData();
+            if (this.data[stage_options]) {
+                return _.clone(this.data[stage_options]);
+            } else {
+                return {error:'race does not exist'};
+            }
+
+        } else  if (face_options == 'set_data_template') {
+            this.data[stage_options] = canvas_name;
+        } else {
+            this.drawOrRedraw(face_options, stage_options, canvas_name);
+        }
     }
 
     AvatarClass.prototype.drawOrRedraw = function (face_options, stage_options, canvas_name) {
+        if (this.face_options === null) {
+            this.initialization_seed = null;
+        }
+
         this.face_options = $.extend({}, this.face_options || _face_options, face_options || {});
         this.stage_options = $.extend({}, this.stage_options || _stage_options, stage_options || {});
         this.event_list = this.event_list || [];
 
-        var rand_seed = this.face_options.rand_seed || Math.floor(Math.random() * 100000);
-        this.initialization_seed = this.initialization_seed || rand_seed;
+        //Determine the random seed to use.  Either use the one passed in, the existing one, or a random one.
+        face_options = face_options || {};
+        var rand_seed = face_options.rand_seed || this.initialization_seed || Math.floor(Math.random() * 100000);
+        this.initialization_seed = rand_seed;
+        //Set this random seed to be used throughout the avatar's livespan
         this.randomSetSeed(rand_seed);
 
-        for (var key in _data) {
+        //Determine the race, and pick random variables to use for unspecified values
+        var race = this.face_options.race || getFirstRaceFromData();
+        var race_data = _data[race] || _data[getFirstRaceFromData()];
+        this.face_options.race = race;
+        for (var key in race_data) {
             this.randomFaceOption(key, true, true);
         }
 
+        //Find the canvas that the stage should be drawn on (possibly multiple stages per canvas)
         if (canvas_name) {
             this.stage_options.canvas_name = canvas_name;
         }
@@ -148,8 +179,10 @@ var Avatar = (function ($, _, net, createjs) {
             }
         }
 
+        //Turn Decimal color values into hex
         expandFaceColors(this.face_options);
 
+        //Draw the faces
         if (this.stage) {
             if (this.faceShapeCollection) {
                 this.faceShapeCollection.removeAllChildren();
@@ -212,8 +245,8 @@ var Avatar = (function ($, _, net, createjs) {
         if (!_.str.endsWith(key, '_options')) {
             key = key + "_options";
         }
-        if (_data[key]) {
-            var options = _data[key];
+        if (_data[this.face_options.race][key]) {
+            var options = _data[this.face_options.race][key];
             option_name = key.split('_options')[0];
             var currentVal = this.face_options[option_name];
 
@@ -271,6 +304,13 @@ var Avatar = (function ($, _, net, createjs) {
 
     //================
     //Private functions
+    function getFirstRaceFromData(){
+        for (key in _data){
+            //wonky way to get first key
+            return key;
+        }
+        throw "No first race found in _data";
+    }
     function registerEvents(avatar) {
         var usesMouseOver = false;
         _.each(avatar.event_list, function(event){
@@ -287,10 +327,10 @@ var Avatar = (function ($, _, net, createjs) {
 
         //Add in colors based on setting
         //TODO: Make this generic
-        var skin_pigment_colors = _.find(_data.skin_type_color_options, function (skin) {
+        var skin_pigment_colors = _.find(_data[face_options.race].skin_type_color_options, function (skin) {
             return skin.name == face_options.skin_pigment
         });
-        if (!skin_pigment_colors) skin_pigment_colors = randOption(_data.skin_type_color_options, face_options);
+        if (!skin_pigment_colors) skin_pigment_colors = randOption(_data[face_options.race].skin_type_color_options, face_options);
 
         for (var key in skin_pigment_colors) {
             var val = skin_pigment_colors[key];
@@ -307,6 +347,11 @@ var Avatar = (function ($, _, net, createjs) {
         var face_zones = {neck: {}, face: {}, nose: {}, ears: {}, eyes: {}, chin: {}, hair: {}};
 
         var height = (stage_options.size || (stage.canvas.height * stage_options.percent_height)) * (1 - stage_options.buffer);
+
+        var age = maths.clamp(face_options.age, 4, 25);
+        var age_size = (50 + age) / 75;
+        height *= age_size;
+
         stage_options.height = height;
 
         var height_offset = (stage_options.size || (stage.canvas.height * stage_options.percent_height)) * (stage_options.buffer / 2);
@@ -316,8 +361,8 @@ var Avatar = (function ($, _, net, createjs) {
         stage_options.half_height = half_height;
         face_zones.face_width = half_height * (0.55 + (face_options.thickness / 35));
 
-        var x = stage_options.x;
-        var y = stage_options.y;
+        var x = stage_options.x;  //TODO: Center these better
+        var y = stage_options.y * (1.33 - (age_size/3));
 
         face_zones.thick_unit = face_zones.face_width * .007;
 
@@ -563,6 +608,10 @@ var Avatar = (function ($, _, net, createjs) {
         if (face_options.gender == 'Female') {
             neck_width *= 0.9;
         }
+        if (face_options.face_shape=="Inverted Triangle") {
+            neck_width *- 0.8;
+        }
+
         var zone = f.neck;
         var scale_x = (zone.right - zone.left) * neck_width;
         var scale_y = (zone.bottom - zone.top) / 1.5;
@@ -1089,7 +1138,19 @@ var Avatar = (function ($, _, net, createjs) {
         var inner_hair_y = 400;
         var outer_hair_x = 100;
         var outer_hair_y = 200;
-        var inner_hair_peak = 200;
+
+        var inner_hair_peak = 0;
+        if (face_options.hair_style == "Bowl with Peak") {
+            inner_hair_peak = 200;
+        } else if (face_options.hair_style == "Bowl with Big Peak") {
+            inner_hair_peak = 500;
+        }
+
+        if (face_options.age < 20) {
+            inner_hair_y *= 1.5;
+            outer_hair_y *= (face_options.age /20);
+            inner_hair_peak += face_options.age * 10;
+        }
 
         var head_line = transformLineToGlobalCoordinates(lines, 'face');
         var eye_line = transformLineToGlobalCoordinates(lines, 'left eye');
@@ -1147,7 +1208,7 @@ var Avatar = (function ($, _, net, createjs) {
         var outer_hair_y = .5;
         var alpha = 0.8;
 
-        if (face_options.beard_style == 'None') {
+        if (face_options.beard_style == 'None' || face_options.age < 18) {
             return []
         } else if (face_options.beard_style == 'Full Chin') {
             hair_line_level_adjust = 10;
@@ -1177,6 +1238,13 @@ var Avatar = (function ($, _, net, createjs) {
             outer_hair_x = 0;
             outer_hair_y = .2;
             alpha = .4;
+        } else if (face_options.beard_style == 'Thin Low Chin Wrap') {
+            hair_line_level_adjust = 10;
+            inner_hair_x = 1;
+            inner_hair_y = 1;
+            outer_hair_x = 0;
+            outer_hair_y = .2;
+            alpha = .3;
         }
 
         var head_line = transformLineToGlobalCoordinates(lines, 'face');
@@ -1819,4 +1887,4 @@ var Avatar = (function ($, _, net, createjs) {
     }
 
     return AvatarClass; //TODO: Is return all the 'this' variables, should return only version and two functions
-})($, _, net, createjs);
+})($, _, net, createjs, Helpers, maths);

@@ -2,6 +2,9 @@
 _.mixin({ deepClone: function (p_object) { return JSON.parse(JSON.stringify(p_object)); } });
 
 var maths = {};
+maths.clamp = function(number, min, max) {
+    return Math.min(Math.max(number, min), max);
+};
 maths.heightOnSin=function(theta_min,theta_max,step,steps,amplitude,func){
     func = func || Math.sin; //Find the Sin value by default, you can also pass in Math.cos
 
