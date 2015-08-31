@@ -14,6 +14,7 @@ $(document).ready(function () {
     ogreTemplate.gender_options = ['Female'];
     ogreTemplate.ear_shape_options.push('Pointed');
     ogreTemplate.eye_color_options = ['Red', 'Pink', 'Purple'];
+    ogreTemplate.eye_cloudiness = ['Pink','Blue','Misty'];
     ogreTemplate.skin_type_color_options = [
         {name: 'Fair', highlights: '40,202,30', skin: '50,185,50', cheek: '30,80,30', darkflesh: '20,60,20', deepshadow: '10,50,10'},
         {name: 'Dark', highlights: '80,80,80', skin: '80,185,70', cheek: '30,30,30', darkflesh: '20,20,20', deepshadow: '10,10,10'}
