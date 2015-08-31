@@ -701,7 +701,6 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
         var face = createPathFromLocalCoordinates(face_line, {
                 close_line: true, line_color: face_options.colors.highlights,
-                //Adds a gradient inside face
                 fill_method: 'linear', fill_colors: fill_colors, fill_steps: fill_steps,
                 radius: radius_x * .1},
             radius_x, radius_y);
@@ -1264,11 +1263,10 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             {x: -8, y: 2},
             {x: -10, y: 5}
         ];
-        var l = createPathFromLocalCoordinates(nose_line, {thickness: 2 * thickness, color: face_options.colors.deepshadow}, width, height);
-        l.x = f.nose.x;
-        l.y = f.nose.y;
-        lines.push({name: 'nose bottom line', line: nose_line, shape: l});
-        shapes.push(l);
+        var nose_bottom_squiggle = createPathFromLocalCoordinates(nose_line, {thickness: 2 * thickness, color: face_options.colors.deepshadow}, width, height);
+        nose_bottom_squiggle.x = f.nose.x;
+        nose_bottom_squiggle.y = f.nose.y;
+        lines.push({name: 'nose bottom line', line: nose_line, shape: nose_bottom_squiggle});
 
 
         //Sides of nose, that get taller based on size
@@ -1299,14 +1297,23 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         var nose_full_line = nose_line_l_full.concat(nose_line_r_full.reverse());
         var full_nose_line = transformShapeLine({type: 'smooth'}, face_options, nose_full_line);
         var alpha = 0.8;
+
         var fill_color = net.brehaut.Color(face_options.colors.skin).darkenByRatio(0.05).toString();
-        var full_nose = createPathFromLocalCoordinates(full_nose_line, {close_line: true, thickness: f.thick_unit * .2, line_color: face_options.colors.deepshadow, fill_color: fill_color}, width, height);
+        var nose_fill_colors = [face_options.colors.highlights, fill_color, face_options.colors.skin];
+        var nose_fill_steps = [0, .3, 1];
+
+        var full_nose = createPathFromLocalCoordinates(full_nose_line, {
+            close_line: true, thickness: f.thick_unit * .2, line_color: face_options.colors.skin,
+            fill_colors: nose_fill_colors, fill_method: 'radial',
+            fill_steps: nose_fill_steps, y_offset: (10 * f.thick_unit), radius: (80 * f.thick_unit)
+        }, width, height);
         full_nose.x = f.nose.x;
         full_nose.y = f.nose.y;
         full_nose.alpha = alpha;
         lines.push({name: 'full nose', line: full_nose_line, shape: full_nose, x: f.nose.x, y: f.nose.y, scale_x: 1, scale_y: 1, alpha: alpha});
         shapes = shapes.concat(full_nose);
 
+        shapes.push(nose_bottom_squiggle);
 
         var l_r = createPathFromLocalCoordinates(nose_line_r, {thickness: thickness, thickness_end: thickness * .3, color: face_options.colors.deepshadow}, width, height);
         l_r.x = f.nose.x;
