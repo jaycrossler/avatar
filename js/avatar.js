@@ -133,6 +133,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //-----------------------------
     //Initialization
     function AvatarClass(face_options, stage_options, canvas_name) {
+        this.version = file_name + ' (version ' + VERSION + ') - ' + summary + ' by ' + author;
         if (face_options == 'get_data_template') {
             stage_options = stage_options || getFirstRaceFromData();
             return this.data[stage_options] || {error: 'race does not exist'};
@@ -171,8 +172,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         this.randomSetSeed(rand_seed);
 
         //Determine the race, and pick random variables to use for unspecified values
-        var race = this.face_options.race || getFirstRaceFromData();
-        this.face_options.race = race;
+        this.face_options.race = this.face_options.race || getFirstRaceFromData();;
         var race_data = this.getRaceData();
         for (var key in race_data) {
             this.randomFaceOption(key, true, true);
@@ -215,9 +215,6 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         }
     };
 
-    AvatarClass.prototype._version = function () {
-        return file_name + ' (version ' + VERSION + ') - ' + summary + ' by ' + author;
-    }();
     AvatarClass.prototype.data = _data;
     AvatarClass.prototype.getRaceData = function () {
         var race = this.face_options.race || getFirstRaceFromData();
