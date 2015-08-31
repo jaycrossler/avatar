@@ -1,6 +1,14 @@
 var firstNames = "Bob,Thomas,William,Waldo,Michael,Kicaid,Luccio,Johny,Donald,Morgan,Mouse,Sanya,Merlin,Rashid,Joseph".split(",");
 var lastNames = "Conestoga,Mariner,Observer,Odyssey,Pioneer,Ranger,Scout,Surveyor,Trailblazer".split(",");
 
+function getMousePos(canvas, evt) {
+    var rect = canvas.getBoundingClientRect();
+    return {
+      x: evt.clientX - rect.left,
+      y: evt.clientY - rect.top
+    };
+}
+
 var av1;
 $(document).ready(function () {
     var $canvas = $('canvas');
@@ -8,7 +16,22 @@ $(document).ready(function () {
     var height = $canvas.height();
     var size = 130;
 
+    var canvas = $canvas[0];
+    var context = canvas.getContext("2d");
+    function draw(e){
+        var pos = getMousePos(canvas, e);
+
+        context.fillStyle = "#000000";
+//        context.fillRect (pos.x, pos.y, 4, 4);
+        $('#avatar_name').text("x=" + pos.x + " : y="+pos.y);
+
+    }
+    canvas.addEventListener('mousemove', draw, false);
+
     $canvas.width($(window).width());
+
+//    var testWithTemplate = new Avatar('get_data_template', 'Human');
+//    testWithTemplate.chin_shape_options = ['Oval'];
 
     var ogreTemplate = new Avatar('copy_data_template', 'Human');
     ogreTemplate.gender_options = ['Female'];
@@ -16,8 +39,8 @@ $(document).ready(function () {
     ogreTemplate.eye_color_options = ['Red', 'Pink', 'Purple'];
     ogreTemplate.eye_cloudiness = ['Pink','Blue','Misty'];
     ogreTemplate.skin_type_color_options = [
-        {name: 'Fair', highlights: '40,202,30', skin: '50,185,50', cheek: '30,80,30', darkflesh: '20,60,20', deepshadow: '10,50,10'},
-        {name: 'Dark', highlights: '80,80,80', skin: '80,185,70', cheek: '30,30,30', darkflesh: '20,20,20', deepshadow: '10,10,10'}
+        {name: 'Fair', highlights: '40,202,30', skin: '50,185,50', cheek: '40,150,40', darkflesh: '20,60,20', deepshadow: '10,50,10'},
+        {name: 'Dark', highlights: '80,80,80', skin: '80,185,70', cheek: '40,160,30', darkflesh: '20,20,20', deepshadow: '10,10,10'}
     ];
     ogreTemplate.decorations.push(
         {type: 'rectangle', p1: 'facezone topleft', p2: 'facezone bottomright', line_color: 'black', size: '2', alpha: 1, forceInBounds: true}
