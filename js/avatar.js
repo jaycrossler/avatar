@@ -124,7 +124,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         nose_size_options: "Tiny,Small,Normal,Large,Big,Giant,Huge".split(","),
 
         eye_shape_options: "Almond".split(","),
-        eye_color_options: "Hazel,Amber,Green,Blue,Gray,Brown,Dark Brown,Black,Violet".split(","),
+        eye_color_options: "Hazel,Amber,Green,Blue,Gray,Brown,Dark Brown,Black".split(","),
         eye_lids_options: "None,Smooth,Folded,Thick".split(","), //TODO
         eye_cloudiness_options: "Normal,Clear,Misty".split(","),
 
@@ -1278,7 +1278,9 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             {x: 7, y: -12},
             {x: 6, y: -14},
             {x: 7, y: -16},
-            {x: 8, y: -18}
+            {x: 8, y: -18},
+            {x: 8, y: -24}
+
         ];
         var nose_line_l = [];
         var nose_line_r = [];
@@ -1296,7 +1298,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
         var nose_full_line = nose_line_l_full.concat(nose_line_r_full.reverse());
         var full_nose_line = transformShapeLine({type: 'smooth'}, face_options, nose_full_line);
-        var alpha = 0.8;
+        var alpha = 1;
 
         var fill_color = net.brehaut.Color(face_options.colors.skin).darkenByRatio(0.05).toString();
         var nose_fill_colors = [face_options.colors.highlights, fill_color, face_options.colors.skin];

@@ -26,7 +26,7 @@ $(document).ready(function () {
         $('#avatar_name').text("x=" + pos.x + " : y="+pos.y);
 
     }
-    canvas.addEventListener('mousemove', draw, false);
+//    canvas.addEventListener('mousemove', draw, false);
 
     $canvas.width($(window).width());
 
@@ -36,7 +36,7 @@ $(document).ready(function () {
     var ogreTemplate = new Avatar('copy_data_template', 'Human');
     ogreTemplate.gender_options = ['Female'];
     ogreTemplate.ear_shape_options.push('Pointed');
-    ogreTemplate.eye_color_options = ['Red', 'Pink', 'Purple'];
+    ogreTemplate.eye_color_options = ['Red', 'Pink', 'Purple', 'Yellow'];
     ogreTemplate.eye_cloudiness = ['Pink','Blue','Misty'];
     ogreTemplate.skin_type_color_options = [
         {name: 'Fair', highlights: '40,202,30', skin: '50,185,50', cheek: '40,150,40', darkflesh: '20,60,20', deepshadow: '10,50,10'},
