@@ -84,7 +84,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     var STAGES = []; //Global list of all stages used to lookup any existing ones
 
     //-----------------------------
-    var _data = {'Human':{
+    var _data = {'Human': {
         skin_type_color_options: [
             {name: 'Fair', highlights: '254,202,182', skin: '245,185,158', cheek: '246,171,142', darkflesh: '217,118,76', deepshadow: '202,168,110'},
             {name: 'Brown', highlights: '229,144,50', skin: '228,131,86', cheek: '178,85,44', darkflesh: '143,70,29', deepshadow: '152,57,17'},
@@ -122,11 +122,12 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         ear_lobe_right_options: "Hanging,Attached,Same".split(","),
 
         lip_color_options: "#f00,#e00,#d00,#c00,#f10,#f01,#b22,#944".split(","),
-        mouth_height_options: [.04,.05,.06,.07],
+        mouth_height_options: [.04, .05, .06, .07],
 
         nose_height_options: [0, .01, .01],
 
-        forehead_height_options: [.1,.11,.12,.13,.14,.15,.16,.17]
+        forehead_height_options: [.1, .11, .12, .13, .14, .15, .16, .17],
+        decorations: []
     }};
 
     //-----------------------------
@@ -134,7 +135,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     function AvatarClass(face_options, stage_options, canvas_name) {
         if (face_options == 'get_data_template') {
             stage_options = stage_options || getFirstRaceFromData();
-            return this.data[stage_options] || {error:'race does not exist'};
+            return this.data[stage_options] || {error: 'race does not exist'};
         } else if (face_options == 'copy_data_template') {
             stage_options = stage_options || getFirstRaceFromData();
             if (this.data[stage_options]) {
@@ -142,10 +143,10 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
                 data = JSON.parse(JSON.stringify(data));
                 return data;
             } else {
-                return {error:'race does not exist'};
+                return {error: 'race does not exist'};
             }
 
-        } else  if (face_options == 'set_data_template') {
+        } else if (face_options == 'set_data_template') {
             this.data[stage_options] = canvas_name;
         } else {
             this.drawOrRedraw(face_options, stage_options, canvas_name);
@@ -160,6 +161,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         this.face_options = $.extend({}, this.face_options || _face_options, face_options || {});
         this.stage_options = $.extend({}, this.stage_options || _stage_options, stage_options || {});
         this.event_list = this.event_list || [];
+        this.registered_points = this.registered_points || [];
 
         //Determine the random seed to use.  Either use the one passed in, the existing one, or a random one.
         face_options = face_options || {};
@@ -170,8 +172,8 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
         //Determine the race, and pick random variables to use for unspecified values
         var race = this.face_options.race || getFirstRaceFromData();
-        var race_data = _data[race] || _data[getFirstRaceFromData()];
         this.face_options.race = race;
+        var race_data = this.getRaceData();
         for (var key in race_data) {
             this.randomFaceOption(key, true, true);
         }
@@ -183,7 +185,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         if (this.stage_options.canvas_name) {
             var existing_stage = findStageByCanvas(this.stage_options.canvas_name);
             if (!this.$canvas && $(this.stage_options.canvas_name)) {
-                this.$canvas = $(this.stage_options.canvas_name);
+                this.$canvas = $('#' + this.stage_options.canvas_name);
             }
 
             if (existing_stage) {
@@ -195,7 +197,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         }
 
         //Turn Decimal color values into hex
-        expandFaceColors(this.face_options);
+        expandFaceColors(this);
 
         //Draw the faces
         if (this.stage) {
@@ -203,7 +205,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
                 this.faceShapeCollection.removeAllChildren();
                 this.faceShapeCollection.visible = false;
             }
-            var face = this.buildFace(this.face_options, this.stage_options, this.stage);
+            var face = this.buildFace(this.face_options);
             this.drawOnStage(face, this.stage);
             this.faceShapeCollection = face;
 
@@ -213,10 +215,14 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         }
     };
 
-    AvatarClass.prototype.version = function () {
+    AvatarClass.prototype._version = function () {
         return file_name + ' (version ' + VERSION + ') - ' + summary + ' by ' + author;
     }();
     AvatarClass.prototype.data = _data;
+    AvatarClass.prototype.getRaceData = function () {
+        var race = this.face_options.race || getFirstRaceFromData();
+        return _data[race] || _data[getFirstRaceFromData()];
+    };
 
     //-----------------------------
     //Supporting functions
@@ -233,11 +239,11 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         stage.addChild(face);
         stage.update();
     };
-    AvatarClass.prototype.buildFace = function (face_options, stage_options, stage) {
+    AvatarClass.prototype.buildFace = function (face_options) {
         var container = new createjs.Container();
         this.lines = [];
 
-        var face_zones = buildFaceZones(face_options, stage_options, stage);
+        var face_zones = buildFaceZones(this);
         if (face_options.style == 'circles') {
             container = buildFace_Circles(container, face_options, face_zones, 'neck,ears,face,eyes,nose,mouth'.split(','));
 
@@ -252,6 +258,8 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             var ears = buildEars_Lines(face_zones, face_options, this.lines);
             addSceneChildren(container, [neck, face, beard, nose, eyes, mouth, hair, ears]);
         }
+        addSceneChildren(container, buildDecorations(this));
+
         return container;
     };
     AvatarClass.prototype.randomFaceOption = function (key, dontForceSetting, skipRedraw) {
@@ -260,8 +268,9 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         if (!_.str.endsWith(key, '_options')) {
             key = key + "_options";
         }
-        if (_data[this.face_options.race][key]) {
-            var options = _data[this.face_options.race][key];
+        var data = this.getRaceData();
+        if (data[key]) {
+            var options = data[key];
             option_name = key.split('_options')[0];
             var currentVal = this.face_options[option_name];
 
@@ -276,10 +285,10 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         }
         return result;
     };
-    AvatarClass.prototype.unregisterEvent = function(shapeNames){
+    AvatarClass.prototype.unregisterEvent = function (shapeNames) {
         var avatar = this;
         if (shapeNames == 'all') {
-            _.each(avatar.event_list, function(event) {
+            _.each(avatar.event_list, function (event) {
                 if (event.shape) {
                     event.shape.removeEventListener(event.eventType || 'click');
                 }
@@ -288,7 +297,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         }
 
         var newEventList = [];
-        _.each(avatar.event_list, function(event){
+        _.each(avatar.event_list, function (event) {
             if (event.shapeNames == shapeNames && event.shape) {
                 event.shape.removeEventListener(event.eventType || 'click');
             } else {
@@ -298,7 +307,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         avatar.event_list = newEventList;
     };
 
-    AvatarClass.prototype.registerEvent = function(shapeNames, functionToRun, eventType, dontRegister){
+    AvatarClass.prototype.registerEvent = function (shapeNames, functionToRun, eventType, dontRegister) {
         eventType = eventType || 'click';
         if (!functionToRun) return;
         var avatar = this;
@@ -307,28 +316,37 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             avatar.event_list.push({shapeNames: shapeNames, functionToRun: functionToRun, eventType: eventType});
         }
 
-        _.each(shapeNames.split(","), function(shapeName){
+        _.each(shapeNames.split(","), function (shapeName) {
             var shape = findShape(avatar.lines, shapeName);
             if (shape && shape.shape) {
-                shape.shape.addEventListener(eventType, function(){
+                shape.shape.addEventListener(eventType, function () {
                     functionToRun(avatar);
                 });
             }
         });
     };
+    AvatarClass.prototype.getBounds = function () {
+        var p1 = getPoint(this, 'facezone topleft');
+        var p2 = getPoint(this, 'facezone bottomright');
+        var p2x = p2.x - p1.x;
+        var p2y = p2.y - p1.y;
+
+        return ({top_x: p1.x, top_y: p1.y, bottom_x: p2x, bottom_y: p2y});
+    };
 
     //================
     //Private functions
-    function getFirstRaceFromData(){
-        for (key in _data){
+    function getFirstRaceFromData() {
+        for (key in _data) {
             //wonky way to get first key
             return key;
         }
         throw "No first race found in _data";
     }
+
     function registerEvents(avatar) {
         var usesMouseOver = false;
-        _.each(avatar.event_list, function(event){
+        _.each(avatar.event_list, function (event) {
             avatar.registerEvent(event.shapeNames, event.functionToRun, event.eventType, true);
             if (event.eventType == 'mouseover' || event.eventType == 'mouseout') usesMouseOver = true;
         });
@@ -336,16 +354,16 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             avatar.stage.enableMouseOver();
         }
     }
-    function expandFaceColors(face_options) {
 
-        if (face_options.colors) return;
+    function expandFaceColors(avatar) {
+        if (avatar.face_options.colors) return;
 
         //Add in colors based on setting
-        //TODO: Make this generic
-        var skin_pigment_colors = _.find(_data[face_options.race].skin_type_color_options, function (skin) {
-            return skin.name == face_options.skin_pigment
+        var data = avatar.getRaceData();
+        var skin_pigment_colors = _.find(data.skin_type_color_options, function (skin) {
+            return skin.name == avatar.face_options.skin_pigment
         });
-        if (!skin_pigment_colors) skin_pigment_colors = randOption(_data[face_options.race].skin_type_color_options, face_options);
+        if (!skin_pigment_colors) skin_pigment_colors = randOption(data.skin_type_color_options, avatar.face_options);
 
         for (var key in skin_pigment_colors) {
             var val = skin_pigment_colors[key];
@@ -353,11 +371,53 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
                 skin_pigment_colors[key] = Helpers.rgb2hex(val);
             }
         }
-        face_options.colors = $.extend({}, face_options.colors || {}, skin_pigment_colors);
+        avatar.face_options.colors = $.extend({}, avatar.face_options.colors || {}, skin_pigment_colors);
         //TODO: vary colors based on charisma
     }
 
-    function buildFaceZones(face_options, stage_options, stage) {
+    function buildDecorations(avatar) {
+        var shapes = [];
+        var data = avatar.getRaceData();
+
+        var canvas_w = avatar.$canvas.width();
+        var canvas_h = avatar.$canvas.height();
+
+        _.each(data.decorations || [], function (decoration, i) {
+            if (decoration.type == 'rectangle') {
+                var p1 = (_.isString(decoration.p1)) ? getPoint(avatar, decoration.p1) : decoration.p1;
+                var p2 = (_.isString(decoration.p2)) ? getPoint(avatar, decoration.p2) : decoration.p2;
+                if (p1 && _.isObject(p1) && p2 && _.isObject(p2)) {
+                    var p2x = p2.x - p1.x;
+                    var p2y = p2.y - p1.y;
+
+                    if (decoration.forceInBounds) {
+                        if (p1.x < 1) p1.x = 1;
+                        if (p1.y < 1) p1.y = 1;
+                        if (p2x > canvas_w) p2x = (canvas_w - p1.x) - 2;
+                        if (p2y > canvas_h) p2y = (canvas_h - p1.y) - 2;
+                    }
+
+                    var rect = new createjs.Shape();
+                    if (decoration.size) rect.graphics.setStrokeStyle(decoration.size);
+                    if (decoration.line_color || decoration.color) rect.graphics.beginStroke(decoration.line_color || decoration.color);
+                    if (decoration.fill_color || decoration.color) rect.graphics.beginFill(decoration.line_color || decoration.color);
+                    rect.alpha = decoration.alpha || 1;
+                    rect.graphics.drawRect(p1.x, p1.y, p2x, p2y);
+                    shapes.push(rect);
+                    avatar.lines.push({name: decoration.name || 'decoration ' + i, line: [p1, {x: p2x, y: p2y}], shape: rect, scale_x: 1, scale_y: 1, x: 1, y: 1});
+
+                }
+            } else if (decoration.type == 'image') {
+                //TODO:
+            }
+        });
+        return shapes;
+    }
+
+    function buildFaceZones(avatar) {
+        var face_options = avatar.face_options;
+        var stage_options = avatar.stage_options;
+        var stage = avatar.stage;
 
         var face_zones = {neck: {}, face: {}, nose: {}, ears: {}, eyes: {}, chin: {}, hair: {}};
 
@@ -379,9 +439,10 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
         var x = stage_options.x;
         var y = stage_options.y;
-        if (age_size<1) {
-            y += (full_height - height);
-            x += (full_height - height)/2;
+
+        if (age_size < 1) {
+            y += (full_height - height + 2);
+            x += (full_height - height) / 2;
         }
 
         face_zones.thick_unit = face_zones.face_width * .007;
@@ -462,6 +523,16 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             x: x + half_height,
             y: y + height_offset + (half_height * (1.5 + (face_options.forehead_height / 2) + face_options.nose_height + face_options.mouth_height))
         };
+
+        namePoint(avatar, 'facezone topleft', {
+            x: face_zones.ears.left_x + (2 * face_zones.ears.left),
+            y: y
+        });
+        namePoint(avatar, 'facezone bottomright', {
+            x: face_zones.ears.right_x + face_zones.ears.right,
+            y: face_zones.neck.y + face_zones.neck.bottom
+        });
+
 
         return face_zones;
     }
@@ -605,7 +676,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         } else if (face_options.face_shape == 'Heart') {
             options = {type: 'oval', facet_below: 0.1, warp_x: 0.3, pinch_bottom: 2};
         }
-        options = $.extend({},{facet_below: 0.4, dont_facet_below: 0.8, warp_x: 0.6, warp_y_bottom: 2}, options);
+        options = $.extend({}, {facet_below: 0.4, dont_facet_below: 0.8, warp_x: 0.6, warp_y_bottom: 2}, options);
 
         var face_line = transformShapeLine(options, face_options);
 
@@ -628,7 +699,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         if (face_options.gender == 'Female') {
             neck_width *= 0.9;
         }
-        if (face_options.face_shape=="Inverted Triangle") {
+        if (face_options.face_shape == "Inverted Triangle") {
             neck_width *= 0.9;
         }
 
@@ -716,12 +787,12 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
 
         var ear_line_side;
-        if (face_options.ear_shape == 'Pointed'){
+        if (face_options.ear_shape == 'Pointed') {
             ear_line_side = [
                 {x: -3, y: -4},
-                {x: -5, y: -6, line:true},
-                {x: 3, y: -12, line:true},
-                {x: 9, y: -6, line:true},
+                {x: -5, y: -6, line: true},
+                {x: 3, y: -12, line: true},
+                {x: 9, y: -6, line: true},
                 {x: 3, y: -0},
                 {x: 6, y: 4},
                 {x: 3, y: 5},
@@ -1262,7 +1333,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
         if (face_options.age < 20) {
             inner_hair_y *= 1.5;
-            outer_hair_y *= (face_options.age /20);
+            outer_hair_y *= (face_options.age / 20);
             inner_hair_peak += face_options.age * 10;
         }
 
@@ -1437,7 +1508,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
             {x: 10, y: 1},
             {x: 4, y: bottom_lip_height + bottom_lip_bottom},
-            {x: 0, y: bottom_lip_height + bottom_lip_bottom -1},
+            {x: 0, y: bottom_lip_height + bottom_lip_bottom - 1},
             {x: -4, y: bottom_lip_height + bottom_lip_bottom},
             {x: -10, y: 1}
         ];
@@ -1470,7 +1541,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             {x: -11, y: -2},
             {x: -10, y: 0},
             {x: -2, y: -top_lip_height},
-            {x: 0, y: 1-top_lip_height},
+            {x: 0, y: 1 - top_lip_height},
             {x: 2, y: -top_lip_height},
             {x: 10, y: 0},
             {x: 11, y: -2}
@@ -1517,6 +1588,32 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
     //-----------------------------
     //Drawing Helpers
+    function namePoint(avatar, name, point) {
+        var existingPoint = _.find(avatar.registered_points, function (point) {
+            return point.name == name;
+        });
+        if (existingPoint) {
+            existingPoint.point = point;
+        } else {
+            avatar.registered_points = avatar.registered_points || [];
+            avatar.registered_points.push({name: name, point: point});
+        }
+    }
+
+    function getPoint(avatar, name) {
+        var existingPoint = _.find(avatar.registered_points, function (point) {
+            return point.name == name;
+        });
+        var found = null;
+        if (existingPoint && existingPoint.point) {
+            found = existingPoint.point;
+            found.x = parseInt(found.x);
+            found.y = parseInt(found.y);
+
+        }
+        return found;
+    }
+
     function addSceneChildren(container, children) {
         _.each(children, function (c) {
             if (_.isArray(c)) {
@@ -1993,7 +2090,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         var result = options[numChosen];
         if (dontUseVal) {
             if (result == dontUseVal) {
-                numChosen = (numChosen+1) % len;
+                numChosen = (numChosen + 1) % len;
                 result = options[numChosen];
             }
         }
