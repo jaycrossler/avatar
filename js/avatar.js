@@ -206,7 +206,8 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
                 this.stage = existing_stage;
             } else {
                 var rect = new createjs.Shape();
-                rect.graphics.beginFill('#eef').drawRect(0, 0, this.$canvas.width(), this.$canvas.height());;
+                rect.graphics.beginFill('#eef').drawRect(0, 0, this.$canvas.width(), this.$canvas.height());
+                ;
                 this.stage = setupStage(this.stage_options.canvas_name);
 //                this.stage.addChild(rect);
                 addStageByCanvas({canvas_id: this.stage_options.canvas_name, $canvas: this.$canvas, stage: this.stage});
@@ -267,11 +268,12 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             var nose = buildNose_Lines(face_zones, this);
             var eyes = buildEyes_Lines(face_zones, this);
             var chin = buildChin_Lines(face_zones, this);
+            var wrinkles = buildWrinkles_Lines(face_zones, this);
             var beard = buildBeard_Lines(face_zones, this);
             var mouth = buildMouth_Lines(face_zones, this);
             var hair = buildHair_Lines(face_zones, this);
             var ears = buildEars_Lines(face_zones, this);
-            addSceneChildren(container, [neck, face, chin, beard, nose, eyes, mouth, hair, ears]);
+            addSceneChildren(container, [neck, face, chin, wrinkles, beard, nose, eyes, mouth, hair, ears]);
         }
         addSceneChildren(container, buildDecorations(this));
 
@@ -702,7 +704,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
         //TODO: Add Some skin variations, noise, dirtiness
         var fill_colors = [face_options.colors.cheek, face_options.colors.skin, face_options.colors.skin, face_options.colors.cheek];
-        var fill_steps = [0,.25,.75,1];
+        var fill_steps = [0, .25, .75, 1];
 
         var face = createPathFromLocalCoordinates(face_line, {
                 close_line: true, line_color: face_options.colors.highlights,
@@ -960,7 +962,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         } else if (face_options.eye_cloudiness == 'Misty') {
             eye_fill_colors = ["#fff", "#baa", "#444"];
         } else if (face_options.eye_cloudiness == 'Blue') {
-            eye_fill_steps = [0, .8,.92, 1];
+            eye_fill_steps = [0, .8, .92, 1];
             eye_fill_colors = ["#fff", "#99e", "#ddf", "#444"];
         }
 
@@ -1401,7 +1403,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         var hair_line = lineSegmentCompared(head_line, eye_line, 'above', hair_line_level_adjust);
 
         if (hair_line && hair_line.length) {
-            var hair_dot_array = createPath(hair_line, {dot_array:true, thickness: f.thick_unit * 5, line_color: face_options.hair_color});
+            var hair_dot_array = createPath(hair_line, {dot_array: true, thickness: f.thick_unit * 5, line_color: face_options.hair_color});
             lines.push({name: 'hair dot line', line: hair_line, shape: hair_dot_array, x: 0, y: 0, scale_x: 1, scale_y: 1});
 //            shapes = shapes.concat(hair);
 
@@ -1512,6 +1514,55 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         return shapes;
     }
 
+    function buildWrinkles_Lines(f, avatar) {
+        var face_options = avatar.face_options;
+        var lines = avatar.lines;
+        var shapes = [];
+
+        var wrinkle_lines = parseInt(face_options.age / 15);
+        var head_line = transformLineToGlobalCoordinates(lines, 'face');
+        var eye_line = transformLineToGlobalCoordinates(lines, 'left eye');
+
+        head_line = hydratePointsAlongLine(head_line, f.thick_unit * 30);
+
+        var hair_line = lineSegmentCompared(head_line, eye_line, 'above');
+
+        if (hair_line && hair_line.length) {
+            var hair_dot_array = createPath(hair_line, {close_line: true, thickness: f.thick_unit * 5, line_color: face_options.hair_color});
+            lines.push({name: 'hair dot line', line: hair_line, shape: hair_dot_array, x: 0, y: 0, scale_x: 1, scale_y: 1});
+//            shapes = shapes.concat(hair_dot_array);
+
+            var mid_x = comparePoints(hair_line, 'x', 'middle');
+            var mid_y = comparePoints(hair_line, 'y', 'middle');
+            var base_width = (f.thick_unit * 200);
+            var height = (f.thick_unit * 100);
+
+            //TODO: Should warp this to match head shape
+            var forehead_wrinkle_line = [
+                {x: -4, y: 0},
+                {x: 0, y: -.5},
+                {x: 4, y: 0}
+            ];
+
+            var x, y, width;
+            var alpha = .2;
+
+            for (var i = 0; i < wrinkle_lines; i++) {
+                width = base_width + (f.thick_unit * i * 15);
+                var forehead_wrinkle = createPathFromLocalCoordinates(forehead_wrinkle_line, {close_line: false, thickness: (f.thick_unit * 2), color: face_options.colors.deepshadow}, width, height);
+                x = mid_x;
+                y = mid_y + (f.thick_unit * i * 15) - (f.thick_unit * 30);
+                forehead_wrinkle.x = x;
+                forehead_wrinkle.y = y;
+                forehead_wrinkle.alpha = alpha;
+                lines.push({name: 'forehead wrinkle line ' + i, line: forehead_wrinkle_line, shape: forehead_wrinkle, x: x, y: y, alpha: alpha, scale_x: width, scale_y: height});
+                shapes.push(forehead_wrinkle);
+            }
+
+        }
+        return shapes;
+    }
+
     function buildChin_Lines(f, avatar) {
         var face_options = avatar.face_options;
         var lines = avatar.lines;
@@ -1554,16 +1605,16 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             //TODO: This could use some work to make it look more realistic
 
             if (chin && chin.length && chin.length > 2) {
-                chin = transformShapeLine({type:'contract', multiplier:0.7},face_options,chin);
+                chin = transformShapeLine({type: 'contract', multiplier: 0.7}, face_options, chin);
 
-                var chin_fill_colors = [face_options.colors.cheek,face_options.colors.skin];
+                var chin_fill_colors = [face_options.colors.cheek, face_options.colors.skin];
                 var chin_fill_steps = [0, 1];
                 var chin_height = comparePoints(chin, 'height');
 
                 var chin_shape = createPath(chin, {
-                    close_line:true, thickness: f.thick_unit, smooth:true, line_color: face_options.colors.skin,
+                    close_line: true, thickness: f.thick_unit, smooth: true, line_color: face_options.colors.skin,
                     fill_colors: chin_fill_colors, fill_method: 'radial',
-                    fill_steps: chin_fill_steps, radius: chin_height/1.5
+                    fill_steps: chin_fill_steps, radius: chin_height / 1.5
                 });
                 chin_shape.y = (f.thick_unit * 10);
                 shapes.push(chin_shape);
@@ -1573,14 +1624,14 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
             if (chin && chin.length && chin.length > 2) {
 
-                var chin_fill_colors = [face_options.colors.cheek,face_options.colors.skin];
+                var chin_fill_colors = [face_options.colors.cheek, face_options.colors.skin];
                 var chin_fill_steps = [0, 1];
                 var chin_height = comparePoints(chin, 'height');
 
                 var chin_shape = createPath(chin, {
-                    close_line:true, thickness: f.thick_unit, smooth:true, line_color: face_options.colors.skin,
+                    close_line: true, thickness: f.thick_unit, smooth: true, line_color: face_options.colors.skin,
                     fill_colors: chin_fill_colors, fill_method: 'radial',
-                    fill_steps: chin_fill_steps, radius: chin_height/2
+                    fill_steps: chin_fill_steps, radius: chin_height / 2
                 });
                 chin_shape.y = -f.thick_unit;
                 shapes.push(chin_shape);
@@ -1615,12 +1666,11 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             divot_line.x = x;
             divot_line.y = y;
             divot_line.alpha = alpha;
-            divot_line.name = 'chin divot line';
             lines.push({name: 'chin divot line', line: chin_divot_line, shape: divot_line, x: x, y: y, alpha: alpha, scale_x: width, scale_y: height});
             shapes.push(divot_line);
 
             if (face_options.chin_divot == 'Double') {
-                chin_divot_line = transformShapeLine({type:'reverse', direction: 'horizontal'}, face_options, chin_divot_line);
+                chin_divot_line = transformShapeLine({type: 'reverse', direction: 'horizontal'}, face_options, chin_divot_line);
                 var divot_line_2 = createPathFromLocalCoordinates(chin_divot_line, {close_line: false, thickness: (f.thick_unit * 5), color: face_options.colors.deepshadow}, width, height);
                 divot_line_2.x = x + (f.thick_unit * 6);
                 divot_line_2.y = y;
@@ -1867,17 +1917,17 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
                 if (starting_step < ending_step) {
                     for (c = starting_step; c < ending_step; c++) {
-                        existing_list[c].x = mid_x - ((mid_x - existing_list[c].x) * (options.multiplier||.9));
-                        existing_list[c].y = mid_y - ((mid_y - existing_list[c].y) * (options.multiplier||.9));
+                        existing_list[c].x = mid_x - ((mid_x - existing_list[c].x) * (options.multiplier || .9));
+                        existing_list[c].y = mid_y - ((mid_y - existing_list[c].y) * (options.multiplier || .9));
                     }
                 } else {
                     for (c = 0; c < ending_step; c++) {
-                        existing_list[c].x = mid_x - ((mid_x - existing_list[c].x) * (options.multiplier||.9));
-                        existing_list[c].y = mid_y - ((mid_y - existing_list[c].y) * (options.multiplier||.9));
+                        existing_list[c].x = mid_x - ((mid_x - existing_list[c].x) * (options.multiplier || .9));
+                        existing_list[c].y = mid_y - ((mid_y - existing_list[c].y) * (options.multiplier || .9));
                     }
                     for (c = starting_step; c < existing_list.length; c++) {
-                        existing_list[c].x = mid_x - ((mid_x - existing_list[c].x) * (options.multiplier||.9));
-                        existing_list[c].y = mid_y - ((mid_y - existing_list[c].y) * (options.multiplier||.9));
+                        existing_list[c].x = mid_x - ((mid_x - existing_list[c].x) * (options.multiplier || .9));
+                        existing_list[c].y = mid_y - ((mid_y - existing_list[c].y) * (options.multiplier || .9));
                     }
                 }
 
@@ -2016,7 +2066,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         } else if (attribute == 'width') {
             var x_max = comparePoints(existing_list, 'x', 'highest');
             var x_min = comparePoints(existing_list, 'x', 'lowest');
-            result =  Math.max(x_max - x_min, x_min - x_max);
+            result = Math.max(x_max - x_min, x_min - x_max);
 
         } else {
             var lowest = Number.MAX_VALUE;
@@ -2109,13 +2159,13 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
                 if (style.fill_method == 'linear') {
                     line.graphics.beginLinearGradientFill(
                         style.fill_colors, style.fill_steps || [0, 1],
-                        style.x_offset_start || -style.radius || -10, style.y_offset_start || 0,
-                        style.x_offset_end || style.radius || 10, style.y_offset_end || 0)
+                            style.x_offset_start || -style.radius || -10, style.y_offset_start || 0,
+                            style.x_offset_end || style.radius || 10, style.y_offset_end || 0)
                 } else { //Assume Radial
                     line.graphics.beginRadialGradientFill(
                         style.fill_colors, style.fill_steps || [0, 1],
-                        style.x_offset || comparePoints(points, 'x', 'middle'), style.y_offset || comparePoints(points, 'y', 'middle'), 0,
-                        style.x_offset || comparePoints(points, 'x', 'middle'), style.y_offset || comparePoints(points, 'y', 'middle'), style.radius || radius || 10);
+                            style.x_offset || comparePoints(points, 'x', 'middle'), style.y_offset || comparePoints(points, 'y', 'middle'), 0,
+                            style.x_offset || comparePoints(points, 'x', 'middle'), style.y_offset || comparePoints(points, 'y', 'middle'), style.radius || radius || 10);
                 }
             }
 
