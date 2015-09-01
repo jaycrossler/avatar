@@ -93,18 +93,18 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //-----------------------------
     var _data = {'Human': {
         rendering_order: [
-            {decoration:"box-behind"},
-            {feature:"neck", style:"lines"},
-            {feature:"face", style:"lines"},
-            {feature:"eyes", style:"lines"},
-            {feature:"nose", style:"lines"},
-            {feature:"chin", style:"lines"},
-            {feature:"wrinkles", style:"lines"},
-            {feature:"beard", style:"lines"},
-            {feature:"mouth", style:"lines"},
-            {feature:"hair", style:"lines"},
-            {feature:"ears", style:"lines"},
-            {decoration:"name-plate"}
+//            {decoration:"box-behind"},
+            {feature: "neck", style: "lines"},
+            {feature: "face", style: "lines"},
+            {feature: "eyes", style: "lines"},
+            {feature: "nose", style: "lines"},
+            {feature: "chin", style: "lines"},
+            {feature: "wrinkles", style: "lines"},
+            {feature: "beard", style: "lines"},
+            {feature: "mouth", style: "lines"},
+            {feature: "hair", style: "lines"},
+            {feature: "ears", style: "lines"},
+            {decoration: "name-plate"}
         ],
         skin_type_color_options: [
             {name: 'Fair', highlights: '254,202,182', skin: '245,185,158', cheek: '246,171,142', darkflesh: '217,118,76', deepshadow: '202,168,110'},
@@ -154,10 +154,10 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
         forehead_height_options: "Under,Low,Less,Normal,Above,Raised,High,Floating".split(","),
         decorations: [
-            {name:"box-behind", type: 'rectangle', p1: 'facezone topleft', p2: 'facezone bottomright',
-            fill_color:'blue', alpha: 0.3, line_color: 'light blue', size: '2', forceInBounds: true},
-            {name:"name-plate", type: 'rectangle', height: 16, docked:'bottom', forceInBounds: true, font_size: 9,
-            text:'{{name}}', text_color:'black', line_color:'brown', fill_color:'white', alpha:0.8}
+            {name: "box-behind", type: 'rectangle', p1: 'facezone topleft', p2: 'facezone bottomright',
+                fill_color: 'blue', alpha: 0.3, line_color: 'light blue', size: '2', forceInBounds: true},
+            {name: "name-plate", type: 'rectangle', height: 16, docked: 'bottom', forceInBounds: true, font_size: 9,
+                text: '{{name}}', text_color: 'black', line_color: 'brown', fill_color: 'white', alpha: 0.8}
         ]
     }};
 
@@ -280,14 +280,14 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         var face_zones = buildFaceZones(this);
         var race_data = this.getRaceData();
 
-        _.each(race_data.rendering_order || [], function(layer){
+        _.each(race_data.rendering_order || [], function (layer) {
             if (layer.decoration) {
                 addSceneChildren(container, buildDecoration(avatar, layer));
 
             } else if (layer.feature) {
                 //TODO: Change this to not use eval
                 var funcName = "build" + _.str.capitalize(layer.feature) + "_" + _.str.capitalize(layer.style || "Lines");
-                var feature_shapes = eval (funcName + "(face_zones, avatar, layer);");
+                var feature_shapes = eval(funcName + "(face_zones, avatar, layer);");
                 addSceneChildren(container, feature_shapes);
             }
         });
@@ -416,10 +416,10 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         var shapes = [];
 
         var data = avatar.getRaceData();
-        var data_item = _.find(data.decorations || [], function(dec){
+        var data_item = _.find(data.decorations || [], function (dec) {
             return dec.name == decoration.decoration;
         });
-        if (data_item){
+        if (data_item) {
             decoration = JSON.parse(JSON.stringify(decoration)); //Deep-copy this
             $.extend(decoration, data_item);
         }
@@ -473,7 +473,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
                 rect.graphics.drawRect(p1x, p1y, p2x, p2y);
                 rect.graphics.endFill();
                 shapes.push(rect);
-                avatar.lines.push({name: decoration.name || 'decoration ' + (decoration.name||"item"), line: [p1, {x: p2x, y: p2y}], shape: rect, scale_x: 1, scale_y: 1, x: 1, y: 1});
+                avatar.lines.push({name: decoration.name || 'decoration ' + (decoration.name || "item"), line: [p1, {x: p2x, y: p2y}], shape: rect, scale_x: 1, scale_y: 1, x: 1, y: 1});
 
                 if (decoration.text) {
                     var font_size = decoration.font_size || 10;
@@ -483,21 +483,21 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
                     if (font_text.indexOf("{{") > -1) {
                         _.templateSettings = {
-                          interpolate: /\{\{(.+?)\}\}/g
+                            interpolate: /\{\{(.+?)\}\}/g
                         };
 
                         var text_template = _.template(font_text);
                         font_text = text_template(avatar.face_options);
                     }
 
-                    var text = new createjs.Text(font_text, font_size + "px "+font_name, font_color);
-                    var textBounds =text.getBounds();
-                    var textWidth=p2x;
+                    var text = new createjs.Text(font_text, font_size + "px " + font_name, font_color);
+                    var textBounds = text.getBounds();
+                    var textWidth = p2x;
                     if (textBounds && textBounds.width) {
                         textWidth = textBounds.width;
                     }
-                    text.x = p1x + ((p2x - textWidth)/2);
-                    text.y = ((p2y-font_size)/2) + p1y + (p2y / 2);
+                    text.x = p1x + ((p2x - textWidth) / 2);
+                    text.y = ((p2y - font_size) / 2) + p1y + (p2y / 2);
                     text.textBaseline = "alphabetic";
                     shapes.push(text);
                 }
@@ -579,7 +579,6 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         } else if (face_options.forehead_height == "Floating") {
             forehead_height = 0.17;
         }
-
 
 
         var x = stage_options.x;
@@ -1204,8 +1203,8 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
         x = zone.left_x;
         y = zone.y - (f.thick_unit * 1.5 * eyebrow_height);
-        var width_eyebrow = width_eye /2.5;
-        var height_eyebrow = height_eye /4;
+        var width_eyebrow = width_eye / 2.5;
+        var height_eyebrow = height_eye / 4;
 
 //        var left_eyebrow_line_top = [];
 //        if (face_options.eye_shape == 'Almond') {
@@ -1475,7 +1474,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         var alpha = 1;
 
         var fill_color = net.brehaut.Color(face_options.colors.skin).darkenByRatio(0.05).toString();
-        var nose_fill_colors = [face_options.colors.highlights, fill_color, face_options.colors.skin];
+        var nose_fill_colors = [face_options.colors.highlights, maths.hexColorToRGBA(fill_color, 0.9), maths.hexColorToRGBA(face_options.colors.skin, 0.1)];
         var nose_fill_steps = [0, .3, 1];
 
         var full_nose = createPathFromLocalCoordinates(full_nose_line, {
@@ -1688,11 +1687,11 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
         var wrinkle_lines = parseInt(face_options.age / 15);
         var head_line = transformLineToGlobalCoordinates(lines, 'face');
-        var eye_line = transformLineToGlobalCoordinates(lines, 'left eye');
+        var left_eye_line = transformLineToGlobalCoordinates(lines, 'left eye');
 
         head_line = hydratePointsAlongLine(head_line, f.thick_unit * 30);
 
-        var hair_line = lineSegmentCompared(head_line, eye_line, 'above');
+        var hair_line = lineSegmentCompared(head_line, left_eye_line, 'above');
 
         if (hair_line && hair_line.length) {
             var hair_dot_array = createPath(hair_line, {close_line: true, thickness: f.thick_unit * 5, line_color: face_options.hair_color});
@@ -1700,8 +1699,8 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 //            shapes = shapes.concat(hair_dot_array);
 
             var mid_x = comparePoints(hair_line, 'x', 'middle');
-            var mid_y = comparePoints(hair_line, 'y', 'middle');
-            var base_width = (f.thick_unit * 200);
+            var mid_y = comparePoints(hair_line, 'y', 'middle') + (f.thick_unit * 30);
+            var base_width = (f.thick_unit * 220);
             var height = (f.thick_unit * 100);
 
             //TODO: Should warp this to match head shape
@@ -1715,18 +1714,65 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             var alpha = .2;
 
             for (var i = 0; i < wrinkle_lines; i++) {
-                width = base_width + (f.thick_unit * i * 15);
+                width = base_width - (f.thick_unit * i * 25);
                 var forehead_wrinkle = createPathFromLocalCoordinates(forehead_wrinkle_line, {close_line: false, thickness: (f.thick_unit * 2), color: face_options.colors.deepshadow}, width, height);
                 x = mid_x;
-                y = mid_y + (f.thick_unit * i * 15) - (f.thick_unit * 30);
+                y = mid_y - (f.thick_unit * i * 15);
                 forehead_wrinkle.x = x;
                 forehead_wrinkle.y = y;
                 forehead_wrinkle.alpha = alpha;
                 lines.push({name: 'forehead wrinkle line ' + i, line: forehead_wrinkle_line, shape: forehead_wrinkle, x: x, y: y, alpha: alpha, scale_x: width, scale_y: height});
                 shapes.push(forehead_wrinkle);
             }
-
         }
+
+        var right_eye_line = transformLineToGlobalCoordinates(lines, 'right eye');
+        mid_x = comparePoints(head_line, 'x', 'middle');
+        mid_y = right_eye_line[0].y;
+
+        var mid_nose_divot_line = [
+            {x: -1, y: -3},
+            {x: 0, y: -1.5},
+            {x: -.5, y: 3}
+        ];
+        height /= 1.2;
+        var divot_line = createPathFromLocalCoordinates(mid_nose_divot_line, {close_line: false, thickness: (f.thick_unit * 2), color: face_options.colors.deepshadow}, width, height);
+        x = mid_x - (f.thick_unit * 10);
+        y = mid_y - (f.thick_unit * 25);
+        alpha = (face_options.age / 500);
+        divot_line.x = x;
+        divot_line.y = y;
+        divot_line.alpha = alpha;
+        lines.push({name: 'mid nose divot line', line: mid_nose_divot_line, shape: divot_line, x: x, y: y, alpha: alpha, scale_x: width, scale_y: height});
+        shapes.push(divot_line);
+
+        var divot_line_r_2 = transformShapeLine({type: 'reverse', direction: 'horizontal'}, face_options, mid_nose_divot_line);
+        var divot_line_2 = createPathFromLocalCoordinates(divot_line_r_2, {close_line: false, thickness: (f.thick_unit * 2), color: face_options.colors.deepshadow}, width, height);
+        x = mid_x + (f.thick_unit * 10);
+        divot_line_2.x = x;
+        divot_line_2.y = y;
+        divot_line_2.alpha = alpha;
+        lines.push({name: 'mid nose divot line 2', line: divot_line_r_2, shape: divot_line_2, x: x, y: y, alpha: alpha, scale_x: width, scale_y: height});
+        shapes.push(divot_line_2);
+
+        var nose_divot_line = [
+            {x: 0, y: -3},
+            {x: 0, y: -1.5},
+            {x: 0, y: 1.5},
+            {x: 0, y: 3}
+        ];
+        height *= (face_options.age / 50);
+        var divot_line_3 = createPathFromLocalCoordinates(nose_divot_line, {close_line: false, thickness: (f.thick_unit * 1), color: face_options.colors.deepshadow}, width, height);
+        x = mid_x;
+        y = mid_y - (f.thick_unit * 35);
+        alpha = (face_options.age / 500);
+        divot_line_3.x = x;
+        divot_line_3.y = y;
+        divot_line_3.alpha = alpha;
+        lines.push({name: 'mid nose divot line', line: nose_divot_line, shape: divot_line_3, x: x, y: y, alpha: alpha, scale_x: width, scale_y: height});
+        shapes.push(divot_line_3);
+
+
         return shapes;
     }
 
@@ -1762,7 +1808,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         chin_mid_line.alpha = alpha;
         lines.push({name: 'chin mid line', line: chin_line, shape: chin_mid_line, x: x, y: y, alpha: alpha, scale_x: width * .9, scale_y: height});
         shapes.push(chin_mid_line);
-
+//TODO: Arc shape highlighting chin
 
         var head_line = transformLineToGlobalCoordinates(lines, 'face');
         var chin_mid_line_piece = transformLineToGlobalCoordinates(lines, 'chin mid line');

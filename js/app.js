@@ -32,8 +32,8 @@ $(document).ready(function () {
 
 //    $canvas.width($(window).width());
 
-    var testWithTemplate = new Avatar('get_data_template', 'Human');
-//    testWithTemplate.hair_style_options = ['Bald'];
+//    var testWithTemplate = new Avatar('get_data_template', 'Human');
+//    testWithTemplate.eye_color_options = ['Red','Yellow'];
 
     var ogreTemplate = new Avatar('copy_data_template', 'Human');
     ogreTemplate.gender_options = ['Female'];
@@ -44,10 +44,11 @@ $(document).ready(function () {
         {name: 'Fair', highlights: '40,202,30', skin: '50,185,50', cheek: '40,150,40', darkflesh: '20,60,20', deepshadow: '10,50,10'},
         {name: 'Dark', highlights: '80,80,80', skin: '80,185,70', cheek: '40,160,30', darkflesh: '20,20,20', deepshadow: '10,10,10'}
     ];
-    ogreTemplate.decorations.push(
-        {name: 'highlight_rectangle', type: 'rectangle', p1: 'facezone topleft', p2: 'facezone bottomright', line_color: 'black', size: '4', alpha: 1, forceInBounds: true}
+    ogreTemplate.rendering_order.push(
+        {decoration: 'highlight_rectangle', type: 'rectangle', p1: 'facezone topleft', p2: 'facezone bottomright', line_color: 'black', size: '4', alpha: 1, forceInBounds: true}
     );
     av1 = new Avatar('set_data_template', 'Ogre', ogreTemplate);
+
 
     av1.drawOrRedraw({rand_seed: 241, name: 'John Doe', race: 'Ogre'}, {canvas_name: 'demoCanvas'});
     setup_main_avatar();
