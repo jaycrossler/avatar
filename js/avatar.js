@@ -62,6 +62,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
         eye_color: null,
         eye_shape: null,
+        eye_spacing: null,
         eyelid_shape: null,
         eye_cloudiness: null,
         eyebrow_shape: null,
@@ -69,22 +70,19 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         hair_texture: 'Smooth',
         head_size: 'Normal',
         hairiness: 'Normal',
+        forehead_height: null,
 
         nose_shape: null,
         nose_size: null,
+        nose_height: null,
 
         teeth_shape: 'Normal',
+        mouth_height: null,
 
         ear_shape: null,
         ear_thickness: null,
         ear_lobe_left: null,
-        ear_lobe_right: null,
-
-        //Operating settings, these should become obsolete
-        eye_spacing: 0.02,
-        forehead_height: null,
-        nose_height: null,
-        mouth_height: null
+        ear_lobe_right: null
     };
     var _stage_options = {
         percent_height: 1,
@@ -125,6 +123,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         nose_shape_options: "Flat,Wide,Thin,Turned up/perky,Normal,Hooked down,Bulbous,Giant Nostrils".split(","),
         nose_size_options: "Tiny,Small,Normal,Large,Big,Giant,Huge".split(","),
 
+        eye_spacing_options: "Squeezed,Pinched,Thin,Normal,Wide".split(","),
         eye_shape_options: "Almond".split(","),
         eye_color_options: "Hazel,Amber,Green,Blue,Gray,Brown,Dark Brown,Black".split(","),
         eye_lids_options: "None,Smooth,Folded,Thick".split(","), //TODO
@@ -137,11 +136,11 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         ear_lobe_right_options: "Hanging,Attached,Same".split(","),
 
         lip_color_options: "#f00,#e00,#d00,#c00,#f10,#f01,#b22,#944".split(","),
-        mouth_height_options: [.04, .05, .06, .07],
+        mouth_height_options: "Low,Normal,Raised,High".split(","),
 
-        nose_height_options: [0, .01, .01],
+        nose_height_options: "Low,Normal,Raised".split(","),
 
-        forehead_height_options: [.1, .11, .12, .13, .14, .15, .16, .17],
+        forehead_height_options: "Under,Low,Less,Normal,Above,Raised,High,Floating".split(","),
         decorations: []
     }};
 
@@ -267,8 +266,8 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         } else if (face_options.style == 'lines') {
             var neck = buildNeck_Lines(face_zones, this);
             var face = buildFace_Lines(face_zones, this);
-            var nose = buildNose_Lines(face_zones, this);
             var eyes = buildEyes_Lines(face_zones, this);
+            var nose = buildNose_Lines(face_zones, this);
             var chin = buildChin_Lines(face_zones, this);
             var wrinkles = buildWrinkles_Lines(face_zones, this);
             var beard = buildBeard_Lines(face_zones, this);
@@ -459,6 +458,54 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         stage_options.half_height = half_height;
         face_zones.face_width = half_height * (0.55 + (face_options.thickness / 35));
 
+        var eye_spacing = 0.005;
+        if (face_options.eye_spacing == "Pinched") {
+            eye_spacing = 0;
+        } else if (face_options.eye_spacing == "Squeezed") {
+            eye_spacing = -.005;
+        } else if (face_options.eye_spacing == "Thin") {
+            eye_spacing = 0.01;
+        } else if (face_options.eye_spacing == "Wide") {
+            eye_spacing = 0.02;
+        }
+
+        var mouth_height = 0.05;
+        if (face_options.mouth_height == "Low") {
+            mouth_height = 0.04;
+        } else if (face_options.mouth_height == "Raised") {
+            mouth_height = 0.06;
+        } else if (face_options.mouth_height == "High") {
+            mouth_height = 0.07;
+        }
+
+        var nose_height = 0.01;
+        if (face_options.nose_height == "Low") {
+            nose_height = 0;
+        } else if (face_options.nose_height == "Raised") {
+            nose_height = 0.02;
+        }
+
+        var forehead_height = 0.01;
+        if (face_options.forehead_height == "Under") {
+            forehead_height = 0.1;
+        } else if (face_options.forehead_height == "Low") {
+            forehead_height = 0.11;
+        } else if (face_options.forehead_height == "Less") {
+            forehead_height = 0.12;
+        } else if (face_options.forehead_height == "Normal") {
+            forehead_height = 0.13;
+        } else if (face_options.forehead_height == "Above") {
+            forehead_height = 0.14;
+        } else if (face_options.forehead_height == "Raised") {
+            forehead_height = 0.15;
+        } else if (face_options.forehead_height == "High") {
+            forehead_height = 0.16;
+        } else if (face_options.forehead_height == "Floating") {
+            forehead_height = 0.17;
+        }
+
+
+
         var x = stage_options.x;
         var y = stage_options.y;
 
@@ -489,33 +536,33 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         face_zones.eyes = {
             top: -half_height / 16,
             bottom: 2 * half_height / 12,
-            y: y + height_offset + (half_height * (0.8 + face_options.forehead_height)),
+            y: y + height_offset + (half_height * (0.8 + forehead_height)),
 
             left: -half_height / 8,
             right: 2 * half_height / 8,
-            left_x: x + (half_height * (0.75 - face_options.eye_spacing)),
-            right_x: x + (half_height * (1.25 + face_options.eye_spacing)),
+            left_x: x + (half_height * (0.75 - eye_spacing)),
+            right_x: x + (half_height * (1.25 + eye_spacing)),
 
             iris: {
                 top: -half_height / 24,
                 bottom: 2 * half_height / 16,
-                y: y + height_offset + (half_height * (0.8 + face_options.forehead_height)),
+                y: y + height_offset + (half_height * (0.8 + forehead_height)),
 
                 left: -half_height / 16,
                 right: 2 * half_height / 16,
-                left_x: x + (half_height * (0.75 - face_options.eye_spacing)),
-                right_x: x + (half_height * (1.25 + face_options.eye_spacing))
+                left_x: x + (half_height * (0.75 - eye_spacing)),
+                right_x: x + (half_height * (1.25 + eye_spacing))
             },
 
             pupil: {
                 top: -half_height / 65,
                 bottom: 2 * half_height / 28,
-                y: y + height_offset + (half_height * (0.805 + face_options.forehead_height)),
+                y: y + height_offset + (half_height * (0.805 + forehead_height)),
 
                 left: -half_height / 32,
                 right: 2 * half_height / 32,
-                left_x: x + (half_height * (0.75 - face_options.eye_spacing)),
-                right_x: x + (half_height * (1.25 + face_options.eye_spacing))
+                left_x: x + (half_height * (0.75 - eye_spacing)),
+                right_x: x + (half_height * (1.25 + eye_spacing))
             }
 
         };
@@ -523,7 +570,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         face_zones.ears = {
             top: -half_height / 5,
             bottom: 2 * half_height / 5,
-            y: y + height_offset + (half_height * (0.9 + face_options.forehead_height)),
+            y: y + height_offset + (half_height * (0.9 + forehead_height)),
 
             left: -half_height / 16,
             right: 2 * half_height / 16,
@@ -536,14 +583,14 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             right: 2 * half_height / 15, bottom: 2 * half_height / 15,
             radius: half_height / 15,
             x: x + half_height,
-            y: y + height_offset + (half_height * (1.13 + (face_options.forehead_height * 1.2) + face_options.nose_height))
+            y: y + height_offset + (half_height * (1.13 + (forehead_height * 1.2) + nose_height))
         };
 
         face_zones.mouth = {
             left: -half_height / 6, top: -half_height / 18,
             right: 2 * half_height / 6, bottom: 2 * half_height / 18,
             x: x + half_height,
-            y: y + height_offset + (half_height * (1.5 + (face_options.forehead_height / 2) + face_options.nose_height + face_options.mouth_height))
+            y: y + height_offset + (half_height * (1.5 + (forehead_height / 2) + nose_height + mouth_height))
         };
 
         namePoint(avatar, 'facezone topleft', {
