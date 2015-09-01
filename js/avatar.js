@@ -64,6 +64,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         eye_shape: null,
         eyelid_shape: null,
         eye_cloudiness: null,
+        eyebrow_shape: null,
 
         hair_texture: 'Smooth',
         head_size: 'Normal',
@@ -128,6 +129,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         eye_color_options: "Hazel,Amber,Green,Blue,Gray,Brown,Dark Brown,Black".split(","),
         eye_lids_options: "None,Smooth,Folded,Thick".split(","), //TODO
         eye_cloudiness_options: "Normal,Clear,Misty".split(","),
+        eyebrow_shape_options: "Straignt,Squiggle,Squiggle Flip,Slim,Lifted,Arch".split(","),
 
         ear_shape_options: "Round".split(","),
         ear_thickness_options: "Wide,Normal,Big,Tall,Splayed".split(","),
@@ -777,7 +779,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         var ear_width_adjust = 1; //.7-2
         var right_lobe_height = 0; //0-3
         var left_lobe_height = 0; //0-3
-        var inner_cavity_size_adjust = .4; //.3-.6
+        var inner_cavity_size_adjust = .3; //.3-.6
         var ear_inset_adjust = 2;  //0-5
         var ear_head_height_adjust = 0;  //-20 - 20
         ear_head_height_adjust -= 10;
@@ -799,11 +801,11 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         } else if (face_options.ear_thickness == "Tiny") {
             ear_width_adjust = .7;
             ear_height_adjust = .4;
-            inner_cavity_size_adjust = .4;
+            inner_cavity_size_adjust = .35;
         } else if (face_options.ear_thickness == "Splayed") {
             ear_width_adjust = 2;
             ear_height_adjust = 1.2;
-            inner_cavity_size_adjust = .5;
+            inner_cavity_size_adjust = .4;
         }
 
         if (face_options.ear_lobe_left == "Hanging") {
@@ -935,7 +937,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         var pupil_transparency = 0.7; //.1 - .9 for weird eyes, but .7 works best
         var iris_transparency = 0.5; //.1 - .9 for weird eyes, but .5 works best
         var pupil_color = 'black'; //best dark colors, black or dark blue. red looks freaky
-        var eyebrow_thick_start = 4 * f.thick_unit;
+        var eyebrow_thick_start = 4;
         var eyebrow_thick_stop = 2 * f.thick_unit;  //TODO: Still not working fully
         var eye_squint = 1.4;
         var iris_side_movement = -0; // -8 - 8  //TODO: Can go farther once eyes are overdrawn
@@ -950,6 +952,8 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             eyebrow_thick_start *= 1.2;
             eyebrow_thick_stop *= 1.2;
         }
+
+        eyebrow_thick_start += parseInt(face_options.age / 12);
 
         var eye_fill_colors = ["#fff", "#cbb", "#444"];
         var eye_fill_steps = [0, .92, 1];
@@ -978,6 +982,8 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         var width_iris = (f.eyes.iris.right - f.eyes.iris.left);
         var height_iris = (f.eyes.iris.bottom - f.eyes.iris.top);
 
+
+        eyebrow_thick_start *= f.thick_unit;
 
         //Left Eye
         var zone = f.eyes;
@@ -1037,14 +1043,52 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         lines.push({name: 'left eye bottom', line: left_eye_line_bottom, shape: left_eye_bottom, scale_x: width_eye, scale_y: height_eye, x: x, y: y, rotation: rotation_amount});
         shapes.push(left_eye_bottom);
 
+        var left_eyebrow_line_top = [
+            {x: 10, y: 2},
+            {x: -2, y: -6},
+            {x: -10, y: 1}
+        ];
+        if (face_options.eyebrow_shape == "Slim") {
+            left_eyebrow_line_top = [
+                {x: 10, y: 1},
+                {x: -2, y: -6},
+                {x: -10, y: 1}
+            ];
+            eyebrow_thick_start /= 2;
+        } else if (face_options.eyebrow_shape == "Squiggle") {
+            left_eyebrow_line_top = [
+                {x: 12, y: -1},
+                {x: 4, y: 2},
+                {x: -2, y: -5},
+                {x: -10, y: 1}
+            ];
+        } else if (face_options.eyebrow_shape == "Squiggle Flip") {
+            left_eyebrow_line_top = [
+                {x: 12, y: 1},
+                {x: 4, y: -2},
+                {x: -2, y: 2},
+                {x: -10, y: -1}
+            ];
+        } else if (face_options.eyebrow_shape == "Arch") {
+            left_eyebrow_line_top = [
+                {x: 11, y: 0},
+                {x: 4, y: -3},
+                {x: -2, y: -5},
+                {x: -10, y: 2}
+            ];
+
+        }
 
         x = zone.left_x;
-        y = zone.y - (f.thick_unit * eyebrow_height);
-        var left_eyebrow_line_top = [];
-        if (face_options.eye_shape == 'Almond') {
-            left_eyebrow_line_top = transformShapeLine({type: 'almond-horizontal', modifier: 'left', radius: 4.2, starting_step: 10, ending_step: 17 + eyebrow_length}, face_options);
-        }
-        var left_eyebrow_top = createPathFromLocalCoordinates(left_eyebrow_line_top, {close_line: false, line_color: face_options.hair_color, thickness: eyebrow_thick_start, thickness_end: eyebrow_thick_stop}, width_eye, height_eye);
+        y = zone.y - (f.thick_unit * 1.5 * eyebrow_height);
+        var width_eyebrow = width_eye /2.5;
+        var height_eyebrow = height_eye /4;
+
+//        var left_eyebrow_line_top = [];
+//        if (face_options.eye_shape == 'Almond') {
+//            left_eyebrow_line_top = transformShapeLine({type: 'almond-horizontal', modifier: 'left', radius: 4.2, starting_step: 10, ending_step: 17 + eyebrow_length}, face_options);
+//        }
+        var left_eyebrow_top = createPathFromLocalCoordinates(left_eyebrow_line_top, {close_line: false, line_color: face_options.hair_color, thickness: eyebrow_thick_start, thickness_end: eyebrow_thick_stop}, width_eyebrow, height_eyebrow);
         left_eyebrow_top.x = x;
         left_eyebrow_top.y = y;
         left_eyebrow_top.alpha = eyebrow_transparency;
@@ -1142,9 +1186,9 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
 
         x = zone.right_x;
-        y = zone.y - (f.thick_unit * eyebrow_height);
+        y = zone.y - (f.thick_unit * 1.5 * eyebrow_height);
         var right_eyebrow_line_top = transformShapeLine({type: 'reverse', direction: 'horizontal', axis: 0}, face_options, left_eyebrow_line_top);
-        var right_eyebrow_top = createPathFromLocalCoordinates(right_eyebrow_line_top, {close_line: false, line_color: face_options.hair_color, thickness: eyebrow_thick_start, thickness_end: eyebrow_thick_stop}, width_eye, height_eye);
+        var right_eyebrow_top = createPathFromLocalCoordinates(right_eyebrow_line_top, {close_line: false, line_color: face_options.hair_color, thickness: eyebrow_thick_start, thickness_end: eyebrow_thick_stop}, width_eyebrow, height_eyebrow);
         right_eyebrow_top.x = x;
         right_eyebrow_top.y = y;
         right_eyebrow_top.alpha = eyebrow_transparency;
@@ -1449,28 +1493,28 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             return []
         } else if (face_options.beard_style == 'Full Chin') {
             hair_line_level_adjust = 10;
-            inner_hair_x = 1;
+//            inner_hair_x = 1;
             inner_hair_y = 14;
             outer_hair_x = 1;
             outer_hair_y = 2;
             alpha = .9;
         } else if (face_options.beard_style == 'Chin Warmer') {
             hair_line_level_adjust = 1;
-            inner_hair_x = 0;
+//            inner_hair_x = 0;
             inner_hair_y = 11;
             outer_hair_x = .5;
             outer_hair_y = .5;
             alpha = .8;
         } else if (face_options.beard_style == 'Soup Catcher') {
             hair_line_level_adjust = 1;
-            inner_hair_x = 1;
+//            inner_hair_x = 1;
             inner_hair_y = 15;
             outer_hair_x = 1;
             outer_hair_y = 10;
             alpha = .9;
         } else if (face_options.beard_style == 'Thin Chin Wrap') {
             hair_line_level_adjust = 1;
-            inner_hair_x = 1;
+//            inner_hair_x = 1;
             inner_hair_y = 1;
             outer_hair_x = 0;
             outer_hair_y = .2;
