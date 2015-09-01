@@ -50,7 +50,7 @@ $(document).ready(function () {
     av1 = new Avatar('set_data_template', 'Ogre', ogreTemplate);
 
 
-    av1.drawOrRedraw({rand_seed: 241, name: 'John Doe', race: 'Ogre'}, {canvas_name: 'demoCanvas'});
+    av1.drawOrRedraw({rand_seed: 36983, name: 'John Doe'}, {canvas_name: 'demoCanvas'});
     setup_main_avatar();
 
     function setup_main_avatar() {

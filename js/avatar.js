@@ -75,7 +75,16 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         nose_height: null,
 
         teeth_shape: 'Normal',
+        lip_shape: null,
         mouth_height: null,
+        mouth_left_upturn: null,
+        mouth_right_upturn: null,
+        mouth_width: null,
+        lip_bottom_height: null,
+        lip_top_height: null,
+        lip_bottom_bottom: null,
+        lip_top_top: null,
+
 
         ear_shape: null,
         ear_thickness: null,
@@ -149,6 +158,14 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
         lip_color_options: "#f00,#e00,#d00,#c00,#f10,#f01,#b22,#944".split(","),
         mouth_height_options: "Low,Normal,Raised,High".split(","),
+        mouth_left_upturn_options: "Down,Low,Normal,Raised,High".split(","),
+        mouth_right_upturn_options: "Down,Low,Normal,Raised,High".split(","),
+        mouth_width_options: "Wide,Big,Normal,Short,Small,Tiny".split(","),
+        lip_bottom_height_options: "Down,Low,Normal,Raised,High".split(","),
+        lip_top_height_options: "Down,Low,Normal,Raised,High".split(","),
+        lip_bottom_bottom_options: "Down,Low,Normal,Raised,High".split(","),
+        lip_top_top_options: "Down,Low,Normal,Raised,High".split(","),
+        lip_shape_options: "Puckered,Thin,Thick".split(","),
 
         nose_height_options: "Low,Normal,Raised".split(","),
 
@@ -1383,11 +1400,11 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             width *= 0.6;
             nose_side_offset /= 2;
         } else if (face_options.nose_shape == 'Wide') {
-            width *= 1.3;
+            width *= 1.1;
         } else if (face_options.nose_shape == 'Thin') {
-            width *= 0.8;
+            width *= 0.9;
         } else if (face_options.nose_shape == 'Bulbous') {
-            width *= 1.3;
+            width *= 1.2;
             height *= 1.3;
             nose_side_offset++;
         } else if (face_options.nose_shape == 'Giant Nostrils') {
@@ -1409,19 +1426,19 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             thickness *= 1.1;
         } else if (face_options.nose_size == 'Big') {
             nose_length = 5;
-            width *= 1.2;
+            width *= 1.15;
             height *= 1.3;
             thickness *= 1.4;
             nose_side_offset++;
         } else if (face_options.nose_size == 'Giant') {
             nose_length = 6;
-            width *= 1.3;
+            width *= 1.2;
             height *= 1.4;
             thickness *= 1.5;
             nose_side_offset += 2;
         } else if (face_options.nose_size == 'Huge') {
             nose_length = 7;
-            width *= 1.5;
+            width *= 1.3;
             height *= 1.6;
             thickness *= 2;
             nose_side_offset += 3;
@@ -1741,7 +1758,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         var divot_line = createPathFromLocalCoordinates(mid_nose_divot_line, {close_line: false, thickness: (f.thick_unit * 2), color: face_options.colors.deepshadow}, width, height);
         x = mid_x - (f.thick_unit * 10);
         y = mid_y - (f.thick_unit * 25);
-        alpha = (face_options.age / 500);
+        alpha = (face_options.age / 350);
         divot_line.x = x;
         divot_line.y = y;
         divot_line.alpha = alpha;
@@ -1767,7 +1784,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         var divot_line_3 = createPathFromLocalCoordinates(nose_divot_line, {close_line: false, thickness: (f.thick_unit * 1), color: face_options.colors.deepshadow}, width, height);
         x = mid_x;
         y = mid_y - (f.thick_unit * 35);
-        alpha = (face_options.age / 500);
+        alpha = (face_options.age / 400);
         divot_line_3.x = x;
         divot_line_3.y = y;
         divot_line_3.alpha = alpha;
@@ -1922,12 +1939,93 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
         //These can change expression alot
         var mouth_width = 1; //.6 - 1.3
-        var bottom_lip_height = 0.5; // 0 - 2
-        var bottom_lip_bottom = 1.5; // 1-5
-        var top_lip_height = 1.5; //.2 - 1.5
-        var top_lip_top = 1; //.2 - 2
+        if (face_options.mouth_width == "Tiny") {
+            mouth_width = .6;
+        } else if (face_options.mouth_width == "Small") {
+            mouth_width = .75;
+        } else if (face_options.mouth_width == "Short") {
+            mouth_width = .9;
+        } else if (face_options.mouth_width == "Normal") {
+            mouth_width = 1;
+        } else if (face_options.mouth_width == "Big") {
+            mouth_width = 1.1;
+        } else if (face_options.mouth_width == "Wide") {
+            mouth_width = 1.2;
+        }
 
-        top_lip_top += top_lip_height;
+        var lip_bottom_height = 0.5; // 0 - 2
+        if (face_options.lip_bottom_height == "Down") {
+            lip_bottom_height = 0;
+        } else if (face_options.lip_bottom_height == "Low") {
+            lip_bottom_height = .25;
+        } else if (face_options.lip_bottom_height == "Raised") {
+            lip_bottom_height = 1;
+        } else if (face_options.lip_bottom_height == "High") {
+            lip_bottom_height = 1.3;
+        }
+
+        var lip_bottom_bottom = 1.5; // 1-5
+        if (face_options.lip_bottom_bottom == "Down") {
+            lip_bottom_bottom = 1;
+        } else if (face_options.lip_bottom_bottom == "Low") {
+            lip_bottom_bottom = 1.2;
+        } else if (face_options.lip_bottom_bottom == "Raised") {
+            lip_bottom_bottom = 2;
+        } else if (face_options.lip_bottom_bottom == "High") {
+            lip_bottom_bottom = 2.5;
+        }
+
+        var lip_top_height = 1.5; //.2 - 1.5
+        if (face_options.lip_top_height == "Down") {
+            lip_top_height = .5;
+        } else if (face_options.lip_top_height == "Low") {
+            lip_top_height = 1;
+        } else if (face_options.lip_top_height == "Raised") {
+            lip_top_height = 1.75;
+        } else if (face_options.lip_top_height == "High") {
+            lip_top_height = 2;
+        }
+
+        var lip_top_top = 1; //.2 - 2
+        if (face_options.lip_top_top == "Down") {
+            lip_top_top = .2;
+        } else if (face_options.lip_top_top == "Low") {
+            lip_top_top = .5;
+        } else if (face_options.lip_top_top == "Raised") {
+            lip_top_top = 1.3;
+        } else if (face_options.lip_top_top == "High") {
+            lip_top_top = 1.5;
+        }
+
+        var mouth_left_lift = 0;
+        if (face_options.mouth_left_upturn == "Down") {
+            mouth_left_lift = -2;
+        } else if (face_options.mouth_left_upturn == "Low") {
+            mouth_left_lift = -1;
+        } else if (face_options.mouth_left_upturn == "Raised") {
+            mouth_left_lift = 1;
+        } else if (face_options.mouth_left_upturn == "High") {
+            mouth_left_lift = 2;
+        }
+        var mouth_right_lift = 0;
+        if (face_options.mouth_right_upturn == "Down") {
+            mouth_right_lift = -2;
+        } else if (face_options.mouth_right_upturn == "Low") {
+            mouth_right_lift = -1;
+        } else if (face_options.mouth_right_upturn == "Raised") {
+            mouth_right_lift = 1;
+        } else if (face_options.mouth_right_upturn == "High") {
+            mouth_right_lift = 2;
+        }
+
+
+//        lip_bottom_height_options: "Down,Low,Normal,Raised,High".split(","),
+//        lip_top_height_options: "Down,Low,Normal,Raised,High".split(","),
+//        lip_bottom_bottom_options: "Down,Low,Normal,Raised,High".split(","),
+//        lip_top_top_options: "Down,Low,Normal,Raised,High".split(","),
+
+
+        lip_top_top += lip_top_height;
 
         var lip_thickness = f.thick_unit * 2;
         var width = (f.mouth.right - f.mouth.left) / 2.6 * mouth_width;
@@ -1935,29 +2033,67 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
         if (face_options.gender == 'Female') {
             lip_thickness *= 1.4;
-            bottom_lip_bottom += 1.5;
-            bottom_lip_height += 1;
-            top_lip_height += 1;
-            top_lip_top += 1;
+            lip_bottom_bottom += 1.5;
+            lip_bottom_height += 1;
+            lip_top_height += 1;
+            lip_top_top += 1;
         }
 
         //Mouth top and bottom line
         var mouth_top_line = [
-            {x: -13, y: -2},
-            {x: -10, y: -1},
-            {x: -5, y: -(top_lip_top * 2)},
-            {x: 0, y: -top_lip_top},
-            {x: 0, y: -top_lip_top},
-            {x: 5, y: -(top_lip_top * 2)},
-            {x: 10, y: -1},
-            {x: 13, y: -2},
+            {x: -13, y: -2 - mouth_left_lift},
+            {x: -10, y: -1 - (mouth_left_lift/2)},
+            {x: -5, y: -(lip_top_top * 2)},
+            {x: -1, y: -lip_top_top},
+            {x: 1, y: -lip_top_top},
+            {x: 5, y: -(lip_top_top * 2)},
+            {x: 10, y: -1 - (mouth_right_lift/2) },
+            {x: 13, y: -2 - mouth_right_lift},
 
-            {x: 10, y: 1},
-            {x: 4, y: bottom_lip_height + bottom_lip_bottom},
-            {x: 0, y: bottom_lip_height + bottom_lip_bottom - 1},
-            {x: -4, y: bottom_lip_height + bottom_lip_bottom},
-            {x: -10, y: 1}
+            {x: 13, y: -2 - mouth_right_lift},
+            {x: 10, y: 1 - (mouth_right_lift/2) },
+            {x: 4, y: lip_bottom_height + lip_bottom_bottom},
+            {x: 1, y: lip_bottom_height + lip_bottom_bottom - 1},
+            {x: -1, y: lip_bottom_height + lip_bottom_bottom - 1},
+            {x: -4, y: lip_bottom_height + lip_bottom_bottom},
+            {x: -10, y: 1 - (mouth_left_lift/2)},
+            {x: -13, y: -2 - mouth_left_lift}
         ];
+        if (face_options.lip_shape == "Thin") {
+            mouth_top_line = [
+                {x: -13, y: -2 - (mouth_left_lift *.5)},
+                {x: -5, y: -(lip_top_top)},
+                {x: -1, y: -(lip_top_top *.8)},
+                {x: 1, y: -(lip_top_top *.8)},
+                {x: 5, y: -(lip_top_top)},
+                {x: 13, y: -2 - (mouth_right_lift *.5)},
+
+                {x: 12, y: -2.5 - (mouth_right_lift *.5)},
+                {x: 4, y: (lip_bottom_height + lip_bottom_bottom) *.5},
+                {x: 1, y: (lip_bottom_height + lip_bottom_bottom) * .7},
+                {x: -1, y: (lip_bottom_height + lip_bottom_bottom) * .7},
+                {x: -4, y: (lip_bottom_height + lip_bottom_bottom) *.5},
+                {x: -12, y: -2.5 - (mouth_left_lift *.5)}
+            ];
+        } else if (face_options.lip_shape == "Thick") {
+            mouth_top_line = [
+                {x: -13, y: -2 - (mouth_left_lift *.7)},
+                {x: -5, y: -(lip_top_top * 1.2)},
+                {x: -1, y: -(lip_top_top * 1.1)},
+                {x: 1, y: -(lip_top_top * 1.1)},
+                {x: 5, y: -(lip_top_top * 1.2)},
+                {x: 13, y: -2 - (mouth_right_lift *.7)},
+
+                {x: 12, y: -2.5 - (mouth_right_lift *.5)},
+                {x: 4, y: (lip_bottom_height + lip_bottom_bottom) *.9},
+                {x: 1, y: (lip_bottom_height + lip_bottom_bottom) * 1.1},
+                {x: -1, y: (lip_bottom_height + lip_bottom_bottom) * 1.1},
+                {x: -4, y: (lip_bottom_height + lip_bottom_bottom) *.9},
+                {x: -12, y: -2.5 - (mouth_left_lift *.5)}
+            ];
+        }
+
+
         var l = createPathFromLocalCoordinates(mouth_top_line, {close_line: true, thickness: lip_thickness, color: face_options.colors.deepshadow, fill_color: face_options.lip_color}, width, height);
         l.x = f.mouth.x;
         l.y = f.mouth.y;
@@ -1966,34 +2102,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         shapes.push(l);
 
 
-//        var tongue_line = [
-//            {x: -10, y: 0},
-//            {x: 0, y: -top_lip_height},
-//            {x: 10, y: 0},
-//
-//            {x: 10, y: 0},
-//            {x: 0, y: bottom_lip_height},
-//            {x: -10, y: 0}
-//        ];
-//        var l2 = createPathFromLocalCoordinates(tongue_line, {close_line: true, thickness: 0, color: face_options.colors.deepshadow, fill_color: 'pink'}, width, height);
-//        l2.x = f.mouth.x;
-//        l2.y = f.mouth.y;
-//        l2.alpha = 0.5;
-//        l2.name = 'tongue';
-//        lines.push({name: 'tongue', line: tongue_line, shape: l2, x: f.mouth.x, y: f.mouth.y, scale_x: width, scale_y: height});
-//        shapes.push(l2);
-
-        var tongue_line = [
-            {x: -11, y: -2},
-            {x: -10, y: 0},
-            {x: -2, y: -top_lip_height},
-            {x: 0, y: 1 - top_lip_height},
-            {x: 2, y: -top_lip_height},
-            {x: 10, y: 0},
-            {x: 11, y: -2}
-
-
-        ];
+        var tongue_line = transformShapeLine({type:'midline of loop'}, face_options, mouth_top_line);
         var l2 = createPathFromLocalCoordinates(tongue_line, {close_line: false, thickness: 1, color: face_options.colors.deepshadow}, width, height);
         l2.x = f.mouth.x;
         l2.y = f.mouth.y;
@@ -2002,20 +2111,6 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         lines.push({name: 'tongue', line: tongue_line, shape: l2, x: f.mouth.x, y: f.mouth.y, scale_x: width, scale_y: height});
         shapes.push(l2);
 
-
-//
-//        var mouth_high_line = [
-//            {x: -3, y: 0},
-//            {x: 0, y: -0.5},
-//            {x: 3, y: 0}
-//        ];
-//        var l4 = createPathFromLocalCoordinates(mouth_high_line, {close_line: false, thickness: 0, color: face_options.colors.cheek, fill_color: 'pink'}, width, height);
-//        l4.x = f.mouth.x;
-//        l4.y = f.mouth.y - (f.thick_unit * 24);
-//        l4.alpha = 0.5;
-//        l4.name = 'mouth high line';
-//        lines.push({name: 'mouth high line', line: mouth_high_line, shape: l4, x: f.mouth.x, y: f.mouth.y - (f.thick_unit * 24), scale_x: width, scale_y: height});
-//        shapes.push(l4);
 
         return shapes;
     }
@@ -2160,7 +2255,26 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
                         existing_list[c].y = mid_y - ((mid_y - existing_list[c].y) * (options.multiplier || .9));
                     }
                 }
+            } else if (type == 'midline of loop') {
+                //Takes a loop and averages the points through the middle
+                var e_length = existing_list.length;
+                var e_length_mid = e_length/2;
+                var new_list = [];
 
+                for (c = 0; c < e_length_mid; c++) {
+                    var xy = _.clone(existing_list[c]);
+                    new_list.push(xy);
+                }
+                var id=0;
+                for (c = e_length-1; c > e_length_mid; c--) {
+                    var point = existing_list[c];
+                    new_list[id].x += point.x;
+                    new_list[id].x /= 2;
+                    new_list[id].y += point.y;
+                    new_list[id].y /= 2;
+                    id++;
+                }
+                existing_list = new_list;
 
             } else if (type == 'reverse') {
                 var axis = options.axis || 0;
