@@ -901,7 +901,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         var ear_width_adjust = 1; //.7-2
         var right_lobe_height = 0; //0-3
         var left_lobe_height = 0; //0-3
-        var inner_cavity_size_adjust = .3; //.3-.6
+        var inner_cavity_size_adjust = .2; //.3-.6
         var ear_inset_adjust = 2;  //0-5
         var ear_head_height_adjust = 0;  //-20 - 20
         ear_head_height_adjust -= 10;
@@ -923,11 +923,11 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         } else if (face_options.ear_thickness == "Tiny") {
             ear_width_adjust = .7;
             ear_height_adjust = .4;
-            inner_cavity_size_adjust = .35;
+            inner_cavity_size_adjust = .25;
         } else if (face_options.ear_thickness == "Splayed") {
             ear_width_adjust = 2;
             ear_height_adjust = 1.2;
-            inner_cavity_size_adjust = .4;
+            inner_cavity_size_adjust = .3;
         }
 
         if (face_options.ear_lobe_left == "Hanging") {
@@ -1023,14 +1023,15 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
         width *= inner_cavity_size_adjust;
         height *= inner_cavity_size_adjust;
-        in_x_offset = 1;
-        in_y_offset = 2;
+        in_x_offset = 4;
+        in_y_offset = 6;
 
         var ear_r_in = createPathFromLocalCoordinates(ear_line_r, {close_line: true, thickness: f.thick_unit, fill_color: face_options.colors.darkflesh, color: face_options.colors.deepshadow}, width, height);
         x = zone.left_x - (f.thick_unit * ear_inset_adjust) + (f.thick_unit * in_x_offset);
         y = zone.y - (f.thick_unit * ear_head_height_adjust) + (f.thick_unit * in_y_offset);
         ear_r_in.x = x;
         ear_r_in.y = y;
+        ear_r_in.rotation = 6;
         lines.push({name: 'ear right line in', line: ear_line_r, shape: ear_r_in, scale_x: 1, scale_y: 1, x: x, y: y});
         shapes.push(ear_r_in);
 
@@ -1039,6 +1040,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         y = zone.y - (f.thick_unit * ear_head_height_adjust) + (f.thick_unit * in_y_offset);
         ear_l_in.x = x;
         ear_l_in.y = y;
+        ear_l_in.rotation = -6;
         lines.push({name: 'ear left line in', line: ear_line_l, shape: ear_l_in, scale_x: 1, scale_y: 1, x: x, y: y});
         shapes.push(ear_l_in);
 
@@ -1480,7 +1482,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         var full_nose = createPathFromLocalCoordinates(full_nose_line, {
             close_line: true, thickness: f.thick_unit * .2, line_color: face_options.colors.skin,
             fill_colors: nose_fill_colors, fill_method: 'radial',
-            fill_steps: nose_fill_steps, y_offset: (10 * f.thick_unit), radius: (80 * f.thick_unit)
+            fill_steps: nose_fill_steps, y_offset: (5 * f.thick_unit), radius: (80 * f.thick_unit)
         }, width, height);
         full_nose.x = f.nose.x;
         full_nose.y = f.nose.y;
@@ -1808,7 +1810,22 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         chin_mid_line.alpha = alpha;
         lines.push({name: 'chin mid line', line: chin_line, shape: chin_mid_line, x: x, y: y, alpha: alpha, scale_x: width * .9, scale_y: height});
         shapes.push(chin_mid_line);
-//TODO: Arc shape highlighting chin
+
+        var chin_line_lower = [
+            {x: -5, y: 1},
+            {x: 0, y: 0},
+            {x: 5, y: 1}
+        ];
+        width *= 1.5;
+        var chin_under_line = createPathFromLocalCoordinates(chin_line_lower, {close_line: false, thickness: (f.thick_unit * 1.5), color: face_options.colors.deepshadow}, width, height);
+        x = f.mouth.x;
+        y = f.mouth.y + (f.thick_unit * 45);
+        alpha = .15;
+        chin_under_line.x = x;
+        chin_under_line.y = y;
+        chin_under_line.alpha = alpha;
+        lines.push({name: 'chin bottom line', line: chin_line_lower, shape: chin_under_line, x: x, y: y, alpha: alpha, scale_x: width, scale_y: height});
+        shapes.push(chin_under_line);
 
         var head_line = transformLineToGlobalCoordinates(lines, 'face');
         var chin_mid_line_piece = transformLineToGlobalCoordinates(lines, 'chin mid line');
