@@ -3,13 +3,11 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
     //TODO: Hair Peak have multiple shapes, apply more than one peak
     //TODO: Hair and beard use variables
-    //TODO: Eye spacing as fraction of face width
     //TODO: Neck like coathanger shape
     //TODO: Cheekbones
     //TODO: Wrinkles
     //TODO: Age progression
     //TODO: Scars and Jewelery
-    //TODO: Background images on canvas
     //TODO: Sprite images
     //TODO: Emotions
     //TODO: Moving eyes with border around them
@@ -19,7 +17,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
     //-----------------------------
     //Private Global variables
-    var VERSION = '0.0.3',
+    var VERSION = '0.0.4',
         summary = 'Drawing procedurally rendered people on HTML5 canvas.',
         author = 'Jay Crossler - http://github.com/jaycrossler',
         file_name = 'avatar.js';
@@ -94,6 +92,20 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
     //-----------------------------
     var _data = {'Human': {
+        rendering_order: [
+            {decoration:"box-behind"},
+            {feature:"neck", style:"lines"},
+            {feature:"face", style:"lines"},
+            {feature:"eyes", style:"lines"},
+            {feature:"nose", style:"lines"},
+            {feature:"chin", style:"lines"},
+            {feature:"wrinkles", style:"lines"},
+            {feature:"beard", style:"lines"},
+            {feature:"mouth", style:"lines"},
+            {feature:"hair", style:"lines"},
+            {feature:"ears", style:"lines"},
+            {decoration:"name-plate"}
+        ],
         skin_type_color_options: [
             {name: 'Fair', highlights: '254,202,182', skin: '245,185,158', cheek: '246,171,142', darkflesh: '217,118,76', deepshadow: '202,168,110'},
             {name: 'Brown', highlights: '229,144,50', skin: '228,131,86', cheek: '178,85,44', darkflesh: '143,70,29', deepshadow: '152,57,17'},
@@ -141,7 +153,12 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         nose_height_options: "Low,Normal,Raised".split(","),
 
         forehead_height_options: "Under,Low,Less,Normal,Above,Raised,High,Floating".split(","),
-        decorations: []
+        decorations: [
+            {name:"box-behind", type: 'rectangle', p1: 'facezone topleft', p2: 'facezone bottomright',
+            fill_color:'blue', alpha: 0.3, line_color: 'light blue', size: '2', forceInBounds: true},
+            {name:"name-plate", type: 'rectangle', height: 16, docked:'bottom', forceInBounds: true, font_size: 9,
+            text:'{{name}}', text_color:'black', line_color:'brown', fill_color:'white', alpha:0.8}
+        ]
     }};
 
     //-----------------------------
@@ -258,25 +275,26 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     AvatarClass.prototype.buildFace = function (face_options) {
         var container = new createjs.Container();
         this.lines = [];
+        var avatar = this;
 
         var face_zones = buildFaceZones(this);
-        if (face_options.style == 'circles') {
-            container = buildFace_Circles(container, face_options, face_zones, 'neck,ears,face,eyes,nose,mouth'.split(','));
+        var race_data = this.getRaceData();
 
-        } else if (face_options.style == 'lines') {
-            var neck = buildNeck_Lines(face_zones, this);
-            var face = buildFace_Lines(face_zones, this);
-            var eyes = buildEyes_Lines(face_zones, this);
-            var nose = buildNose_Lines(face_zones, this);
-            var chin = buildChin_Lines(face_zones, this);
-            var wrinkles = buildWrinkles_Lines(face_zones, this);
-            var beard = buildBeard_Lines(face_zones, this);
-            var mouth = buildMouth_Lines(face_zones, this);
-            var hair = buildHair_Lines(face_zones, this);
-            var ears = buildEars_Lines(face_zones, this);
-            addSceneChildren(container, [neck, face, chin, wrinkles, beard, nose, eyes, mouth, hair, ears]);
-        }
-        addSceneChildren(container, buildDecorations(this));
+        _.each(race_data.rendering_order || [], function(layer){
+            if (layer.decoration) {
+                addSceneChildren(container, buildDecoration(avatar, layer));
+
+            } else if (layer.feature) {
+                //TODO: Change this to not use eval
+                var funcName = "build" + _.str.capitalize(layer.feature) + "_" + _.str.capitalize(layer.style || "Lines");
+                var feature_shapes = eval (funcName + "(face_zones, avatar, layer);");
+                addSceneChildren(container, feature_shapes);
+            }
+        });
+
+        //TODO: Add Circles in
+//        if (face_options.style == 'circles') {
+//            container = buildFace_Circles(container, face_options, face_zones, 'neck,ears,face,eyes,nose,mouth'.split(','));
 
         return container;
     };
@@ -393,45 +411,103 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         //TODO: vary colors based on charisma
     }
 
-    function buildDecorations(avatar) {
+    function buildDecoration(avatar, decoration) {
         //TODO: There should be a way to add decorations before drawing the pic
         var shapes = [];
+
         var data = avatar.getRaceData();
+        var data_item = _.find(data.decorations || [], function(dec){
+            return dec.name == decoration.decoration;
+        });
+        if (data_item){
+            decoration = JSON.parse(JSON.stringify(decoration)); //Deep-copy this
+            $.extend(decoration, data_item);
+        }
 
-        var canvas_w = avatar.$canvas.width();
-        var canvas_h = avatar.$canvas.height();
-
-        _.each(data.decorations || [], function (decoration, i) {
-            if (decoration.type == 'rectangle') {
-                var p1 = (_.isString(decoration.p1)) ? getPoint(avatar, decoration.p1) : decoration.p1;
-                var p2 = (_.isString(decoration.p2)) ? getPoint(avatar, decoration.p2) : decoration.p2;
-                if (p1 && _.isObject(p1) && p2 && _.isObject(p2)) {
-                    var p1x = parseInt(p1.x);
-                    var p1y = parseInt(p1.y);
-                    var p2x = parseInt(p2.x - p1.x);
-                    var p2y = parseInt(p2.y - p1.y);
+        if (decoration.type == 'rectangle') {
+            //TODO: Work with docked locations
+            var p1, p2;
+            if (decoration.docked) {
+                var image_tl = getPoint(avatar, 'facezone topleft');
+                var image_br = getPoint(avatar, 'facezone bottomright');
+                var height = decoration.height || 16;
+                var width = decoration.width || 16;
+                if (decoration.docked == "bottom") {
+                    p1 = {x: image_tl.x, y: image_br.y - height};
+                    p2 = {x: image_br.x, y: image_br.y}
 
                     if (decoration.forceInBounds) {
-                        if (p1x < 1) p1x = 1;
-                        if (p1y < 1) p1y = 1;
-                        if (p2x > canvas_w) p2x = (canvas_w - p1x) - 2;
-                        if (p2y > canvas_h) p2y = (canvas_h - p1y) - 2;
+                        var canvas_h = avatar.$canvas.height();
+                        if (p2.y > canvas_h) {
+                            p1.y += (canvas_h - p2.y);
+                            p2.y += (canvas_h - p2.y);
+                        }
+                    }
+                } //TODO: Add other docked locations
+
+
+            } else {
+                p1 = (_.isString(decoration.p1)) ? getPoint(avatar, decoration.p1) : decoration.p1;
+                p2 = (_.isString(decoration.p2)) ? getPoint(avatar, decoration.p2) : decoration.p2;
+            }
+            if (p1 && _.isObject(p1) && p2 && _.isObject(p2)) {
+                var p1x = parseInt(p1.x);
+                var p1y = parseInt(p1.y);
+                var p2x = parseInt(p2.x - p1.x);
+                var p2y = parseInt(p2.y - p1.y);
+
+                if (decoration.forceInBounds) {
+                    var canvas_w = avatar.$canvas.width();
+                    var canvas_h = avatar.$canvas.height();
+                    if (p1x < 1) p1x = 1;
+                    if (p1y < 1) p1y = 1;
+                    if (p2x > canvas_w) p2x = (canvas_w - p1x) - 2;
+                    if (p2y > canvas_h) p2y = (canvas_h - p1y) - 2;
+                }
+
+                var rect = new createjs.Shape();
+                if (decoration.size) rect.graphics.setStrokeStyle(decoration.size);
+                if (decoration.line_color || decoration.color) rect.graphics.beginStroke(decoration.line_color || decoration.color);
+                if (decoration.fill_color || decoration.color) rect.graphics.beginFill(decoration.fill_color || decoration.color);
+                rect.alpha = decoration.alpha || 1;
+                rect.graphics.drawRect(p1x, p1y, p2x, p2y);
+                rect.graphics.endFill();
+                shapes.push(rect);
+                avatar.lines.push({name: decoration.name || 'decoration ' + (decoration.name||"item"), line: [p1, {x: p2x, y: p2y}], shape: rect, scale_x: 1, scale_y: 1, x: 1, y: 1});
+
+                if (decoration.text) {
+                    var font_size = decoration.font_size || 10;
+                    var font_name = decoration.font_name || "Arial";
+                    var font_color = decoration.font_color || decoration.color || "Black";
+                    var font_text = decoration.text;
+
+                    if (font_text.indexOf("{{") > -1) {
+                        _.templateSettings = {
+                          interpolate: /\{\{(.+?)\}\}/g
+                        };
+
+                        var text_template = _.template(font_text);
+                        font_text = text_template(avatar.face_options);
                     }
 
-                    var rect = new createjs.Shape();
-                    if (decoration.size) rect.graphics.setStrokeStyle(decoration.size);
-                    if (decoration.line_color || decoration.color) rect.graphics.beginStroke(decoration.line_color || decoration.color);
-                    if (decoration.fill_color || decoration.color) rect.graphics.beginFill(decoration.line_color || decoration.color);
-                    rect.alpha = decoration.alpha || 1;
-                    rect.graphics.drawRect(p1x, p1y, p2x, p2y);
-                    shapes.push(rect);
-                    avatar.lines.push({name: decoration.name || 'decoration ' + i, line: [p1, {x: p2x, y: p2y}], shape: rect, scale_x: 1, scale_y: 1, x: 1, y: 1});
-
+                    var text = new createjs.Text(font_text, font_size + "px "+font_name, font_color);
+                    var textBounds =text.getBounds();
+                    var textWidth=p2x;
+                    if (textBounds && textBounds.width) {
+                        textWidth = textBounds.width;
+                    }
+                    text.x = p1x + ((p2x - textWidth)/2);
+                    text.y = ((p2y-font_size)/2) + p1y + (p2y / 2);
+                    text.textBaseline = "alphabetic";
+                    shapes.push(text);
                 }
-            } else if (decoration.type == 'image') {
-                //TODO: Add images - is there a way to do this from a local file?
+
+
             }
-        });
+        } else if (decoration.type == 'image') {
+            //TODO: Add images - is there a way to do this from a local file?
+        }
+
         return shapes;
     }
 

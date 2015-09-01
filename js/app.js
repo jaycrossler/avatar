@@ -45,7 +45,7 @@ $(document).ready(function () {
         {name: 'Dark', highlights: '80,80,80', skin: '80,185,70', cheek: '40,160,30', darkflesh: '20,20,20', deepshadow: '10,10,10'}
     ];
     ogreTemplate.decorations.push(
-        {type: 'rectangle', p1: 'facezone topleft', p2: 'facezone bottomright', line_color: 'black', size: '2', alpha: 1, forceInBounds: true}
+        {name: 'highlight_rectangle', type: 'rectangle', p1: 'facezone topleft', p2: 'facezone bottomright', line_color: 'black', size: '4', alpha: 1, forceInBounds: true}
     );
     av1 = new Avatar('set_data_template', 'Ogre', ogreTemplate);
 
@@ -82,12 +82,12 @@ $(document).ready(function () {
                 var seed = avatar.initialization_seed;
                 var age = avatar.face_options.age;
                 av1.face_options = null;
-                av1.drawOrRedraw({rand_seed: seed, age: age});
+                av1.drawOrRedraw({rand_seed: seed, age: age, name: name});
                 setup_main_avatar();
 
                 //Set this one to ogre
                 avatar.face_options = null;
-                avatar.drawOrRedraw({race: 'Ogre', rand_seed: seed});
+                avatar.drawOrRedraw({race: 'Ogre', rand_seed: seed, age: age, name: name});
             });
             avatar.registerEvent('face', function (avatar) {
                 $('#avatar_name').text(avatar.face_options.name || "Avatar");
