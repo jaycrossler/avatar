@@ -4,22 +4,23 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //TODO: Hair Peak have multiple shapes, apply more than one peak
     //TODO: Hair and beard use variables
     //TODO: Eye spacing as fraction of face width
-    //TODO: Eye lines shifted, jagged in the middle
     //TODO: Neck like coathanger shape
-    //TODO: Cheekbones and shading
+    //TODO: Cheekbones
     //TODO: Wrinkles
     //TODO: Age progression
     //TODO: Scars and Jewelery
     //TODO: Background images on canvas
     //TODO: Sprite images
     //TODO: Emotions
+    //TODO: Moving eyes with border around them
     //TODO: Outfits
     //TODO: Other Races
+    //TODO: How to have a tentacle added?
 
     //-----------------------------
     //Private Global variables
     var VERSION = '0.0.3',
-        summary = 'Functions for building and drawing a graphical character avatar on a canvas.',
+        summary = 'Drawing procedurally rendered people on HTML5 canvas.',
         author = 'Jay Crossler - http://github.com/jaycrossler',
         file_name = 'avatar.js';
 
@@ -204,7 +205,10 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             if (existing_stage) {
                 this.stage = existing_stage;
             } else {
+                var rect = new createjs.Shape();
+                rect.graphics.beginFill('#eef').drawRect(0, 0, this.$canvas.width(), this.$canvas.height());;
                 this.stage = setupStage(this.stage_options.canvas_name);
+//                this.stage.addChild(rect);
                 addStageByCanvas({canvas_id: this.stage_options.canvas_name, $canvas: this.$canvas, stage: this.stage});
             }
         }
@@ -387,6 +391,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     }
 
     function buildDecorations(avatar) {
+        //TODO: There should be a way to add decorations before drawing the pic
         var shapes = [];
         var data = avatar.getRaceData();
 
@@ -421,7 +426,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
                 }
             } else if (decoration.type == 'image') {
-                //TODO:
+                //TODO: Add images - is there a way to do this from a local file?
             }
         });
         return shapes;

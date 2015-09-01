@@ -28,7 +28,7 @@ $(document).ready(function () {
     }
 //    canvas.addEventListener('mousemove', draw, false);
 
-    $canvas.width($(window).width());
+//    $canvas.width($(window).width());
 
 //    var testWithTemplate = new Avatar('get_data_template', 'Human');
 //    testWithTemplate.chin_shape_options = ['Oval'];
@@ -85,7 +85,7 @@ $(document).ready(function () {
 
                 //Set this one to ogre
                 avatar.face_options = null;
-                avatar.drawOrRedraw({race:'Ogre', rand_seed:seed, age: age});  //TODO: Why aren't events sticking?
+                avatar.drawOrRedraw({race:'Ogre', rand_seed:seed, age: age});
             });
             avatar.registerEvent('face', function(avatar){
                 $('#avatar_name').text(avatar.face_options.name || "Avatar");
