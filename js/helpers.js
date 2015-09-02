@@ -491,16 +491,21 @@ Helpers.blendColors=function(c1,c2,percentage){
     if (typeof Colors == 'undefined') {
         throw "Requires colors.min.js library";
     }
-    c1 = Colors.hex2rgb(c1).a;
-    c2 = Colors.hex2rgb(c2).a;
+    if (!c1 || !c2) return c1;
 
-    var rDiff = (c2[0]-c1[0]) * percentage;
-    var gDiff = (c2[1]-c1[1]) * percentage;
-    var bDiff = (c2[2]-c1[2]) * percentage;
+    c1 = (c1.indexOf('#') == 0) ? c1 = Colors.hex2rgb(c1) : Colors.name2rgb(c1);
+    c2 = (c2.indexOf('#') == 0) ? c2 = Colors.hex2rgb(c2) : Colors.name2rgb(c2);
 
-    var cNew = [parseInt(c1[0]+rDiff),parseInt(c1[1]+gDiff),parseInt(c1[2]+bDiff)];
+    var rDiff = (c2.R-c1.R) * percentage;
+    var gDiff = (c2.G-c1.G) * percentage;
+    var bDiff = (c2.B-c1.B) * percentage;
 
-    return Colors.rgb2hex(cNew);
+
+    var result = Colors.rgb2hex(parseInt(c1.R+rDiff), parseInt(c1.G+gDiff), parseInt(c1.B+bDiff));
+    if (result.indexOf('#') != 0) {
+        result = c1;
+    }
+    return result;
 };
 Helpers.bw=function(color){
 //r must be an rgb color array of 3 integers between 0 and 255.

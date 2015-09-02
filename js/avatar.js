@@ -61,6 +61,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         eye_color: null,
         eye_shape: null,
         eye_spacing: null,
+        eye_rotation: null,
         eyelid_shape: null,
         eye_cloudiness: null,
         eyebrow_shape: null,
@@ -69,6 +70,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         head_size: 'Normal',
         hairiness: 'Normal',
         forehead_height: null,
+        hair_color_roots: null,
 
         nose_shape: null,
         nose_size: null,
@@ -134,7 +136,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         chin_divot_options: "Double,Small,Large,Smooth".split(","),
         chin_shape_options: "Pronounced,Smooth".split(","),
 
-        hair_color_options: "Yellow,Brown,Black,White,Gray,Dark Brown,Dark Yellow,Red".split(","),
+        hair_color_roots_options: "Yellow,Brown,Black,White,Gray,Dark Brown,Dark Yellow,Red".split(","),
         hair_style_options: "Bald,Bowl,Bowl with Peak,Bowl with Big Peak".split(","),
         hairiness_options: "Bald,Thin Hair,Thick Hair,Hairy,Fuzzy,Bearded,Covered in Hair,Fury".split(","), //TODO
 
@@ -150,6 +152,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         eye_lids_options: "None,Smooth,Folded,Thick".split(","), //TODO
         eye_cloudiness_options: "Normal,Clear,Misty".split(","),
         eyebrow_shape_options: "Straignt,Squiggle,Squiggle Flip,Slim,Lifted,Arch".split(","),
+        eye_rotation_options: "Flat,Small,Medium,Large,Slanted".split(","),
 
         ear_shape_options: "Round".split(","),
         ear_thickness_options: "Wide,Normal,Big,Tall,Splayed".split(","),
@@ -425,11 +428,13 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             }
         }
         avatar.face_options.colors = $.extend({}, avatar.face_options.colors || {}, skin_pigment_colors);
-        //TODO: vary colors based on charisma
+        //TODO: vary colors based on charisma and age
+
+        var age_hair_percent = Math.min(Math.max(0,avatar.face_options.age-35)/60,1);
+        avatar.face_options.hair_color = avatar.face_options.hair_color || Helpers.blendColors(avatar.face_options.hair_color_roots,'#eeeeee',age_hair_percent);
     }
 
     function buildDecoration(avatar, decoration) {
-        //TODO: There should be a way to add decorations before drawing the pic
         var shapes = [];
 
         var data = avatar.getRaceData();
@@ -442,7 +447,6 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         }
 
         if (decoration.type == 'rectangle') {
-            //TODO: Work with docked locations
             var p1, p2;
             if (decoration.docked) {
                 var image_tl = getPoint(avatar, 'facezone topleft');
@@ -1073,6 +1077,18 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         var shapes = [];
 
         var rotation_amount = 4; //-6 to 15, sets emotion
+        if (face_options.eye_rotation == "Flat") {
+            rotation_amount = -2;
+        } else if (face_options.eye_rotation == "Small") {
+            rotation_amount = 2;
+        } else if (face_options.eye_rotation == "Medium") {
+            rotation_amount = 4;
+        } else if (face_options.eye_rotation == "Large") {
+            rotation_amount = 7;
+        } else if (face_options.eye_rotation == "Slanted") {
+            rotation_amount = 11;
+        }
+
         var iris_size = 3.6;  // 3.5 to 3.9
         var iris_lift = 1.3;
         var pupil_transparency = 0.7; //.1 - .9 for weird eyes, but .7 works best
