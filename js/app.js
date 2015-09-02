@@ -32,7 +32,7 @@ $(document).ready(function () {
 
 //    $canvas.width($(window).width());
 
-//    var testWithTemplate = new Avatar('get_data_template', 'Human');
+//    var testWithTemplate = new Avatar('get_linked_template', 'Human');
 //    testWithTemplate.eye_color_options = ['Red','Yellow'];
 
     var ogreTemplate = new Avatar('copy_data_template', 'Human');
