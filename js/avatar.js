@@ -87,7 +87,6 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         lip_bottom_bottom: null,
         lip_top_top: null,
 
-
         ear_shape: null,
         ear_thickness: null,
         ear_lobe_left: null,
@@ -107,8 +106,8 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 //            {decoration:"box-behind"},
             {feature: "neck", style: "lines"},
             {feature: "face", style: "lines"},
-            {feature: "eyes", style: "lines"},
             {feature: "nose", style: "lines"},
+            {feature: "eyes", style: "lines"},
             {feature: "chin", style: "lines"},
             {feature: "wrinkles", style: "lines"},
             {feature: "beard", style: "lines"},
@@ -127,7 +126,9 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             {name: 'Pink', highlights: '253,196,179', skin: '245,158,113', cheek: '236,134,86', darkflesh: '182,88,34', deepshadow: '143,60,18'},
             {name: 'Bronzed', highlights: '236,162,113', skin: '233,132,86', cheek: '219,116,75', darkflesh: '205,110,66', deepshadow: '173,83,46'},
             {name: 'Light Brown', highlights: '242,207,175', skin: '215,159,102', cheek: '208,138,86', darkflesh: '195,134,80', deepshadow: '168,112,63'},
-            {name: 'Peach', highlights: '247,168,137', skin: '221,132,98', cheek: '183,90,57', darkflesh: '165,87,51', deepshadow: '105,29,15'}
+            {name: 'Peach', highlights: '247,168,137', skin: '221,132,98', cheek: '183,90,57', darkflesh: '165,87,51', deepshadow: '105,29,15'},
+            {name: 'Black', highlights: '140,120,110', skin: '160,90,66', cheek: '140,80,40', darkflesh: '120,90,29', deepshadow: '30,30,30'},
+            {name: 'Deep Black', highlights: '40,40,50', skin: '80,80,80', cheek: '70,70,70', darkflesh: '80,70,29', deepshadow: '30,30,30'}
         ],
         gender_options: "Male,Female".split(","),
         thickness_options: [-1, .5, 0, .5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6],  //TODO: Turn these to word options
@@ -848,8 +849,11 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         var face_line = transformShapeLine(options, face_options);
 
         //TODO: Add Some skin variations, noise, dirtiness
-        var fill_colors = [face_options.colors.cheek, face_options.colors.skin, face_options.colors.skin, face_options.colors.cheek];
-        var fill_steps = [0, .25, .75, 1];
+        var skin_lighter = net.brehaut.Color(face_options.colors.skin).lightenByRatio(0.05).toString();
+        var skin_bright = net.brehaut.Color(face_options.colors.skin).lightenByRatio(0.1).toString();
+        var cheek_darker = net.brehaut.Color(face_options.colors.cheek).darkenByRatio(0.05).toString();
+        var fill_colors = [cheek_darker, skin_lighter, skin_bright, skin_lighter, cheek_darker];
+        var fill_steps = [0, .25,.5, .75, 1];
 
         var face = createPathFromLocalCoordinates(face_line, {
                 close_line: true, line_color: face_options.colors.highlights,
@@ -1509,8 +1513,8 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         var alpha = 1;
 
         var fill_color = net.brehaut.Color(face_options.colors.skin).darkenByRatio(0.05).toString();
-        var nose_fill_colors = [face_options.colors.highlights, maths.hexColorToRGBA(fill_color, 0.9), maths.hexColorToRGBA(face_options.colors.skin, 0.1)];
-        var nose_fill_steps = [0, .3, 1];
+        var nose_fill_colors = [face_options.colors.highlights, maths.hexColorToRGBA(fill_color, 0.9), maths.hexColorToRGBA(face_options.colors.skin, 0.3)];
+        var nose_fill_steps = [0, .5, 1];
 
         var full_nose = createPathFromLocalCoordinates(full_nose_line, {
             close_line: true, thickness: f.thick_unit * .2, line_color: face_options.colors.skin,
@@ -1867,7 +1871,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         if (face_options.chin_shape == 'Pronounced') {
             //TODO: This could use some work to make it look more realistic
 
-            if (chin && chin.length && chin.length > 2) {
+            if (chin && chin.length && chin.length > 2 && face_options.age < 20) {
                 chin = transformShapeLine({type: 'contract', multiplier: 0.7}, face_options, chin);
 
                 var chin_fill_colors = [face_options.colors.cheek, face_options.colors.skin];
@@ -1885,7 +1889,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
         } else if (face_options.chin_shape == 'Oval') {
 
-            if (chin && chin.length && chin.length > 2) {
+            if (chin && chin.length && chin.length > 2 && face_options.age < 20) {
 
                 var chin_fill_colors = [face_options.colors.cheek, face_options.colors.skin];
                 var chin_fill_steps = [0, 1];
@@ -1911,7 +1915,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             draw_divot = true;
         }
 
-        if (draw_divot) {
+        if (draw_divot && face_options.age < 20) {
 
             var mid_x = comparePoints(chin, 'x', 'middle');
             var mid_y = comparePoints(chin, 'y', 'middle');
@@ -2034,13 +2038,6 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             mouth_right_lift = 2;
         }
 
-
-//        lip_bottom_height_options: "Down,Low,Normal,Raised,High".split(","),
-//        lip_top_height_options: "Down,Low,Normal,Raised,High".split(","),
-//        lip_bottom_bottom_options: "Down,Low,Normal,Raised,High".split(","),
-//        lip_top_top_options: "Down,Low,Normal,Raised,High".split(","),
-
-
         lip_top_top += lip_top_height;
 
         var lip_thickness = f.thick_unit * 2;
@@ -2066,14 +2063,14 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             {x: 10, y: -1 - (mouth_right_lift/2) },
             {x: 13, y: -2 - mouth_right_lift},
 
-            {x: 13, y: -2 - mouth_right_lift},
+            {x: 12, y: 0 - mouth_right_lift},
             {x: 10, y: 1 - (mouth_right_lift/2) },
             {x: 4, y: lip_bottom_height + lip_bottom_bottom},
             {x: 1, y: lip_bottom_height + lip_bottom_bottom - 1},
             {x: -1, y: lip_bottom_height + lip_bottom_bottom - 1},
             {x: -4, y: lip_bottom_height + lip_bottom_bottom},
             {x: -10, y: 1 - (mouth_left_lift/2)},
-            {x: -13, y: -2 - mouth_left_lift}
+            {x: -12, y: 0 - mouth_left_lift}
         ];
         if (face_options.lip_shape == "Thin") {
             mouth_top_line = [
@@ -2109,14 +2106,12 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             ];
         }
 
-
         var l = createPathFromLocalCoordinates(mouth_top_line, {close_line: true, thickness: lip_thickness, color: face_options.colors.deepshadow, fill_color: face_options.lip_color}, width, height);
         l.x = f.mouth.x;
         l.y = f.mouth.y;
         l.name = 'lips';
         lines.push({name: 'lips', line: mouth_top_line, shape: l, x: f.mouth.x, y: f.mouth.y, scale_x: width, scale_y: height});
         shapes.push(l);
-
 
         var tongue_line = transformShapeLine({type:'midline of loop'}, face_options, mouth_top_line);
         var l2 = createPathFromLocalCoordinates(tongue_line, {close_line: false, thickness: 1, color: face_options.colors.deepshadow}, width, height);
