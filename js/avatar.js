@@ -50,7 +50,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         gender: null,
         height: 0,
 
-        skin_pigment: null,
+        skin_colors: null,
         face_shape: null,
         skull_thickness: 'Normal',
         chin_divot: null,
@@ -116,20 +116,22 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             {feature: "ears", style: "lines"},
             {decoration: "name-plate"}
         ],
-        skin_type_color_options: [
-            {name: 'Fair', highlights: '254,202,182', skin: '245,185,158', cheek: '246,171,142', darkflesh: '217,118,76', deepshadow: '202,168,110'},
-            {name: 'Brown', highlights: '229,144,50', skin: '228,131,86', cheek: '178,85,44', darkflesh: '143,70,29', deepshadow: '152,57,17'},
-            {name: 'Tanned', highlights: '245,194,151', skin: '234,154,95', cheek: '208,110,56', darkflesh: '168,66,17', deepshadow: '147,68,27'},
-            {name: 'White', highlights: '250,220,196', skin: '245,187,149', cheek: '239,165,128', darkflesh: '203,137,103', deepshadow: '168,102,68'},
-            {name: 'Medium', highlights: '247,188,154', skin: '243,160,120', cheek: '213,114,75', darkflesh: '154,79,48', deepshadow: '127,67,41'},
-            {name: 'Yellow', highlights: '255,218,179', skin: '250,187,134', cheek: '244,159,104', darkflesh: '189,110,46', deepshadow: '138,67,3'},
-            {name: 'Pink', highlights: '253,196,179', skin: '245,158,113', cheek: '236,134,86', darkflesh: '182,88,34', deepshadow: '143,60,18'},
-            {name: 'Bronzed', highlights: '236,162,113', skin: '233,132,86', cheek: '219,116,75', darkflesh: '205,110,66', deepshadow: '173,83,46'},
-            {name: 'Light Brown', highlights: '242,207,175', skin: '215,159,102', cheek: '208,138,86', darkflesh: '195,134,80', deepshadow: '168,112,63'},
-            {name: 'Peach', highlights: '247,168,137', skin: '221,132,98', cheek: '183,90,57', darkflesh: '165,87,51', deepshadow: '105,29,15'},
-            {name: 'Black', highlights: '140,120,110', skin: '160,90,66', cheek: '140,80,40', darkflesh: '120,90,29', deepshadow: '30,30,30'},
-            {name: 'Deep Black', highlights: '40,40,50', skin: '80,80,80', cheek: '70,70,70', darkflesh: '80,70,29', deepshadow: '30,30,30'}
+//        skin_colors_options: "Fair,Brown,Tanned,White,Medium,Yellow,Pink,Bronzed,Light Brown,Peach,Black,Deep Black".split(","),
+        skin_colors_options: [
+            {name: 'Fair', highlights: 'rgb(254,202,182)', skin: 'rgb(245,185,158)', cheek: 'rgb(246,171,142)', darkflesh: 'rgb(217,118,76)', deepshadow: 'rgb(202,168,110'},
+            {name: 'Brown', highlights: 'rgb(229,144,50)', skin: 'rgb(228,131,86)', cheek: 'rgb(178,85,44)', darkflesh: 'rgb(143,70,29)', deepshadow: 'rgb(152,57,17'},
+            {name: 'Tanned', highlights: 'rgb(245,194,151)', skin: 'rgb(234,154,95)', cheek: 'rgb(208,110,56)', darkflesh: 'rgb(168,66,17)', deepshadow: 'rgb(147,68,27'},
+            {name: 'White', highlights: 'rgb(250,220,196)', skin: 'rgb(245,187,149)', cheek: 'rgb(239,165,128)', darkflesh: 'rgb(203,137,103)', deepshadow: 'rgb(168,102,68'},
+            {name: 'Medium', highlights: 'rgb(247,188,154)', skin: 'rgb(243,160,120)', cheek: 'rgb(213,114,75)', darkflesh: 'rgb(154,79,48)', deepshadow: 'rgb(127,67,41'},
+            {name: 'Yellow', highlights: 'rgb(255,218,179)', skin: 'rgb(250,187,134)', cheek: 'rgb(244,159,104)', darkflesh: 'rgb(189,110,46)', deepshadow: 'rgb(138,67,3'},
+            {name: 'Pink', highlights: 'rgb(253,196,179)', skin: 'rgb(245,158,113)', cheek: 'rgb(236,134,86)', darkflesh: 'rgb(182,88,34)', deepshadow: 'rgb(143,60,18'},
+            {name: 'Bronzed', highlights: 'rgb(236,162,113)', skin: 'rgb(233,132,86)', cheek: 'rgb(219,116,75)', darkflesh: 'rgb(205,110,66)', deepshadow: 'rgb(173,83,46'},
+            {name: 'Light Brown', highlights: 'rgb(242,207,175)', skin: 'rgb(215,159,102)', cheek: 'rgb(208,138,86)', darkflesh: 'rgb(195,134,80)', deepshadow: 'rgb(168,112,63'},
+            {name: 'Peach', highlights: 'rgb(247,168,137)', skin: 'rgb(221,132,98)', cheek: 'rgb(183,90,57)', darkflesh: 'rgb(165,87,51)', deepshadow: 'rgb(105,29,15'},
+            {name: 'Black', highlights: 'rgb(140,120,110)', skin: 'rgb(160,90,66)', cheek: 'rgb(140,80,40)', darkflesh: 'rgb(120,90,29)', deepshadow: 'rgb(30,30,30'},
+            {name: 'Deep Black', highlights: 'rgb(40,40,50)', skin: 'rgb(80,80,80)', cheek: 'rgb(70,70,70)', darkflesh: 'rgb(80,70,29)', deepshadow: 'rgb(30,30,30'}
         ],
+
         gender_options: "Male,Female".split(","),
         thickness_options: [-1, .5, 0, .5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6],  //TODO: Turn these to word options
 
@@ -258,8 +260,9 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             }
         }
 
-        //Turn Decimal color values into hex
-        expandFaceColors(this);
+        //TODO: vary colors based on charisma and age
+        var age_hair_percent = Math.min(Math.max(0,this.face_options.age-35)/60,1);
+        this.face_options.hair_color = this.face_options.hair_color || Helpers.blendColors(this.face_options.hair_color_roots,'#eeeeee',age_hair_percent);
 
         //Draw the faces
         if (this.stage) {
@@ -325,21 +328,24 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     };
     AvatarClass.prototype.randomFaceOption = function (key, dontForceSetting, skipRedraw) {
         var option_name = '';
-        var result;
-        if (!_.str.endsWith(key, '_options')) {
-            key = key + "_options";
-        }
+        var result, currentVal;
         var data = this.getRaceData();
-        if (data[key]) {
+        if (_.str.endsWith(key,'_options') && data[key]) {
             var options = data[key];
             option_name = key.split('_options')[0];
-            var currentVal = this.face_options[option_name];
+            currentVal = this.face_options[option_name];
 
             if (!dontForceSetting || (dontForceSetting && !this.face_options[option_name])) {
+                //Set a random option
                 result = randOption(options, this.face_options, currentVal);
                 this.face_options[option_name] = result;
+            } else if (_.isObject(options[0]) && _.isString(currentVal)) {
+                //The value is set as text, if it's an array of objects then set the object to the val
+                var obj = _.find(options, function(opt){return opt.name==currentVal;});
+                if (obj) this.face_options[option_name] = obj;
             }
         }
+
         if (!skipRedraw) {
             this.drawOrRedraw();
         }
@@ -412,29 +418,6 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         if (usesMouseOver) {
             avatar.stage.enableMouseOver();
         }
-    }
-
-    function expandFaceColors(avatar) {
-        if (avatar.face_options.colors) return;
-
-        //Add in colors based on setting
-        var data = avatar.getRaceData();
-        var skin_pigment_colors = _.find(data.skin_type_color_options, function (skin) {
-            return skin.name == avatar.face_options.skin_pigment
-        });
-        if (!skin_pigment_colors) skin_pigment_colors = randOption(data.skin_type_color_options, avatar.face_options);
-
-        for (var key in skin_pigment_colors) {
-            var val = skin_pigment_colors[key];
-            if (key != 'name' && val.substr(0, 1) != "#") {
-                skin_pigment_colors[key] = Helpers.rgb2hex(val);
-            }
-        }
-        avatar.face_options.colors = $.extend({}, avatar.face_options.colors || {}, skin_pigment_colors);
-        //TODO: vary colors based on charisma and age
-
-        var age_hair_percent = Math.min(Math.max(0,avatar.face_options.age-35)/60,1);
-        avatar.face_options.hair_color = avatar.face_options.hair_color || Helpers.blendColors(avatar.face_options.hair_color_roots,'#eeeeee',age_hair_percent);
     }
 
     function buildDecoration(avatar, decoration) {
@@ -1329,7 +1312,6 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     AvatarClass.prototype._private_functions = {
         getFirstRaceFromData: getFirstRaceFromData,
         registerEvents: registerEvents,
-        expandFaceColors: expandFaceColors,
         buildDecoration: buildDecoration,
         buildFaceZones: buildFaceZones,
         namePoint: namePoint,

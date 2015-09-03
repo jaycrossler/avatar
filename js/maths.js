@@ -69,7 +69,16 @@ maths.getRGBComponents = function (color) {
     };
 };
 maths.hexColorToRGBA = function (color, transparency) {
-    var rgb = maths.getRGBComponents(color);
+    var rgb;
+    if (color.indexOf("rgb(")==0 && color.indexOf(",")>5) {
+        //Is in format of rgb(215,159,102)
+        var newColor = color.substr(0,color.length-1);
+        newColor = newColor.substr(4);
+        var rgbArr = newColor.split(",");
+        rgb = {R: rgbArr[0], G: rgbArr[1], B: rgbArr[2]}
+    } else {
+        rgb = maths.getRGBComponents(color);
+    }
     transparency = transparency || 1;
     return "rgba(" + rgb.R + "," + rgb.G + "," + rgb.B + "," + transparency + ")";
 };
