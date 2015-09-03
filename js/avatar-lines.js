@@ -965,7 +965,10 @@ new Avatar('add_render_function', {style: 'lines', feature: 'wrinkles', renderer
     var lines = avatar.lines;
     var shapes = [];
 
-    var wrinkle_lines = parseInt(face_options.age / 15);
+    var wrinkle_resistance = a.turnWordToNumber(face_options.wrinkle_resistance,50,-100);
+    var wrinkle_age = face_options.age+wrinkle_resistance;
+
+    var wrinkle_lines = parseInt(wrinkle_age / 15);
     var head_line = a.transformLineToGlobalCoordinates(lines, 'face');
     var left_eye_line = a.transformLineToGlobalCoordinates(lines, 'left eye');
 
@@ -1018,13 +1021,14 @@ new Avatar('add_render_function', {style: 'lines', feature: 'wrinkles', renderer
         {x: -.5, y: 3}
     ];
 
+    //NOTE: Removed these as they didn't line up just right
 //    var right_nose_line = a.transformLineToGlobalCoordinates(lines, 'nose left line');
 //    var divot_end_point = a.transformPathFromGlobalCoordinates(_.last(right_nose_line), width, height, x, y);
 //    mid_nose_divot_line = mid_nose_divot_line.concat(divot_end_point);
 
     height /= 1.2;
     var divot_line = a.createPathFromLocalCoordinates(mid_nose_divot_line, {close_line: false, thickness: (f.thick_unit * 2), color: face_options.skin_colors.deepshadow}, width, height);
-    alpha = (face_options.age / 350);
+    alpha = (wrinkle_age / 350);
     divot_line.x = x;
     divot_line.y = y;
     divot_line.alpha = alpha;
@@ -1046,11 +1050,11 @@ new Avatar('add_render_function', {style: 'lines', feature: 'wrinkles', renderer
         {x: 0, y: 1.5},
         {x: 0, y: 3}
     ];
-    height *= (face_options.age / 50);
+    height *= (wrinkle_age / 50);
     var divot_line_3 = a.createPathFromLocalCoordinates(nose_divot_line, {close_line: false, thickness: (f.thick_unit), color: face_options.skin_colors.deepshadow}, width, height);
     x = mid_x;
     y = mid_y - (f.thick_unit * 35);
-    alpha = (face_options.age / 400);
+    alpha = (wrinkle_age / 400);
     divot_line_3.x = x;
     divot_line_3.y = y;
     divot_line_3.alpha = alpha;

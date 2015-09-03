@@ -93,7 +93,10 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         ear_shape: null,
         ear_thickness: null,
         ear_lobe_left: null,
-        ear_lobe_right: null
+        ear_lobe_right: null,
+
+        wrinkle_resistance: null
+
     };
     var _stage_options = {
         percent_height: 1,
@@ -154,6 +157,8 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
         nose_shape_options: "Flat,Wide,Thin,Turned up/perky,Normal,Hooked down,Bulbous,Giant Nostrils".split(","),
         nose_size_options: "Tiny,Small,Normal,Large,Big,Giant,Huge".split(","),
+        nose_height_options: "Low,Normal,Raised".split(","),
+
 
         eye_spacing_options: "Squeezed,Pinched,Thin,Normal,Wide".split(","),
         eye_shape_options: "Almond".split(","),
@@ -179,8 +184,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         lip_top_top_options: "Down,Low,Normal,Raised,High".split(","),
         lip_shape_options: "Puckered,Thin,Thick".split(","),
 
-        nose_height_options: "Low,Normal,Raised".split(","),
-
+        wrinkle_resistance_options: "Very Low,Low,Less,Below,Reduce,Raised,Above,More,High,Very High".split(","),
         forehead_height_options: "Under,Low,Less,Normal,Above,Raised,High,Floating".split(","),
         decorations: [
             {name: "box-behind", type: 'rectangle', p1: 'facezone topleft', p2: 'facezone bottomright',
@@ -326,7 +330,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         var skin_darken_amount, R, G, B;
         //Based on math from http://johnthemathguy.blogspot.com/2013/08/what-color-is-human-skin.html
         if (avatar.face_options.skin_shade == "Light") {
-            skin_darken_amount = turnWordToNumber(avatar.face_options.skin_shade_tint,-3,3);
+            skin_darken_amount = turnWordToNumber(avatar.face_options.skin_shade_tint,-3,2.2);
             R = 224.3 + 9.6 * skin_darken_amount;
             G = 193.1 + 17.0 * skin_darken_amount;
             B = 177.6 + 21.0 * skin_darken_amount;
@@ -345,6 +349,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             avatar.face_options.skin_colors = {name: 'skin', skin: 'rgb(228,131,86)'};
         }
 
+        //TODO: Check that skin is not too white
         var red = net.brehaut.Color('#885544');
         if (!avatar.face_options.skin_colors.highlights) avatar.face_options.skin_colors.highlights = skinColor.lightenByRatio(.4).toString();
         if (!avatar.face_options.skin_colors.cheek) avatar.face_options.skin_colors.cheek = skinColor.blend(red,.1).darkenByRatio(.2).toString();
@@ -1423,6 +1428,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         findPoint: findPoint,
         findShape: findShape,
         createPath: createPath,
+        turnWordToNumber: turnWordToNumber,
         extrudeHorizontalArc: extrudeHorizontalArc,
         distanceBetween: distanceBetween,
         angleBetween: angleBetween,
