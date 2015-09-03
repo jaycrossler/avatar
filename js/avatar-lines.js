@@ -1,6 +1,9 @@
+//-----------------------------------------
+//Avatar.js (lines and circle styles)
 //This set of functions adds rendering capabilities to avatar.js, specifically to draw things like human faces
+//-----------------------------------------
 
-new Avatar('add_render_function', {style:'lines', feature:'face', renderer: function(face_zones, avatar) {
+new Avatar('add_render_function', {style: 'lines', feature: 'face', renderer: function (face_zones, avatar) {
     var f = face_zones;
     var a = avatar._private_functions;
     var face_options = avatar.face_options;
@@ -39,7 +42,7 @@ new Avatar('add_render_function', {style:'lines', feature:'face', renderer: func
     var skin_bright = net.brehaut.Color(face_options.skin_colors.skin).lightenByRatio(0.1).toString();
     var cheek_darker = net.brehaut.Color(face_options.skin_colors.cheek).darkenByRatio(0.05).toString();
     var fill_colors = [cheek_darker, skin_lighter, skin_bright, skin_lighter, cheek_darker];
-    var fill_steps = [0, .25,.5, .75, 1];
+    var fill_steps = [0, .25, .5, .75, 1];
 
     var face = a.createPathFromLocalCoordinates(face_line, {
             close_line: true, line_color: face_options.skin_colors.highlights,
@@ -54,7 +57,7 @@ new Avatar('add_render_function', {style:'lines', feature:'face', renderer: func
     return shapes;
 }});
 
-new Avatar('add_render_function', {style:'lines', feature:'neck', renderer: function(face_zones, avatar) {
+new Avatar('add_render_function', {style: 'lines', feature: 'neck', renderer: function (face_zones, avatar) {
     var f = face_zones;
     var a = avatar._private_functions;
     var face_options = avatar.face_options;
@@ -101,7 +104,7 @@ new Avatar('add_render_function', {style:'lines', feature:'neck', renderer: func
     return shapes;
 }});
 
-new Avatar('add_render_function', {style:'lines', feature:'ears', renderer: function(face_zones, avatar) {
+new Avatar('add_render_function', {style: 'lines', feature: 'ears', renderer: function (face_zones, avatar) {
     var f = face_zones;
     var a = avatar._private_functions;
     var face_options = avatar.face_options;
@@ -262,7 +265,7 @@ new Avatar('add_render_function', {style:'lines', feature:'ears', renderer: func
     return shapes;
 }});
 
-new Avatar('add_render_function', {style:'lines', feature:'eyes', renderer: function(face_zones, avatar) {
+new Avatar('add_render_function', {style: 'lines', feature: 'eyes', renderer: function (face_zones, avatar) {
     var f = face_zones;
     var a = avatar._private_functions;
     var face_options = avatar.face_options;
@@ -598,7 +601,7 @@ new Avatar('add_render_function', {style:'lines', feature:'eyes', renderer: func
     return shapes;
 }});
 
-new Avatar('add_render_function', {style:'lines', feature:'nose', renderer: function(face_zones, avatar) {
+new Avatar('add_render_function', {style: 'lines', feature: 'nose', renderer: function (face_zones, avatar) {
     var f = face_zones;
     var a = avatar._private_functions;
     var face_options = avatar.face_options;
@@ -707,7 +710,7 @@ new Avatar('add_render_function', {style:'lines', feature:'nose', renderer: func
     var alpha = 1;
 
     var fill_color = net.brehaut.Color(face_options.skin_colors.skin).darkenByRatio(0.05).toString();
-    var nose_fill_colors = [face_options.skin_colors.highlights, maths.hexColorToRGBA(fill_color, 0.9), maths.hexColorToRGBA(face_options.skin_colors.skin, 0.3)];
+    var nose_fill_colors = [face_options.skin_colors.highlights, maths.hexColorToRGBA(fill_color, 1), maths.hexColorToRGBA(face_options.skin_colors.skin, 0.4)];
     var nose_fill_steps = [0, .5, 1];
 
     var full_nose = a.createPathFromLocalCoordinates(full_nose_line, {
@@ -767,7 +770,7 @@ new Avatar('add_render_function', {style:'lines', feature:'nose', renderer: func
     return shapes;
 }});
 
-new Avatar('add_render_function', {style:'lines', feature:'hair', renderer: function(face_zones, avatar) {
+new Avatar('add_render_function', {style: 'lines', feature: 'hair', renderer: function (face_zones, avatar) {
     var f = face_zones;
     var a = avatar._private_functions;
     var face_options = avatar.face_options;
@@ -832,7 +835,7 @@ new Avatar('add_render_function', {style:'lines', feature:'hair', renderer: func
     return shapes;
 }});
 
-new Avatar('add_render_function', {style:'lines', feature:'beard', renderer: function(face_zones, avatar) {
+new Avatar('add_render_function', {style: 'lines', feature: 'beard', renderer: function (face_zones, avatar) {
     var f = face_zones;
     var a = avatar._private_functions;
     var face_options = avatar.face_options;
@@ -917,7 +920,7 @@ new Avatar('add_render_function', {style:'lines', feature:'beard', renderer: fun
     return shapes;
 }});
 
-new Avatar('add_render_function', {style:'lines', feature:'wrinkles', renderer: function(face_zones, avatar) {
+new Avatar('add_render_function', {style: 'lines', feature: 'wrinkles', renderer: function (face_zones, avatar) {
     var f = face_zones;
     var a = avatar._private_functions;
     var face_options = avatar.face_options;
@@ -1015,7 +1018,7 @@ new Avatar('add_render_function', {style:'lines', feature:'wrinkles', renderer: 
     return shapes;
 }});
 
-new Avatar('add_render_function', {style:'lines', feature:'chin', renderer: function(face_zones, avatar) {
+new Avatar('add_render_function', {style: 'lines', feature: 'chin', renderer: function (face_zones, avatar) {
     var f = face_zones;
     var a = avatar._private_functions;
     var face_options = avatar.face_options;
@@ -1150,7 +1153,7 @@ new Avatar('add_render_function', {style:'lines', feature:'chin', renderer: func
     return shapes;
 }});
 
-new Avatar('add_render_function', {style:'lines', feature:'mouth', renderer: function(face_zones, avatar) {
+new Avatar('add_render_function', {style: 'lines', feature: 'mouth', renderer: function (face_zones, avatar) {
     var f = face_zones;
     var a = avatar._private_functions;
     var face_options = avatar.face_options;
@@ -1254,54 +1257,54 @@ new Avatar('add_render_function', {style:'lines', feature:'mouth', renderer: fun
     //Mouth top and bottom line
     var mouth_top_line = [
         {x: -13, y: -2 - mouth_left_lift},
-        {x: -10, y: -1 - (mouth_left_lift/2)},
+        {x: -10, y: -1 - (mouth_left_lift / 2)},
         {x: -5, y: -(lip_top_top * 2)},
         {x: -1, y: -lip_top_top},
         {x: 1, y: -lip_top_top},
         {x: 5, y: -(lip_top_top * 2)},
-        {x: 10, y: -1 - (mouth_right_lift/2) },
+        {x: 10, y: -1 - (mouth_right_lift / 2) },
         {x: 13, y: -2 - mouth_right_lift},
 
         {x: 12, y: 0 - mouth_right_lift},
-        {x: 10, y: 1 - (mouth_right_lift/2) },
+        {x: 10, y: 1 - (mouth_right_lift / 2) },
         {x: 4, y: lip_bottom_height + lip_bottom_bottom},
         {x: 1, y: lip_bottom_height + lip_bottom_bottom - 1},
         {x: -1, y: lip_bottom_height + lip_bottom_bottom - 1},
         {x: -4, y: lip_bottom_height + lip_bottom_bottom},
-        {x: -10, y: 1 - (mouth_left_lift/2)},
+        {x: -10, y: 1 - (mouth_left_lift / 2)},
         {x: -12, y: 0 - mouth_left_lift}
     ];
     if (face_options.lip_shape == "Thin") {
         mouth_top_line = [
-            {x: -13, y: -2 - (mouth_left_lift *.5)},
+            {x: -13, y: -2 - (mouth_left_lift * .5)},
             {x: -5, y: -(lip_top_top)},
-            {x: -1, y: -(lip_top_top *.8)},
-            {x: 1, y: -(lip_top_top *.8)},
+            {x: -1, y: -(lip_top_top * .8)},
+            {x: 1, y: -(lip_top_top * .8)},
             {x: 5, y: -(lip_top_top)},
-            {x: 13, y: -2 - (mouth_right_lift *.5)},
+            {x: 13, y: -2 - (mouth_right_lift * .5)},
 
-            {x: 12, y: -2.5 - (mouth_right_lift *.5)},
-            {x: 4, y: (lip_bottom_height + lip_bottom_bottom) *.5},
+            {x: 12, y: -2.5 - (mouth_right_lift * .5)},
+            {x: 4, y: (lip_bottom_height + lip_bottom_bottom) * .5},
             {x: 1, y: (lip_bottom_height + lip_bottom_bottom) * .7},
             {x: -1, y: (lip_bottom_height + lip_bottom_bottom) * .7},
-            {x: -4, y: (lip_bottom_height + lip_bottom_bottom) *.5},
-            {x: -12, y: -2.5 - (mouth_left_lift *.5)}
+            {x: -4, y: (lip_bottom_height + lip_bottom_bottom) * .5},
+            {x: -12, y: -2.5 - (mouth_left_lift * .5)}
         ];
     } else if (face_options.lip_shape == "Thick") {
         mouth_top_line = [
-            {x: -13, y: -2 - (mouth_left_lift *.7)},
+            {x: -13, y: -2 - (mouth_left_lift * .7)},
             {x: -5, y: -(lip_top_top * 1.2)},
             {x: -1, y: -(lip_top_top * 1.1)},
             {x: 1, y: -(lip_top_top * 1.1)},
             {x: 5, y: -(lip_top_top * 1.2)},
-            {x: 13, y: -2 - (mouth_right_lift *.7)},
+            {x: 13, y: -2 - (mouth_right_lift * .7)},
 
-            {x: 12, y: -2.5 - (mouth_right_lift *.5)},
-            {x: 4, y: (lip_bottom_height + lip_bottom_bottom) *.9},
+            {x: 12, y: -2.5 - (mouth_right_lift * .5)},
+            {x: 4, y: (lip_bottom_height + lip_bottom_bottom) * .9},
             {x: 1, y: (lip_bottom_height + lip_bottom_bottom) * 1.1},
             {x: -1, y: (lip_bottom_height + lip_bottom_bottom) * 1.1},
-            {x: -4, y: (lip_bottom_height + lip_bottom_bottom) *.9},
-            {x: -12, y: -2.5 - (mouth_left_lift *.5)}
+            {x: -4, y: (lip_bottom_height + lip_bottom_bottom) * .9},
+            {x: -12, y: -2.5 - (mouth_left_lift * .5)}
         ];
     }
 
@@ -1312,7 +1315,7 @@ new Avatar('add_render_function', {style:'lines', feature:'mouth', renderer: fun
     lines.push({name: 'lips', line: mouth_top_line, shape: l, x: f.mouth.x, y: f.mouth.y, scale_x: width, scale_y: height});
     shapes.push(l);
 
-    var tongue_line = a.transformShapeLine({type:'midline of loop'}, face_options, mouth_top_line);
+    var tongue_line = a.transformShapeLine({type: 'midline of loop'}, face_options, mouth_top_line);
     var l2 = a.createPathFromLocalCoordinates(tongue_line, {close_line: false, thickness: 1, color: face_options.skin_colors.deepshadow}, width, height);
     l2.x = f.mouth.x;
     l2.y = f.mouth.y;
@@ -1325,8 +1328,8 @@ new Avatar('add_render_function', {style:'lines', feature:'mouth', renderer: fun
     return shapes;
 }});
 
-
-new Avatar('add_render_function', {style:'circles', feature:'neck', renderer: function(face_zones, avatar) {
+//Circle Styles
+new Avatar('add_render_function', {style: 'circles', feature: 'neck', renderer: function (face_zones, avatar) {
     var f = face_zones;
     var face_options = avatar.face_options;
     var shapes = [];
@@ -1339,7 +1342,7 @@ new Avatar('add_render_function', {style:'circles', feature:'neck', renderer: fu
     return shapes;
 }});
 
-new Avatar('add_render_function', {style:'circles', feature:'ears', renderer: function(face_zones, avatar) {
+new Avatar('add_render_function', {style: 'circles', feature: 'ears', renderer: function (face_zones, avatar) {
     var f = face_zones;
     var face_options = avatar.face_options;
     var shapes = [];
@@ -1360,7 +1363,7 @@ new Avatar('add_render_function', {style:'circles', feature:'ears', renderer: fu
     return shapes;
 }});
 
-new Avatar('add_render_function', {style:'circles', feature:'face', renderer: function(face_zones, avatar) {
+new Avatar('add_render_function', {style: 'circles', feature: 'face', renderer: function (face_zones, avatar) {
     var f = face_zones;
     var face_options = avatar.face_options;
     var shapes = [];
@@ -1374,7 +1377,7 @@ new Avatar('add_render_function', {style:'circles', feature:'face', renderer: fu
     return shapes;
 }});
 
-new Avatar('add_render_function', {style:'circles', feature:'eyes', renderer: function(face_zones, avatar) {
+new Avatar('add_render_function', {style: 'circles', feature: 'eyes', renderer: function (face_zones, avatar) {
     var f = face_zones;
     var face_options = avatar.face_options;
     var shapes = [];
@@ -1424,7 +1427,7 @@ new Avatar('add_render_function', {style:'circles', feature:'eyes', renderer: fu
     return shapes;
 }});
 
-new Avatar('add_render_function', {style:'circles', feature:'nose', renderer: function(face_zones, avatar) {
+new Avatar('add_render_function', {style: 'circles', feature: 'nose', renderer: function (face_zones, avatar) {
     var f = face_zones;
     var face_options = avatar.face_options;
     var shapes = [];
@@ -1437,7 +1440,7 @@ new Avatar('add_render_function', {style:'circles', feature:'nose', renderer: fu
     return shapes;
 }});
 
-new Avatar('add_render_function', {style:'circles', feature:'mouth', renderer: function(face_zones, avatar) {
+new Avatar('add_render_function', {style: 'circles', feature: 'mouth', renderer: function (face_zones, avatar) {
     var f = face_zones;
     var face_options = avatar.face_options;
     var shapes = [];

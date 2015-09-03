@@ -1,6 +1,7 @@
 var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //Uses jquery and Underscore and colors.js and createjs's easel.js
 
+    //TODO: Hair getting transparent
     //TODO: Hair Peak have multiple shapes, apply more than one peak
     //TODO: Hair and beard use variables
     //TODO: Neck like coathanger shape
@@ -116,7 +117,6 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             {feature: "ears", style: "lines"},
             {decoration: "name-plate"}
         ],
-//        skin_colors_options: "Fair,Brown,Tanned,White,Medium,Yellow,Pink,Bronzed,Light Brown,Peach,Black,Deep Black".split(","),
         skin_colors_options: [
             {name: 'Fair', highlights: 'rgb(254,202,182)', skin: 'rgb(245,185,158)', cheek: 'rgb(246,171,142)', darkflesh: 'rgb(217,118,76)', deepshadow: 'rgb(202,168,110'},
             {name: 'Brown', highlights: 'rgb(229,144,50)', skin: 'rgb(228,131,86)', cheek: 'rgb(178,85,44)', darkflesh: 'rgb(143,70,29)', deepshadow: 'rgb(152,57,17'},
@@ -143,7 +143,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         hair_style_options: "Bald,Bowl,Bowl with Peak,Bowl with Big Peak".split(","),
         hairiness_options: "Bald,Thin Hair,Thick Hair,Hairy,Fuzzy,Bearded,Covered in Hair,Fury".split(","), //TODO
 
-        beard_color_options: "Hair,Yellow,Brown,Black,White,Gray,Dark Brown,Dark Yellow,Red".split(","),
+//        beard_color_options: "Hair,Yellow,Brown,Black,White,Gray,Dark Brown,Dark Yellow,Red".split(","),
         beard_style_options: "None,Full Chin,Chin Warmer,Soup Catcher,Thin Chin Wrap,Thin Low Chin Wrap".split(","),
 
         nose_shape_options: "Flat,Wide,Thin,Turned up/perky,Normal,Hooked down,Bulbous,Giant Nostrils".split(","),
@@ -260,17 +260,13 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             }
         }
 
-        //TODO: vary colors based on charisma and age
-        var age_hair_percent = Math.min(Math.max(0,this.face_options.age-35)/60,1);
-        this.face_options.hair_color = this.face_options.hair_color || Helpers.blendColors(this.face_options.hair_color_roots,'#eeeeee',age_hair_percent);
-
         //Draw the faces
         if (this.stage) {
             if (this.faceShapeCollection) {
                 this.faceShapeCollection.removeAllChildren();
                 this.faceShapeCollection.visible = false;
             }
-            var face = this.buildFace(this.face_options);
+            var face = this.buildFace();
             this.drawOnStage(face, this.stage);
             this.faceShapeCollection = face;
 
@@ -299,20 +295,53 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         stage.addChild(face);
         stage.update();
     };
-    AvatarClass.prototype.buildFace = function (face_options) {
+    AvatarClass.prototype.buildFace = function () {
         var container = new createjs.Container();
         this.lines = [];
         var avatar = this;
 
-        var face_zones = buildFaceZones(this);
-        var race_data = this.getRaceData();
+        var face_zones = buildFaceZones(avatar);
+        var race_data = avatar.getRaceData();
 
+        //TODO: vary colors based on charisma and age
+        //Merge and tweak colors
+        var skinColor;
+        if (_.isString(avatar.face_options.skin_colors)) {
+            skinColor = net.brehaut.Color(avatar.face_options.skin_colors);
+            avatar.face_options.skin_colors = {name: avatar.face_options.skin_colors, skin: skinColor.toString()};
+        } else {
+            skinColor = net.brehaut.Color(avatar.face_options.skin_colors.skin);
+        }
+
+        if (!_.isObject(avatar.face_options.skin_colors)) {
+            avatar.face_options.skin_colors = {name: 'skin', skin: 'rgb(228,131,86)'};
+        }
+
+        var red = net.brehaut.Color('#ff0000');
+        if (!avatar.face_options.skin_colors.highlights) avatar.face_options.skin_colors.highlights = skinColor.lightenByRatio(.4).toString();
+        if (!avatar.face_options.skin_colors.cheek) avatar.face_options.skin_colors.cheek = skinColor.blend(red,.2).lightenByRatio(.1).toString();
+        if (!avatar.face_options.skin_colors.darkflesh) avatar.face_options.skin_colors.darkflesh = skinColor.blend(red,.1).darkenByRatio(.3).toString();
+        if (!avatar.face_options.skin_colors.deepshadow) avatar.face_options.skin_colors.deepshadow = skinColor.darkenByRatio(.4).toString();
+
+        var age_hair_percent = Math.min(Math.max(0, avatar.face_options.age - 55) / 60, 1);
+        var hairColor = net.brehaut.Color(avatar.face_options.hair_color_roots);
+        if (!avatar.face_options.hair_color) {
+            var gray = net.brehaut.Color('#eeeeee');
+            avatar.face_options.hair_color = hairColor.blend(gray, age_hair_percent).desaturateByRatio(age_hair_percent).toString();
+        }
+        if (!avatar.face_options.beard_color) {
+            var gray_d = net.brehaut.Color('#dddddd');
+            avatar.face_options.beard_color = hairColor.blend(gray_d, age_hair_percent).desaturateByRatio(age_hair_percent).toString();
+        }
+
+
+        //Loop through each rendering order and draw each layer
         _.each(race_data.rendering_order || [], function (layer) {
             if (layer.decoration) {
                 addSceneChildren(container, buildDecoration(avatar, layer));
 
             } else if (layer.feature) {
-                var render_layer = _.find(avatar.renderers, function(rend){
+                var render_layer = _.find(avatar.renderers, function (rend) {
                     return (rend.style == layer.style) && (rend.feature == layer.feature);
                 });
                 if (render_layer && render_layer.renderer) {
@@ -330,7 +359,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         var option_name = '';
         var result, currentVal;
         var data = this.getRaceData();
-        if (_.str.endsWith(key,'_options') && data[key]) {
+        if (_.str.endsWith(key, '_options') && data[key]) {
             var options = data[key];
             option_name = key.split('_options')[0];
             currentVal = this.face_options[option_name];
@@ -341,7 +370,9 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
                 this.face_options[option_name] = result;
             } else if (_.isObject(options[0]) && _.isString(currentVal)) {
                 //The value is set as text, if it's an array of objects then set the object to the val
-                var obj = _.find(options, function(opt){return opt.name==currentVal;});
+                var obj = _.find(options, function (opt) {
+                    return opt.name == currentVal;
+                });
                 if (obj) this.face_options[option_name] = obj;
             }
         }
@@ -829,15 +860,15 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             } else if (type == 'midline of loop') {
                 //Takes a loop and averages the points through the middle
                 var e_length = existing_list.length;
-                var e_length_mid = e_length/2;
+                var e_length_mid = e_length / 2;
                 var new_list = [];
 
                 for (c = 0; c < e_length_mid; c++) {
                     var xy = _.clone(existing_list[c]);
                     new_list.push(xy);
                 }
-                var id=0;
-                for (c = e_length-1; c > e_length_mid; c--) {
+                var id = 0;
+                for (c = e_length - 1; c > e_length_mid; c--) {
                     var point = existing_list[c];
                     new_list[id].x += point.x;
                     new_list[id].x /= 2;
@@ -953,7 +984,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
                     }
                 }
             } else if (type == 'neck') {
-                existing_list= [
+                existing_list = [
                     {x: -options.radius, y: -options.radius},
                     {x: -options.radius, y: -options.radius},
                     {x: options.radius, y: -options.radius},

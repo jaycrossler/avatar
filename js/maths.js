@@ -70,6 +70,7 @@ maths.getRGBComponents = function (color) {
 };
 maths.hexColorToRGBA = function (color, transparency) {
     var rgb;
+    if (!color) return "rgba(0,0,0,1)";
     if (color.indexOf("rgb(")==0 && color.indexOf(",")>5) {
         //Is in format of rgb(215,159,102)
         var newColor = color.substr(0,color.length-1);
