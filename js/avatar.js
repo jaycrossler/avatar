@@ -1,24 +1,20 @@
 var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //Uses jquery and Underscore and colors.js and createjs's easel.js
 
-    //TODO: Hair getting transparent
     //TODO: Hair Peak have multiple shapes, apply more than one peak
     //TODO: Hair and beard use variables
     //TODO: Neck like coathanger shape
     //TODO: Cheekbones
-    //TODO: Wrinkles
-    //TODO: Age progression
-    //TODO: Scars and Jewelery
+    //TODO: Scars and Jewlery
     //TODO: Sprite images
     //TODO: Emotions
     //TODO: Moving eyes with border around them
     //TODO: Outfits
     //TODO: Other Races
-    //TODO: How to have a tentacle added?
 
     //-----------------------------
     //Private Global variables
-    var VERSION = '0.0.4',
+    var VERSION = '0.0.5',
         summary = 'Drawing procedurally rendered people on HTML5 canvas.',
         author = 'Jay Crossler - http://github.com/jaycrossler',
         file_name = 'avatar.js';

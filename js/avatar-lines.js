@@ -858,9 +858,11 @@ new Avatar('add_render_function', {style: 'lines', feature: 'hair', renderer: fu
 //            var outer_hair_dots = a.createPath(outer_hair_line, {dot_array:true, thickness: f.thick_unit * 2, line_color: face_options.hair_color});
 //            shapes = shapes.concat(outer_hair_dots);
 
-        var color = face_options.hair_color;
+        var color = _.clone(face_options.hair_color);
         var fill_color = color;
         if (color == 'White' || color == '#000000') color = 'gray';
+        color = maths.hexColorToRGBA(color,1);
+        fill_color = maths.hexColorToRGBA(fill_color,1);
 
         var full_hair_line = inner_hair_line.concat(outer_hair_line.reverse());
         full_hair_line = a.transformShapeLine({type: 'smooth'}, face_options, full_hair_line);
@@ -941,10 +943,11 @@ new Avatar('add_render_function', {style: 'lines', feature: 'beard', renderer: f
         var inner_hair_line = a.extrudeHorizontalArc(beard_line, -f.thick_unit * inner_hair_x * 10, -f.thick_unit * inner_hair_y * 10);
         var outer_hair_line = a.extrudeHorizontalArc(beard_line, -f.thick_unit * outer_hair_x * 10, f.thick_unit * outer_hair_y * 10);
 
-        var color = face_options.beard_color || face_options.hair_color;
+        var color = _.clone(face_options.beard_color || face_options.hair_color);
         if (color == 'Hair') color = face_options.hair_color;
         var fill_color = color;
         if (color == 'White' || color == '#000000') color = 'gray';
+        color = maths.hexColorToRGBA(color,1);
 
         var full_beard_line = outer_hair_line.concat(inner_hair_line.reverse());
         full_beard_line = a.transformShapeLine({type: 'smooth'}, face_options, full_beard_line);
