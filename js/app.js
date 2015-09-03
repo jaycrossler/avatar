@@ -28,7 +28,7 @@ $(document).ready(function () {
 
     }
 
-//    canvas.addEventListener('mousemove', draw, false);
+    canvas.addEventListener('mousemove', draw, false);
 
 //    $canvas.width($(window).width());
 

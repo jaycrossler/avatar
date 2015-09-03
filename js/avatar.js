@@ -109,8 +109,8 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 //            {decoration:"box-behind"},
             {feature: "neck", style: "lines"},
             {feature: "face", style: "lines"},
-            {feature: "nose", style: "lines"},
             {feature: "eyes", style: "lines"},
+            {feature: "nose", style: "lines"},
             {feature: "chin", style: "lines"},
             {feature: "wrinkles", style: "lines"},
             {feature: "beard", style: "lines"},
@@ -462,8 +462,8 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         });
     };
     AvatarClass.prototype.getBounds = function () {
-        var p1 = getPoint(this, 'facezone topleft');
-        var p2 = getPoint(this, 'facezone bottomright');
+        var p1 = findPoint(this, 'facezone topleft');
+        var p2 = findPoint(this, 'facezone bottomright');
         var p2x = parseInt(p2.x - p1.x);
         var p2y = parseInt(p2.y - p1.y);
 
@@ -506,8 +506,8 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         if (decoration.type == 'rectangle') {
             var p1, p2;
             if (decoration.docked) {
-                var image_tl = getPoint(avatar, 'facezone topleft');
-                var image_br = getPoint(avatar, 'facezone bottomright');
+                var image_tl = findPoint(avatar, 'facezone topleft');
+                var image_br = findPoint(avatar, 'facezone bottomright');
                 var height = decoration.height || 16;
                 var width = decoration.width || 16;
                 if (decoration.docked == "bottom") {
@@ -525,8 +525,8 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
 
             } else {
-                p1 = (_.isString(decoration.p1)) ? getPoint(avatar, decoration.p1) : decoration.p1;
-                p2 = (_.isString(decoration.p2)) ? getPoint(avatar, decoration.p2) : decoration.p2;
+                p1 = (_.isString(decoration.p1)) ? findPoint(avatar, decoration.p1) : decoration.p1;
+                p2 = (_.isString(decoration.p2)) ? findPoint(avatar, decoration.p2) : decoration.p2;
             }
             if (p1 && _.isObject(p1) && p2 && _.isObject(p2)) {
                 var p1x = parseInt(p1.x);
@@ -760,29 +760,6 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
     //-----------------------------
     //Drawing Helpers
-    function namePoint(avatar, name, point) {
-        var existingPoint = _.find(avatar.registered_points, function (point) {
-            return point.name == name;
-        });
-        if (existingPoint) {
-            existingPoint.point = point;
-        } else {
-            avatar.registered_points = avatar.registered_points || [];
-            avatar.registered_points.push({name: name, point: point});
-        }
-    }
-
-    function getPoint(avatar, name) {
-        //TODO: Use same function name style as getLines
-        var existingPoint = _.find(avatar.registered_points, function (point) {
-            return point.name == name;
-        });
-        var found = null;
-        if (existingPoint && existingPoint.point) {
-            found = existingPoint.point;
-        }
-        return found;
-    }
 
     function addSceneChildren(container, children) {
         _.each(children, function (c) {
@@ -1080,20 +1057,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         }
     }
 
-    function createPathFromLocalCoordinates(points_local, style, width_radius, height_radius) {
-        var points = [];
-        height_radius = height_radius || width_radius;
-        for (var p = 0; p < points_local.length; p++) {
-            var point = _.clone(points_local[p]);
-            var x = (width_radius * point.x / 10);
-            var y = (height_radius * point.y / 10);
-            point.x = x;
-            point.y = y;
-            points.push(point);
-        }
-        return createPath(points, style, Math.max(width_radius, height_radius));
-    }
-
+    //Point and line tracking
     function findShape(lines, name) {
         var shape = _.find(lines, function (shape) {
             return shape.name == name
@@ -1102,6 +1066,67 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             console.error("avatar.js - Error: " + name + " not found when trying to 'findShape'");
         }
         return shape || {};
+    }
+
+    function findPoint(avatar, name) {
+        var existingPoint = _.find(avatar.registered_points, function (point) {
+            return point.name == name;
+        });
+        var found = null;
+        if (existingPoint && existingPoint.point) {
+            found = existingPoint.point;
+        } else {
+            console.error("avatar.js - Error: " + name + " not found when trying to 'findPoint'");
+        }
+        return found || {};
+    }
+
+    function namePoint(avatar, name, point) {
+        var existingPoint = _.find(avatar.registered_points, function (point) {
+            return point.name == name;
+        });
+        if (existingPoint) {
+            existingPoint.point = point;
+        } else {
+            avatar.registered_points = avatar.registered_points || [];
+            avatar.registered_points.push({name: name, point: point});
+        }
+    }
+
+    //Path creation and editing
+    function transformPathFromLocalCoordinates(points_local, width_radius, height_radius, center_x, center_y) {
+        if (!_.isArray(points_local)) points_local = [points_local];
+
+        var points = [];
+        for (var p = 0; p < points_local.length; p++) {
+            var point = _.clone(points_local[p]);
+            var x = (width_radius * point.x / 10) + (center_x||0);
+            var y = (height_radius * point.y / 10) + (center_y||0);
+            point.x = x;
+            point.y = y;
+            points.push(point);
+        }
+        return points;
+    }
+    function transformPathFromGlobalCoordinates(points_global, width_radius, height_radius, center_x, center_y) {
+        //NOTE: Untested function
+        if (!_.isArray(points_global)) points_global = [points_global];
+
+        var points = [];
+        for (var p = 0; p < points_global.length; p++) {
+            var point = _.clone(points_global[p]);
+            var x = point.x - (center_x||0);
+            var y = point.y - (center_y||0);
+            point.x = x / width_radius * 10;
+            point.y = y / height_radius * 10;
+            points.push(point);
+        }
+        return points;
+    }
+
+    function createPathFromLocalCoordinates(points_local, style, width_radius, height_radius) {
+        var points = transformPathFromLocalCoordinates(points_local, width_radius, height_radius);
+        return createPath(points, style, Math.max(width_radius, height_radius));
     }
 
     function createPath(points, style, radius) {
@@ -1385,15 +1410,17 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         registerEvents: registerEvents,
         buildDecoration: buildDecoration,
         buildFaceZones: buildFaceZones,
-        namePoint: namePoint,
-        getPoint: getPoint,
         addSceneChildren: addSceneChildren,
+        transformPathFromLocalCoordinates: transformPathFromLocalCoordinates,
+        transformPathFromGlobalCoordinates: transformPathFromGlobalCoordinates,
         transformLineToGlobalCoordinates: transformLineToGlobalCoordinates,
         lineSegmentCompared: lineSegmentCompared,
         transformShapeLine: transformShapeLine,
         comparePoints: comparePoints,
         midPointBetween: midPointBetween,
         createPathFromLocalCoordinates: createPathFromLocalCoordinates,
+        namePoint: namePoint,
+        findPoint: findPoint,
         findShape: findShape,
         createPath: createPath,
         extrudeHorizontalArc: extrudeHorizontalArc,
