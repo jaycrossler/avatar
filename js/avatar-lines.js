@@ -965,8 +965,8 @@ new Avatar('add_render_function', {style: 'lines', feature: 'wrinkles', renderer
     var lines = avatar.lines;
     var shapes = [];
 
-    var wrinkle_resistance = a.turnWordToNumber(face_options.wrinkle_resistance,50,-100);
-    var wrinkle_age = face_options.age+wrinkle_resistance;
+    var wrinkle_resistance = a.turnWordToNumber(face_options.wrinkle_resistance, 50, -100);
+    var wrinkle_age = face_options.age + wrinkle_resistance;
 
     var wrinkle_lines = parseInt(wrinkle_age / 15);
     var head_line = a.transformLineToGlobalCoordinates(lines, 'face');
@@ -1060,6 +1060,168 @@ new Avatar('add_render_function', {style: 'lines', feature: 'wrinkles', renderer
     divot_line_3.alpha = alpha;
     lines.push({name: 'mid nose divot line', line: nose_divot_line, shape: divot_line_3, x: x, y: y, alpha: alpha, scale_x: width, scale_y: height});
     shapes.push(divot_line_3);
+
+    var mouth_line = a.transformLineToGlobalCoordinates(lines, 'lips');
+    var mouth_left_point = a.comparePoints(mouth_line, 'x', 'lowest', true);
+    var mouth_right_point = a.comparePoints(mouth_line, 'x', 'highest', true);
+
+    var mouse_side_lines_height = 8;
+    var mouse_side_lines_width = 1;
+    if (mouse_side_lines_height > 0) {
+        var left_mouth_wrinkle = [];
+        left_mouth_wrinkle.push({x: mouth_left_point.x - (f.thick_unit * mouse_side_lines_width), y: mouth_left_point.y - (f.thick_unit * mouse_side_lines_height)});
+        left_mouth_wrinkle.push({x: mouth_left_point.x - (f.thick_unit * mouse_side_lines_width), y: mouth_left_point.y - (f.thick_unit * mouse_side_lines_height * .5)});
+        left_mouth_wrinkle.push({x: mouth_left_point.x + (f.thick_unit), y: mouth_left_point.y});
+        left_mouth_wrinkle.push({x: mouth_left_point.x - (f.thick_unit * mouse_side_lines_width), y: mouth_left_point.y + (f.thick_unit * mouse_side_lines_height * .5)});
+        left_mouth_wrinkle.push({x: mouth_left_point.x - (f.thick_unit * mouse_side_lines_width), y: mouth_left_point.y + (f.thick_unit * mouse_side_lines_height)});
+
+        var left_mouth_curve1 = a.createPath(left_mouth_wrinkle, {
+            thickness: 2 * f.thick_unit, line_color: face_options.skin_colors.darkflesh
+        });
+        shapes.push(left_mouth_curve1);
+
+        var right_mouth_wrinkle = [];
+        right_mouth_wrinkle.push({x: mouth_right_point.x + (f.thick_unit * mouse_side_lines_width), y: mouth_right_point.y - (f.thick_unit * mouse_side_lines_height)});
+        right_mouth_wrinkle.push({x: mouth_right_point.x + (f.thick_unit * mouse_side_lines_width), y: mouth_right_point.y - (f.thick_unit * mouse_side_lines_height * .5)});
+        right_mouth_wrinkle.push({x: mouth_right_point.x - (f.thick_unit), y: mouth_right_point.y});
+        right_mouth_wrinkle.push({x: mouth_right_point.x + (f.thick_unit * mouse_side_lines_width), y: mouth_right_point.y + (f.thick_unit * mouse_side_lines_height * .5)});
+        right_mouth_wrinkle.push({x: mouth_right_point.x + (f.thick_unit * mouse_side_lines_width), y: mouth_right_point.y + (f.thick_unit * mouse_side_lines_height)});
+
+        var right_mouth_curve1 = a.createPath(right_mouth_wrinkle, {
+            thickness: 2 * f.thick_unit, line_color: face_options.skin_colors.darkflesh
+        });
+        shapes.push(right_mouth_curve1);
+
+
+    }
+
+    //Lines to nose-mouth wrinkles uses wrinkle_mouth_width/height
+    if (wrinkle_age > 16) {
+        var mouth_line_curve_alpha = (wrinkle_age - 15) / 150;
+        var left_nose_line = a.transformLineToGlobalCoordinates(lines, 'full nose');
+        var left_nose_round_top_point = left_nose_line[2];
+        var left_chin_line = a.transformLineToGlobalCoordinates(lines, 'chin top line');
+        var left_chin_line_point = a.comparePoints(left_chin_line, 'x', 'lowest', true);
+
+        var left_nose_mouth_wrinkle = [];
+
+        left_nose_round_top_point.x -= (f.thick_unit * 3);
+        left_nose_round_top_point.x -= (f.thick_unit * 5);
+        left_nose_mouth_wrinkle.push(_.clone(left_nose_round_top_point));
+
+        left_nose_round_top_point.x -= (f.thick_unit * 8);
+        left_nose_round_top_point.x -= (f.thick_unit * 5);
+        left_nose_mouth_wrinkle.push(_.clone(left_nose_round_top_point));
+
+        //TODO: Check that points are on face
+        mouth_left_point.x -= (f.thick_unit * 25);
+        mouth_left_point.y -= (f.thick_unit * 8);
+        if (face_options.wrinkle_mouth_width == "Far Out") {
+            mouth_left_point.x -= (f.thick_unit * 8)
+        } else if (face_options.wrinkle_mouth_width == "Out") {
+            mouth_left_point.x -= (f.thick_unit * 3)
+        } else if (face_options.wrinkle_mouth_width == "In") {
+            mouth_left_point.x += (f.thick_unit * 3)
+        } else if (face_options.wrinkle_mouth_width == "Far In") {
+            mouth_left_point.x += (f.thick_unit * 8)
+        }
+
+        if (face_options.wrinkle_mouth_height == "Far Up") {
+            mouth_left_point.y -= (f.thick_unit * 10)
+        } else if (face_options.wrinkle_mouth_height == "Up") {
+            mouth_left_point.y -= (f.thick_unit * 5)
+        } else if (face_options.wrinkle_mouth_height == "Down") {
+            mouth_left_point.y += (f.thick_unit * 5)
+        } else if (face_options.wrinkle_mouth_height == "Far Down") {
+            mouth_left_point.y += (f.thick_unit * 10)
+        }
+        left_nose_mouth_wrinkle.push(mouth_left_point);
+
+        left_chin_line_point.x -= (f.thick_unit * 4);
+        left_nose_mouth_wrinkle.push(left_chin_line_point);
+
+
+        //Right chin mouth line
+        var right_nose_round_top_point = left_nose_line[17];
+        var right_chin_line = a.transformLineToGlobalCoordinates(lines, 'chin top line');
+        var right_chin_line_point = a.comparePoints(right_chin_line, 'x', 'highest', true);
+
+        var right_nose_mouth_wrinkle = [];
+
+        right_nose_round_top_point.x += (f.thick_unit * 3);
+        right_nose_round_top_point.x += (f.thick_unit * 5);
+        right_nose_mouth_wrinkle.push(_.clone(right_nose_round_top_point));
+
+        right_nose_round_top_point.x += (f.thick_unit * 8);
+        right_nose_round_top_point.x += (f.thick_unit * 5);
+        right_nose_mouth_wrinkle.push(_.clone(right_nose_round_top_point));
+
+        //TODO: Check that points are on face
+        mouth_right_point.x += (f.thick_unit * 25);
+        mouth_right_point.y += (f.thick_unit * 8);
+        if (face_options.wrinkle_mouth_width == "Far Out") {
+            mouth_right_point.x += (f.thick_unit * 8)
+        } else if (face_options.wrinkle_mouth_width == "Out") {
+            mouth_right_point.x += (f.thick_unit * 3)
+        } else if (face_options.wrinkle_mouth_width == "In") {
+            mouth_right_point.x -= (f.thick_unit * 3)
+        } else if (face_options.wrinkle_mouth_width == "Far In") {
+            mouth_right_point.x -= (f.thick_unit * 8)
+        }
+
+        if (face_options.wrinkle_mouth_height == "Far Up") {
+            mouth_right_point.y += (f.thick_unit * 10)
+        } else if (face_options.wrinkle_mouth_height == "Up") {
+            mouth_right_point.y += (f.thick_unit * 5)
+        } else if (face_options.wrinkle_mouth_height == "Down") {
+            mouth_right_point.y -= (f.thick_unit * 5)
+        } else if (face_options.wrinkle_mouth_height == "Far Down") {
+            mouth_right_point.y -= (f.thick_unit * 10)
+        }
+        right_nose_mouth_wrinkle.push(mouth_right_point);
+
+        right_chin_line_point.x += (f.thick_unit * 4);
+        right_nose_mouth_wrinkle.push(right_chin_line_point);
+
+
+        var alpha_widths = [20, 10, 2, 6, 3, 1];
+
+        var left_nose_curve1 = a.createPath(left_nose_mouth_wrinkle, {
+            thickness: alpha_widths[0] * f.thick_unit, line_color: face_options.skin_colors.darkflesh
+        });
+        left_nose_curve1.alpha = mouth_line_curve_alpha / alpha_widths[3];
+        var left_nose_curve2 = a.createPath(left_nose_mouth_wrinkle, {
+            thickness: alpha_widths[1] * f.thick_unit, line_color: face_options.skin_colors.darkflesh
+        });
+        left_nose_curve2.alpha = mouth_line_curve_alpha / alpha_widths[4];
+        var left_nose_curve3 = a.createPath(left_nose_mouth_wrinkle, {
+            thickness: alpha_widths[2] * f.thick_unit, line_color: face_options.skin_colors.darkflesh
+        });
+        left_nose_curve3.alpha = mouth_line_curve_alpha / alpha_widths[5];
+
+
+        var right_nose_curve1 = a.createPath(right_nose_mouth_wrinkle, {
+            thickness: alpha_widths[0] * f.thick_unit, line_color: face_options.skin_colors.darkflesh
+        });
+        right_nose_curve1.alpha = mouth_line_curve_alpha / alpha_widths[3];
+
+        var right_nose_curve2 = a.createPath(right_nose_mouth_wrinkle, {
+            thickness: alpha_widths[1] * f.thick_unit, line_color: face_options.skin_colors.darkflesh
+        });
+        right_nose_curve2.alpha = mouth_line_curve_alpha / alpha_widths[4];
+
+        var right_nose_curve3 = a.createPath(right_nose_mouth_wrinkle, {
+            thickness: alpha_widths[2] * f.thick_unit, line_color: face_options.skin_colors.darkflesh
+        });
+        right_nose_curve3.alpha = mouth_line_curve_alpha / alpha_widths[5];
+
+        shapes.push(left_nose_curve1);
+        shapes.push(left_nose_curve2);
+        shapes.push(left_nose_curve3);
+        shapes.push(right_nose_curve1);
+        shapes.push(right_nose_curve2);
+        shapes.push(right_nose_curve3);
+    }
 
 
     return shapes;

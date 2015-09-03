@@ -95,6 +95,8 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         ear_lobe_left: null,
         ear_lobe_right: null,
 
+        wrinkle_mouth_width: null,
+        wrinkle_mouth_height: null,
         wrinkle_resistance: null
 
     };
@@ -115,9 +117,10 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             {feature: "eyes", style: "lines"},
             {feature: "nose", style: "lines"},
             {feature: "chin", style: "lines"},
+            {feature: "mouth", style: "lines"},
             {feature: "wrinkles", style: "lines"},
             {feature: "beard", style: "lines"},
-            {feature: "mouth", style: "lines"},
+            {feature: "mouth", style: "lines"}, //NOTE: Mouth twice to catch wrinkle points
             {feature: "hair", style: "lines"},
             {feature: "ears", style: "lines"},
             {decoration: "name-plate"}
@@ -185,7 +188,11 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         lip_shape_options: "Puckered,Thin,Thick".split(","),
 
         wrinkle_resistance_options: "Very Low,Low,Less,Below,Reduce,Raised,Above,More,High,Very High".split(","),
+        wrinkle_mouth_width_options:"Far Out,Out,Middle,In,Far In".split(","),
+        wrinkle_mouth_height_options:"Far Up,Up,Middle,Down,Far Down".split(","),
+
         forehead_height_options: "Under,Low,Less,Normal,Above,Raised,High,Floating".split(","),
+
         decorations: [
             {name: "box-behind", type: 'rectangle', p1: 'facezone topleft', p2: 'facezone bottomright',
                 fill_color: 'blue', alpha: 0.3, line_color: 'light blue', size: '2', forceInBounds: true},
@@ -1023,8 +1030,9 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         return existing_list;
     }
 
-    function comparePoints(existing_list, attribute, cardinality) {
+    function comparePoints(existing_list, attribute, cardinality, returnPoint) {
         var result = null;
+        var best_point = null;
         if (attribute == 'height') {
             var y_max = comparePoints(existing_list, 'y', 'highest');
             var y_min = comparePoints(existing_list, 'y', 'lowest');
@@ -1040,8 +1048,18 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             var highest = Number.MIN_VALUE;
 
             _.each(existing_list, function (point) {
-                if (point[attribute] > highest) highest = point[attribute];
-                if (point[attribute] < lowest) lowest = point[attribute];
+                if (point[attribute] > highest) {
+                    highest = point[attribute];
+                    if (cardinality == 'highest') {
+                        best_point = point;
+                    }
+                }
+                if (point[attribute] < lowest) {
+                    lowest = point[attribute];
+                    if (cardinality == 'lowest') {
+                        best_point = point;
+                    }
+                }
             });
 
             if (cardinality == 'highest') {
@@ -1050,7 +1068,11 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
                 result = lowest;
             } else if (cardinality == 'middle') {
                 result = (highest + lowest) / 2;
+                //TODO: Return point if returnPoint requested
             }
+        }
+        if (returnPoint) {
+            result = best_point;
         }
         return result;
     }
@@ -1131,10 +1153,10 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
     function createPathFromLocalCoordinates(points_local, style, width_radius, height_radius) {
         var points = transformPathFromLocalCoordinates(points_local, width_radius, height_radius);
-        return createPath(points, style, Math.max(width_radius, height_radius));
+        return createPath(points, style);
     }
 
-    function createPath(points, style, radius) {
+    function createPath(points, style) {
         if (!points || !points.length || points.length < 2) return null;
         style = style || {};
 
@@ -1180,7 +1202,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
                     line.graphics.beginRadialGradientFill(
                         style.fill_colors, style.fill_steps || [0, 1],
                             style.x_offset || comparePoints(points, 'x', 'middle'), style.y_offset || comparePoints(points, 'y', 'middle'), 0,
-                            style.x_offset || comparePoints(points, 'x', 'middle'), style.y_offset || comparePoints(points, 'y', 'middle'), style.radius || radius || 10);
+                            style.x_offset || comparePoints(points, 'x', 'middle'), style.y_offset || comparePoints(points, 'y', 'middle'), style.radius || 10);
                 }
             }
 
