@@ -51,6 +51,8 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         gender: null,
         height: 0,
 
+        skin_shade_tint: null,
+        skin_shade: null,
         skin_colors: null,
         face_shape: null,
         skull_thickness: 'Normal',
@@ -117,9 +119,13 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             {feature: "ears", style: "lines"},
             {decoration: "name-plate"}
         ],
+
+        //If Preset, then use one of the skin_color_options and change tint, otherwise calculate by tint and lightness
+        skin_shade_options: "Light,Dark,Preset".split(","),
+        skin_shade_tint_options: "Darkest,Darker,Dark,Very Low,Low,Less,Below,Reduce,Raised,Above,More,High,Very High,Bright,Brighter,Brightest".split(","),
         skin_colors_options: [
             {name: 'Fair', highlights: 'rgb(254,202,182)', skin: 'rgb(245,185,158)', cheek: 'rgb(246,171,142)', darkflesh: 'rgb(217,118,76)', deepshadow: 'rgb(202,168,110'},
-            {name: 'Brown', highlights: 'rgb(229,144,50)', skin: 'rgb(228,131,86)', cheek: 'rgb(178,85,44)', darkflesh: 'rgb(143,70,29)', deepshadow: 'rgb(152,57,17'},
+            {name: 'Brown', highlights: 'rgb(229,144,90)', skin: 'rgb(228,131,86)', cheek: ' rgb(178,85,44)', darkflesh: 'rgb(143,70,29)', deepshadow: 'rgb(152,57,17'},
             {name: 'Tanned', highlights: 'rgb(245,194,151)', skin: 'rgb(234,154,95)', cheek: 'rgb(208,110,56)', darkflesh: 'rgb(168,66,17)', deepshadow: 'rgb(147,68,27'},
             {name: 'White', highlights: 'rgb(250,220,196)', skin: 'rgb(245,187,149)', cheek: 'rgb(239,165,128)', darkflesh: 'rgb(203,137,103)', deepshadow: 'rgb(168,102,68'},
             {name: 'Medium', highlights: 'rgb(247,188,154)', skin: 'rgb(243,160,120)', cheek: 'rgb(213,114,75)', darkflesh: 'rgb(154,79,48)', deepshadow: 'rgb(127,67,41'},
@@ -295,31 +301,53 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         stage.addChild(face);
         stage.update();
     };
-    AvatarClass.prototype.buildFace = function () {
-        var container = new createjs.Container();
-        this.lines = [];
-        var avatar = this;
-
-        var face_zones = buildFaceZones(avatar);
-        var race_data = avatar.getRaceData();
+    function turnWordToNumber (word,min,max) {
+        var options = "Darkest,Darker,Dark,Very Low,Low,Less,Below,Reduce,Raised,Above,More,High,Very High,Bright,Brighter,Brightest".split(",");
+        var pos = _.indexOf(options,word);
+        var val = 0;
+        if (pos > -1) {
+            var percent = pos/options.length;
+            val = min + (percent * (max-min));
+        }
+        return val;
+    }
+    function generateSkinAndHairColors (avatar) {
 
         //TODO: vary colors based on charisma and age
         //Merge and tweak colors
-        var skinColor;
+        var skinColor = '';
         if (_.isString(avatar.face_options.skin_colors)) {
             skinColor = net.brehaut.Color(avatar.face_options.skin_colors);
             avatar.face_options.skin_colors = {name: avatar.face_options.skin_colors, skin: skinColor.toString()};
-        } else {
+        } else if (avatar.face_options.skin_colors.skin) {
             skinColor = net.brehaut.Color(avatar.face_options.skin_colors.skin);
+        }
+
+        var skin_darken_amount, R, G, B;
+        //Based on math from http://johnthemathguy.blogspot.com/2013/08/what-color-is-human-skin.html
+        if (avatar.face_options.skin_shade == "Light") {
+            skin_darken_amount = turnWordToNumber(avatar.face_options.skin_shade_tint,-3,3);
+            R = 224.3 + 9.6 * skin_darken_amount;
+            G = 193.1 + 17.0 * skin_darken_amount;
+            B = 177.6 + 21.0 * skin_darken_amount;
+            skinColor = net.brehaut.Color("rgb("+parseInt(R)+","+parseInt(G)+","+parseInt(B)+")");
+            avatar.face_options.skin_colors = {name: "light:"+skin_darken_amount, skin:skinColor.toString()};
+        } else if (avatar.face_options.skin_shade == "Dark") {
+            skin_darken_amount = turnWordToNumber(avatar.face_options.skin_shade_tint,-3,1);
+            R = 168.8 + 38.5 * skin_darken_amount;
+            G = 122.5 + 32.1 * skin_darken_amount;
+            B = 96.7 + 26.3 * skin_darken_amount;
+            skinColor = net.brehaut.Color("rgb("+parseInt(R)+","+parseInt(G)+","+parseInt(B)+")");
+            avatar.face_options.skin_colors = {name: "dark:"+skin_darken_amount, skin:skinColor.toString()};
         }
 
         if (!_.isObject(avatar.face_options.skin_colors)) {
             avatar.face_options.skin_colors = {name: 'skin', skin: 'rgb(228,131,86)'};
         }
 
-        var red = net.brehaut.Color('#ff0000');
+        var red = net.brehaut.Color('#885544');
         if (!avatar.face_options.skin_colors.highlights) avatar.face_options.skin_colors.highlights = skinColor.lightenByRatio(.4).toString();
-        if (!avatar.face_options.skin_colors.cheek) avatar.face_options.skin_colors.cheek = skinColor.blend(red,.2).lightenByRatio(.1).toString();
+        if (!avatar.face_options.skin_colors.cheek) avatar.face_options.skin_colors.cheek = skinColor.blend(red,.1).darkenByRatio(.2).toString();
         if (!avatar.face_options.skin_colors.darkflesh) avatar.face_options.skin_colors.darkflesh = skinColor.blend(red,.1).darkenByRatio(.3).toString();
         if (!avatar.face_options.skin_colors.deepshadow) avatar.face_options.skin_colors.deepshadow = skinColor.darkenByRatio(.4).toString();
 
@@ -334,6 +362,18 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             avatar.face_options.beard_color = hairColor.blend(gray_d, age_hair_percent).desaturateByRatio(age_hair_percent).toString();
         }
 
+
+    };
+
+    AvatarClass.prototype.buildFace = function () {
+        var container = new createjs.Container();
+        this.lines = [];
+        var avatar = this;
+
+        var face_zones = buildFaceZones(avatar);
+        var race_data = avatar.getRaceData();
+
+        generateSkinAndHairColors(avatar);
 
         //Loop through each rendering order and draw each layer
         _.each(race_data.rendering_order || [], function (layer) {
