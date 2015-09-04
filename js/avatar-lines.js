@@ -295,7 +295,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'eyes', renderer: fu
     var iris_transparency = 0.5; //.1 - .9 for weird eyes, but .5 works best
     var pupil_color = 'black'; //best dark colors, black or dark blue. red looks freaky
     var eyebrow_thick_start = 4;
-    var eyebrow_thick_stop = 2 * f.thick_unit;  //TODO: Still not working fully
+    var eyebrow_thick_stop = 2 * f.thick_unit;
     var eye_squint = 1.4;
     var iris_side_movement = -0; // -8 - 8  //TODO: Can go farther once eyes are overdrawn
 
@@ -451,9 +451,10 @@ new Avatar('add_render_function', {style: 'lines', feature: 'eyes', renderer: fu
     eyebrow_fade_color = eyebrow_fade_color.toString();
 
     var left_eyebrow_top = a.createMultiPathFromLocalCoordinates(left_eyebrow_line_top, {
-        line_color: face_options.hair_color, line_color_end:eyebrow_fade_color , points_min:3,
-        thickness: eyebrow_thick_start, thickness_end: eyebrow_thick_stop,
-        x: x, y: y, rotation: rotation_amount + eyebrow_rotation, alpha: eyebrow_transparency
+        break_line_every:5,
+        line_color_gradients: [face_options.hair_color, eyebrow_fade_color],
+        thickness_gradients: [eyebrow_thick_start, eyebrow_thick_stop],
+        x: x, y: y, rotation: rotation_amount + eyebrow_rotation
     }, width_eyebrow, height_eyebrow);
     lines.push({name: 'left eyebrow top set', line: left_eyebrow_line_top, shape: left_eyebrow_top, scale_x: width_eye, scale_y: height_eye, x: x, y: y, rotation: rotation_amount + eyebrow_rotation, alpha: eyebrow_transparency});
     shapes = shapes.concat(left_eyebrow_top);
@@ -563,8 +564,9 @@ new Avatar('add_render_function', {style: 'lines', feature: 'eyes', renderer: fu
     y = zone.y - (f.thick_unit * 1.5 * eyebrow_height);
     var right_eyebrow_line_top = a.transformShapeLine({type: 'reverse', direction: 'horizontal', axis: 0}, face_options, left_eyebrow_line_top);
     var right_eyebrow_top = a.createMultiPathFromLocalCoordinates(right_eyebrow_line_top, {
-        line_color: face_options.hair_color, line_color_end:eyebrow_fade_color , points_min:3,
-        thickness: eyebrow_thick_start, thickness_end: eyebrow_thick_stop,
+        break_line_every:5,
+        line_color_gradients: [face_options.hair_color, eyebrow_fade_color],
+        thickness_gradients: [eyebrow_thick_start, eyebrow_thick_stop],
         x: x, y: y, rotation: -rotation_amount - eyebrow_rotation, alpha: eyebrow_transparency
     }, width_eyebrow, height_eyebrow);
     lines.push({name: 'right eyebrow top set', line: right_eyebrow_line_top, shape: right_eyebrow_top, scale_x: width_eye, scale_y: height_eye, x: x, y: y, rotation: -rotation_amount - eyebrow_rotation, alpha: eyebrow_transparency});
@@ -764,13 +766,13 @@ new Avatar('add_render_function', {style: 'lines', feature: 'nose', renderer: fu
 
     shapes.push(nose_bottom_squiggle);
 
-    var l_r = a.createPathFromLocalCoordinates(nose_line_r, {thickness: thickness, thickness_end: thickness * .3, color: face_options.skin_colors.deepshadow}, width, height);
+    var l_r = a.createPathFromLocalCoordinates(nose_line_r, {thickness: thickness, color: face_options.skin_colors.cheek}, width, height);
     l_r.x = zone.x;
     l_r.y = zone.y;
     lines.push({name: 'nose right line', line: nose_line_r, shape: l_r, x: zone.x, y: zone.y, scale_x: width, scale_y: height});
     shapes.push(l_r);
 
-    var l_l = a.createPathFromLocalCoordinates(nose_line_l, {thickness: thickness, thickness_end: thickness * .3, color: face_options.skin_colors.deepshadow}, width, height);
+    var l_l = a.createPathFromLocalCoordinates(nose_line_l, {thickness: thickness, color: face_options.skin_colors.cheek}, width, height);
     l_l.x = zone.x;
     l_l.y = zone.y;
     lines.push({name: 'nose left line', line: nose_line_l, shape: l_l, x: zone.x, y: zone.y, scale_x: width, scale_y: height});
@@ -1139,7 +1141,6 @@ new Avatar('add_render_function', {style: 'lines', feature: 'wrinkles', renderer
         left_nose_round_top_point.y -= (f.thick_unit * 5);
         left_nose_mouth_wrinkle.push(_.clone(left_nose_round_top_point));
 
-        //TODO: Check that points are on face
         mouth_left_point.x -= (f.thick_unit * 25);
         mouth_left_point.y -= (f.thick_unit * 8);
         if (face_options.wrinkle_mouth_width == "Far Out") {
@@ -1182,7 +1183,6 @@ new Avatar('add_render_function', {style: 'lines', feature: 'wrinkles', renderer
         right_nose_round_top_point.y -= (f.thick_unit * 5);
         right_nose_mouth_wrinkle.push(_.clone(right_nose_round_top_point));
 
-        //TODO: Check that points are on face
         mouth_right_point.x += (f.thick_unit * 25);
         mouth_right_point.y += (f.thick_unit * 8);
         if (face_options.wrinkle_mouth_width == "Far Out") {
@@ -1553,7 +1553,14 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mouth', renderer: f
         ];
     }
 
-    var l = a.createPathFromLocalCoordinates(mouth_top_line, {close_line: true, thickness: lip_thickness, color: face_options.skin_colors.deepshadow, fill_color: face_options.lip_color}, width, height);
+    var lip_mid_color = net.brehaut.Color(face_options.lip_color).darkenByRatio(.3).toString();
+    var l = a.createPathFromLocalCoordinates(mouth_top_line, {
+        close_line: true, thickness: lip_thickness,
+        line_color: face_options.skin_colors.deepshadow, fill_method: 'linear',
+        fill_colors: [face_options.lip_color, lip_mid_color, face_options.lip_color],
+        fill_steps: [0,.5,1], y_offset_start: -height/2, y_offset_end: height/2,
+        x_offset_start:0, x_offset_end:0
+    }, width, height);
     l.x = f.mouth.x;
     l.y = f.mouth.y;
     l.name = 'lips';

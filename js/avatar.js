@@ -3,7 +3,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
     //TODO: Hair Peak have multiple shapes, apply more than one peak
     //TODO: Hair and beard use variables
-    //TODO: Neck like coathanger shape
+    //TODO: Neck like coathanger shape with neck muscles
     //TODO: Cheekbones
     //TODO: Scars and Jewlery
     //TODO: Sprite images
@@ -12,6 +12,18 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //TODO: Outfits
     //TODO: Other Races
     //TODO: Lip gradient
+    //TODO: Check big noses don't go over eyes
+
+    //TODO: Presave Eye shapes
+    //TODO: Check curve gets jag annd down
+    //TODO: Three levels of cheek curves
+    //TODO: Multiline function has shadow, offset shadow
+    //TODO: Have a wrinkle matrix for all three curves that gets heavier with age
+    //TODO: Add in many eyebrows, overdraw with a canvas brush for bushiness
+    //TODO: Eyes get eyelashes
+    //TODO: Build an age-progression demo page
+    //TODO: Add horns for Hellboy style
+
 
     //-----------------------------
     //Private Global variables
@@ -1193,10 +1205,11 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
                 line.graphics.beginFill(fill_color);
             } else if (style.fill_colors) {
                 if (style.fill_method == 'linear') {
+                    var x_offset_start =
                     line.graphics.beginLinearGradientFill(
                         style.fill_colors, style.fill_steps || [0, 1],
-                            style.x_offset_start || -style.radius || -10, style.y_offset_start || 0,
-                            style.x_offset_end || style.radius || 10, style.y_offset_end || 0)
+                            style.x_offset_start || -style.radius || 0, style.y_offset_start || 0,
+                            style.x_offset_end || style.radius || 0, style.y_offset_end || 0)
                 } else { //Assume Radial
                     line.graphics.beginRadialGradientFill(
                         style.fill_colors, style.fill_steps || [0, 1],
@@ -1259,20 +1272,56 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         return createMultiPath(points, style);
     }
 
+    function amountFromVarOrRange (point_amount, gradient, setting, percent, isColor) {
+        var amount = setting;
+
+        if (point_amount) {
+            amount = point_amount;
+        } else if (gradient) {
+            if (!_.isArray(gradient)) gradient = [gradient];
+            var grad_length = gradient.length;
+            if (grad_length == 1) {
+                amount = gradient[0];
+            } else {
+                var pos_floor = Math.floor(percent * (grad_length-1));
+                var pos_ceil = Math.ceil(percent * (grad_length-1));
+                if (pos_floor == pos_ceil) {
+                    amount = gradient[pos_floor];
+                } else {
+                    var val_floor = gradient[pos_floor];
+                    var val_ceil = gradient[pos_ceil];
+                    var val_perc = percent * (grad_length-1);
+                    var num_floor = pos_floor / (grad_length-1);
+                    var num_ceil = pos_ceil / (grad_length-1);
+                    var num_perc = (val_perc - num_floor) / (num_ceil - num_floor);
+                    if (isColor) {
+                        var color_floor = net.brehaut.Color(val_floor);
+                        var color_ceil = net.brehaut.Color(val_ceil);
+                        amount = color_floor.blend(color_ceil, num_perc).toString();
+                    } else {
+                        amount = ((val_ceil - val_floor) * num_perc) + val_floor;
+                    }
+                }
+            }
+        }
+
+        return amount;
+    }
     function createMultiPath(points, style) {
         if (!points || !points.length || points.length < 2) return null;
         style = style || {};
 
-        var color = style.line_color || style.color || 'black';
-        var color_end = style.line_color_end || color;
-        var color_obj = net.brehaut.Color(color);
-        var color_end_obj = net.brehaut.Color(color_end);
+        //NOTE: Color, Thickness, and Alpha can be:
+        // 1) Specified on each line segment (highest priority)
+        // 2) Given as a range (e.g. '[0,.1,.9,1]'
+        // 3) Given as a standard variable (e.g. 'style.thickness')
 
+        var color = style.line_color || 'black';
         var thickness = style.thickness || 1;
-        var thickness_end = style.thickness_end || thickness;
+        var alpha = style.alpha || 1;
 
-        if (style.points_min) {
-            points = hydratePointsAlongLine(points, style.points_min, true);
+        if (style.break_line_every) {
+            points = hydratePointsAlongLine(points, style.break_line_every, true);
         }
 
         var returnedShapes = [];
@@ -1282,11 +1331,14 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
             var p1 = points[i-1];
             var p2 = points[i];
+            //TODO: get p3 and do a mid for quads?
 
             var percent = (i / points.length);
-            var new_thickness = p2.thickness || (thickness + (percent * (thickness_end - thickness)));
-            var new_color = color_obj.blend(color_end_obj, percent);
-            line.graphics.beginStroke(new_color).setStrokeStyle(new_thickness);
+            var thickness_now = amountFromVarOrRange (p1.thickness, style.thickness_gradients, thickness, percent);
+            var color_now = amountFromVarOrRange (p1.color, style.line_color_gradients, color, percent, true);
+            var alpha_now = amountFromVarOrRange (p1.alpha, style.alpha_gradients, alpha, percent);
+
+            line.graphics.beginStroke(color_now).setStrokeStyle(thickness_now);
 
             if (style.dot_array) {
                 line.graphics.drawEllipse(p1.x - (thickness / 2), p1.y - (thickness / 2), thickness, thickness);
@@ -1294,9 +1346,10 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
                 line.graphics.moveTo(p1.x, p1.y).lineTo(p2.x, p2.y);
             }
 
+            line.alpha = alpha_now;
             if (style.x) line.x = style.x;
             if (style.y) line.y = style.y;
-            if (style.alpha) line.alpha = style.alpha;
+
             if (style.rotation) line.rotation = style.rotation;
 
             returnedShapes.push(line);
