@@ -81,6 +81,8 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         mouth_left_upturn: null,
         mouth_right_upturn: null,
         mouth_width: null,
+        mouth_upturn: null,
+        mouth_downturn: null,
         lip_bottom_height: null,
         lip_top_height: null,
         lip_bottom_bottom: null,
@@ -110,13 +112,14 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 //            {decoration:"box-behind"},
             {feature: "neck", style: "lines"},
             {feature: "face", style: "lines"},
-            {feature: "eyes", style: "lines"},
+            {feature: "eyes", style: "lines"}, //TODO: Drawing parts multiple times
             {feature: "nose", style: "lines"},
             {feature: "chin", style: "lines"},
             {feature: "mouth", style: "lines"},
             {feature: "wrinkles", style: "lines"},
             {feature: "beard", style: "lines"},
             {feature: "mouth", style: "lines"}, //NOTE: Mouth twice to catch wrinkle points
+            {feature: "eyes", style: "lines"},
             {feature: "hair", style: "lines"},
             {feature: "ears", style: "lines"},
             {decoration: "name-plate"}
@@ -177,6 +180,9 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         mouth_left_upturn_options: "Down,Low,Normal,Raised,High".split(","),
         mouth_right_upturn_options: "Down,Low,Normal,Raised,High".split(","),
         mouth_width_options: "Wide,Big,Normal,Short,Small,Tiny".split(","),
+        mouth_upturn_options: "Large,Short,Small,Tiny".split(","),
+        mouth_downturn_options: "Large,Short,Small,Tiny".split(","),
+
         lip_bottom_height_options: "Down,Low,Normal,Raised,High".split(","),
         lip_top_height_options: "Down,Low,Normal,Raised,High".split(","),
         lip_bottom_bottom_options: "Down,Low,Normal,Raised,High".split(","),
