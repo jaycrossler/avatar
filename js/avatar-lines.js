@@ -1229,12 +1229,29 @@ new Avatar('add_render_function', {style: 'lines', feature: 'wrinkles', renderer
         right_nose_mouth_wrinkle.push(right_chin_line_point);
 
         // Add 3 lines of different thickness to each side
-        //                  -thick--  -alpha-  -movex-
-        var alpha_widths = [14, 8, 8, 2, 4, 1, 8, 2, 1];
+        //                  -thick---   -alpha-  -movex-
+        var alpha_widths = [20, 8, 12, 5, 4,.5, 10, 2, 1];
 
         var curve_thick1 = alpha_widths[0] * f.thick_unit;
         var curve_thick3 = alpha_widths[2] * f.thick_unit;
         var curve_thicknessess = [1,.5,.2,.1,0,.05,0];
+
+        if (face_options.wrinkle_pattern_mouth == "None") {
+            curve_thicknessess = [0];
+        } else if (face_options.wrinkle_pattern_mouth == "Gentle") {
+            curve_thicknessess = [.4,.3,.2,.1,.1,.05,.1];
+        } else if (face_options.wrinkle_pattern_mouth == "Straight") {
+            curve_thicknessess = [1, .7, .6, .4, .5, .4, .3];
+        } else if (face_options.wrinkle_pattern_mouth == "Middle") {
+            curve_thicknessess = [.3,.2,.7,.7,.6,.1,0];
+        } else if (face_options.wrinkle_pattern_mouth == "Bottom") {
+            curve_thicknessess = [.3,.1,0,.3,.3,.7,.6];
+        } else if (face_options.wrinkle_pattern_mouth == "Heavy") {
+            curve_thicknessess = [1,.9,.8,.9,.7,.8,.4];
+        }
+        for (var piece=0;piece<curve_thicknessess.length;piece++){
+            curve_thicknessess[piece] *= (wrinkle_age/200);
+        }
 
         var curve_thicknessess1 = _.map(curve_thicknessess, function(b){return b*curve_thick1});
         var curve_thicknessess3 = _.map(curve_thicknessess, function(b){return b*curve_thick3});
@@ -1253,7 +1270,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'wrinkles', renderer
 //        left_nose_curve2.alpha = mouth_line_curve_alpha / alpha_widths[4];
 
         var left_nose_curve3 = a.createMultiPath(left_nose_mouth_wrinkle, {
-            break_line_every: 5,
+            break_line_every: 20,
             thickness_gradients: curve_thicknessess3,
             alpha: mouth_line_curve_alpha / alpha_widths[5],
             line_color: face_options.skin_colors.cheek
@@ -1276,7 +1293,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'wrinkles', renderer
 //        right_nose_curve2.alpha = mouth_line_curve_alpha / alpha_widths[4];
 
         var right_nose_curve3 = a.createMultiPath(right_nose_mouth_wrinkle, {
-            break_line_every: 5,
+            break_line_every: 20,
             thickness_gradients: curve_thicknessess3,
             alpha: mouth_line_curve_alpha / alpha_widths[5],
             line_color: face_options.skin_colors.cheek

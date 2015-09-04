@@ -105,6 +105,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         ear_lobe_left: null,
         ear_lobe_right: null,
 
+        wrinkle_pattern_mouth: null,
         wrinkle_mouth_width: null,
         wrinkle_mouth_height: null,
         wrinkle_resistance: null
@@ -200,6 +201,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         lip_top_top_options: "Down,Low,Normal,Raised,High".split(","),
         lip_shape_options: "Puckered,Thin,Thick".split(","),
 
+        wrinkle_pattern_mouth_options: "None,Gentle,Straight,Top,Middle,Bottom,Heavy".split(","),
         wrinkle_resistance_options: "Very Low,Low,Less,Below,Reduce,Raised,Above,More,High,Very High".split(","),
         wrinkle_mouth_width_options: "Far Out,Out,Middle,In,Far In".split(","),
         wrinkle_mouth_height_options: "Far Up,Up,Middle,Down,Far Down".split(","),
@@ -1333,6 +1335,8 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
             var p1 = points[i-1];
             var p2 = points[i];
+            var p3 = points[i+1];
+
             //TODO: get p3 and do a mid for quads?
 
             var percent = (i / points.length);
@@ -1345,6 +1349,8 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
                 if (style.dot_array) {
                     line.graphics.drawEllipse(p1.x - (thickness / 2), p1.y - (thickness / 2), thickness, thickness);
+                } else if (!p1.line && p3){
+                    line.graphics.moveTo(p1.x, p1.y).quadraticCurveTo(p2.x, p2.y, p3.x, p3.y);
                 } else {
                     line.graphics.moveTo(p1.x, p1.y).lineTo(p2.x, p2.y);
                 }
