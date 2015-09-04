@@ -11,6 +11,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //TODO: Moving eyes with border around them
     //TODO: Outfits
     //TODO: Other Races
+    //TODO: Lip gradient
 
     //-----------------------------
     //Private Global variables
@@ -161,13 +162,12 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         nose_size_options: "Tiny,Small,Normal,Large,Big,Giant,Huge".split(","),
         nose_height_options: "Low,Normal,Raised".split(","),
 
-
         eye_spacing_options: "Squeezed,Pinched,Thin,Normal,Wide".split(","),
         eye_shape_options: "Almond".split(","),
         eye_color_options: "Hazel,Amber,Green,Blue,Gray,Brown,Dark Brown,Black".split(","),
         eye_lids_options: "None,Smooth,Folded,Thick".split(","), //TODO
         eye_cloudiness_options: "Normal,Clear,Misty".split(","),
-        eyebrow_shape_options: "Straignt,Squiggle,Squiggle Flip,Slim,Lifted,Arch".split(","),
+        eyebrow_shape_options: "Straight,Squiggle,Squiggle Flip,Slim,Lifted,Arch".split(","),
         eye_rotation_options: "Flat,Small,Medium,Large,Slanted".split(","),
 
         ear_shape_options: "Round".split(","),
@@ -175,7 +175,6 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         ear_lobe_left_options: "Hanging,Attached".split(","),
         ear_lobe_right_options: "Hanging,Attached,Same".split(","),
 
-        lip_color_options: "#f00,#e00,#d00,#c00,#f10,#f01,#b22,#944".split(","),
         mouth_height_options: "Low,Normal,Raised,High".split(","),
         mouth_left_upturn_options: "Down,Low,Normal,Raised,High".split(","),
         mouth_right_upturn_options: "Down,Low,Normal,Raised,High".split(","),
@@ -183,6 +182,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         mouth_upturn_options: "Large,Short,Small,Tiny".split(","),
         mouth_downturn_options: "Large,Short,Small,Tiny".split(","),
 
+        lip_color_options: "#f00,#e00,#d00,#c00,#f10,#f01,#b22,#944".split(","),
         lip_bottom_height_options: "Down,Low,Normal,Raised,High".split(","),
         lip_top_height_options: "Down,Low,Normal,Raised,High".split(","),
         lip_bottom_bottom_options: "Down,Low,Normal,Raised,High".split(","),
@@ -190,8 +190,8 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         lip_shape_options: "Puckered,Thin,Thick".split(","),
 
         wrinkle_resistance_options: "Very Low,Low,Less,Below,Reduce,Raised,Above,More,High,Very High".split(","),
-        wrinkle_mouth_width_options:"Far Out,Out,Middle,In,Far In".split(","),
-        wrinkle_mouth_height_options:"Far Up,Up,Middle,Down,Far Down".split(","),
+        wrinkle_mouth_width_options: "Far Out,Out,Middle,In,Far In".split(","),
+        wrinkle_mouth_height_options: "Far Up,Up,Middle,Down,Far Down".split(","),
 
         forehead_height_options: "Under,Low,Less,Normal,Above,Raised,High,Floating".split(","),
 
@@ -314,17 +314,18 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         stage.addChild(face);
         stage.update();
     };
-    function turnWordToNumber (word,min,max) {
+    function turnWordToNumber(word, min, max) {
         var options = "Darkest,Darker,Dark,Very Low,Low,Less,Below,Reduce,Raised,Above,More,High,Very High,Bright,Brighter,Brightest".split(",");
-        var pos = _.indexOf(options,word);
+        var pos = _.indexOf(options, word);
         var val = 0;
         if (pos > -1) {
-            var percent = pos/options.length;
-            val = min + (percent * (max-min));
+            var percent = pos / options.length;
+            val = min + (percent * (max - min));
         }
         return val;
     }
-    function generateSkinAndHairColors (avatar) {
+
+    function generateSkinAndHairColors(avatar) {
 
         //TODO: vary colors based on charisma and age
         //Merge and tweak colors
@@ -339,19 +340,19 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         var skin_darken_amount, R, G, B;
         //Based on math from http://johnthemathguy.blogspot.com/2013/08/what-color-is-human-skin.html
         if (avatar.face_options.skin_shade == "Light") {
-            skin_darken_amount = turnWordToNumber(avatar.face_options.skin_shade_tint,-3,2.2);
+            skin_darken_amount = turnWordToNumber(avatar.face_options.skin_shade_tint, -3, 2.2);
             R = 224.3 + 9.6 * skin_darken_amount;
             G = 193.1 + 17.0 * skin_darken_amount;
             B = 177.6 + 21.0 * skin_darken_amount;
-            skinColor = net.brehaut.Color("rgb("+parseInt(R)+","+parseInt(G)+","+parseInt(B)+")");
-            avatar.face_options.skin_colors = {name: "light:"+skin_darken_amount, skin:skinColor.toString()};
+            skinColor = net.brehaut.Color("rgb(" + parseInt(R) + "," + parseInt(G) + "," + parseInt(B) + ")");
+            avatar.face_options.skin_colors = {name: "light:" + skin_darken_amount, skin: skinColor.toString()};
         } else if (avatar.face_options.skin_shade == "Dark") {
-            skin_darken_amount = turnWordToNumber(avatar.face_options.skin_shade_tint,-3,1);
+            skin_darken_amount = turnWordToNumber(avatar.face_options.skin_shade_tint, -3, 1);
             R = 168.8 + 38.5 * skin_darken_amount;
             G = 122.5 + 32.1 * skin_darken_amount;
             B = 96.7 + 26.3 * skin_darken_amount;
-            skinColor = net.brehaut.Color("rgb("+parseInt(R)+","+parseInt(G)+","+parseInt(B)+")");
-            avatar.face_options.skin_colors = {name: "dark:"+skin_darken_amount, skin:skinColor.toString()};
+            skinColor = net.brehaut.Color("rgb(" + parseInt(R) + "," + parseInt(G) + "," + parseInt(B) + ")");
+            avatar.face_options.skin_colors = {name: "dark:" + skin_darken_amount, skin: skinColor.toString()};
         }
 
         if (!_.isObject(avatar.face_options.skin_colors)) {
@@ -361,8 +362,8 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         //TODO: Check that skin is not too white
         var red = net.brehaut.Color('#885544');
         if (!avatar.face_options.skin_colors.highlights) avatar.face_options.skin_colors.highlights = skinColor.lightenByRatio(.4).toString();
-        if (!avatar.face_options.skin_colors.cheek) avatar.face_options.skin_colors.cheek = skinColor.blend(red,.1).darkenByRatio(.2).toString();
-        if (!avatar.face_options.skin_colors.darkflesh) avatar.face_options.skin_colors.darkflesh = skinColor.blend(red,.1).darkenByRatio(.3).toString();
+        if (!avatar.face_options.skin_colors.cheek) avatar.face_options.skin_colors.cheek = skinColor.blend(red, .1).darkenByRatio(.2).toString();
+        if (!avatar.face_options.skin_colors.darkflesh) avatar.face_options.skin_colors.darkflesh = skinColor.blend(red, .1).darkenByRatio(.3).toString();
         if (!avatar.face_options.skin_colors.deepshadow) avatar.face_options.skin_colors.deepshadow = skinColor.darkenByRatio(.4).toString();
 
         var age_hair_percent = Math.min(Math.max(0, avatar.face_options.age - 55) / 60, 1);
@@ -1129,14 +1130,15 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         var points = [];
         for (var p = 0; p < points_local.length; p++) {
             var point = _.clone(points_local[p]);
-            var x = (width_radius * point.x / 10) + (center_x||0);
-            var y = (height_radius * point.y / 10) + (center_y||0);
+            var x = (width_radius * point.x / 10) + (center_x || 0);
+            var y = (height_radius * point.y / 10) + (center_y || 0);
             point.x = x;
             point.y = y;
             points.push(point);
         }
         return points;
     }
+
     function transformPathFromGlobalCoordinates(points_global, width_radius, height_radius, center_x, center_y) {
         //NOTE: Untested function
         if (!_.isArray(points_global)) points_global = [points_global];
@@ -1144,8 +1146,8 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         var points = [];
         for (var p = 0; p < points_global.length; p++) {
             var point = _.clone(points_global[p]);
-            var x = point.x - (center_x||0);
-            var y = point.y - (center_y||0);
+            var x = point.x - (center_x || 0);
+            var y = point.y - (center_y || 0);
             point.x = x / width_radius * 10;
             point.y = y / height_radius * 10;
             points.push(point);
@@ -1164,17 +1166,11 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
         var color = style.line_color || style.color || 'black';
         var thickness = style.thickness || 1;
-        var thickness_end = style.thickness_end || thickness;
         var fill_color = style.fill_color || null;
 
-        //TODO: Line color fades
-        //TODO: Line thickness changes
-        //TODO: Now, returns shape or array - standardize on one
-
-        var returnedShape;
+        var returnedShapes = [];
 
         if (style.dot_array) {
-            var pointList = [];
 
             for (var i = 0; i < points.length; i++) {
                 var point = points[i];
@@ -1183,9 +1179,10 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
                 if (style.x) circle.x = style.x;
                 if (style.y) circle.y = style.y;
-                pointList.push(circle);
+                if (style.alpha) circle.alpha = style.alpha;
+                if (style.rotation) circle.rotation = style.rotation;
+                returnedShapes.push(circle);
             }
-            returnedShape = pointList;
 
         } else {
             var line = new createjs.Shape();
@@ -1217,6 +1214,11 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
                 line.graphics.moveTo(mid.x, mid.y);
             } // TODO: There's some overlap if closed - maybe don't draw p0, and just loop through p1,p2?
 
+            if (style.x) line.x = style.x;
+            if (style.y) line.y = style.y;
+            if (style.alpha) line.alpha = style.alpha;
+            if (style.rotation) line.rotation = style.rotation;
+
             for (var i = 1; i < points.length; i++) {
                 p1 = points[(points.length + i - 1) % (points.length)];
                 p2 = points[i];
@@ -1225,13 +1227,6 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
                     line.graphics.lineTo(p1.x, p1.y);
                 } else {
                     line.graphics.quadraticCurveTo(p1.x, p1.y, mid.x, mid.y);
-                }
-
-                if (thickness != thickness_end) {
-                    var current_thickness = thickness + ((i / points.length) * (thickness_end - thickness));
-//TODO: Create new Shapes if size changes by pixel integer amount?
-//                    line.graphics.setStrokeStyle(current_thickness);
-//                    console.log(i + ': ' + current_thickness + ' - ' + thickness + ' - ' + thickness_end);
                 }
             }
 
@@ -1247,12 +1242,69 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             } else {
                 line.graphics.lineTo(points[points.length - 1].x, points[points.length - 1].y);
             }
+            returnedShapes.push(line);
+        }
+        if (returnedShapes.length && returnedShapes.length == 1) {
+            return returnedShapes[0];
+        } else {
+            return returnedShapes;
+        }
+    }
+
+
+
+
+    function createMultiPathFromLocalCoordinates(points_local, style, width_radius, height_radius) {
+        var points = transformPathFromLocalCoordinates(points_local, width_radius, height_radius);
+        return createMultiPath(points, style);
+    }
+
+    function createMultiPath(points, style) {
+        if (!points || !points.length || points.length < 2) return null;
+        style = style || {};
+
+        var color = style.line_color || style.color || 'black';
+        var color_end = style.line_color_end || color;
+        var color_obj = net.brehaut.Color(color);
+        var color_end_obj = net.brehaut.Color(color_end);
+
+        var thickness = style.thickness || 1;
+        var thickness_end = style.thickness_end || thickness;
+
+        if (style.points_min) {
+            points = hydratePointsAlongLine(points, style.points_min, true);
+        }
+
+        var returnedShapes = [];
+
+        for (var i = 1; i < points.length; i++) {
+            var line = new createjs.Shape();
+
+            var p1 = points[i-1];
+            var p2 = points[i];
+
+            var percent = (i / points.length);
+            var new_thickness = p2.thickness || (thickness + (percent * (thickness_end - thickness)));
+            var new_color = color_obj.blend(color_end_obj, percent);
+            line.graphics.beginStroke(new_color).setStrokeStyle(new_thickness);
+
+            if (style.dot_array) {
+                line.graphics.drawEllipse(p1.x - (thickness / 2), p1.y - (thickness / 2), thickness, thickness);
+            } else {
+                line.graphics.moveTo(p1.x, p1.y).lineTo(p2.x, p2.y);
+            }
+
             if (style.x) line.x = style.x;
             if (style.y) line.y = style.y;
-            returnedShape = line;
+            if (style.alpha) line.alpha = style.alpha;
+            if (style.rotation) line.rotation = style.rotation;
+
+            returnedShapes.push(line);
         }
-        return returnedShape;
+
+        return returnedShapes;
     }
+
 
     function extrudeHorizontalArc(linePoints, distX, distY, distPeak) {
         //Have distY be positive to do an inner arc
@@ -1324,7 +1376,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         return Math.atan2(point2.x - point1.x, point2.y - point1.y);
     }
 
-    function hydratePointsAlongLine(line, spacing) {
+    function hydratePointsAlongLine(line, spacing, dontLinkLastFirst) {
         spacing = spacing || 5;
         var newLine = [];
         var lastPoint = line[0];
@@ -1342,18 +1394,19 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             lastPoint = currentPoint;
         });
 
-        //Do again for last-first point
-        lastPoint = line[line.length - 1];
-        currentPoint = line[0];
-        var dist = distanceBetween(lastPoint, currentPoint);
-        var angle = angleBetween(lastPoint, currentPoint);
-        for (var i = 0; i < dist; i += spacing) {
-            var newPoint = _.clone(currentPoint);
-            newPoint.x = lastPoint.x + (Math.sin(angle) * i);
-            newPoint.y = lastPoint.y + (Math.cos(angle) * i);
-            newLine.push(newPoint);
+        if (!dontLinkLastFirst) {
+            //Do again for last-first point
+            lastPoint = line[line.length - 1];
+            currentPoint = line[0];
+            var dist = distanceBetween(lastPoint, currentPoint);
+            var angle = angleBetween(lastPoint, currentPoint);
+            for (var i = 0; i < dist; i += spacing) {
+                var newPoint = _.clone(currentPoint);
+                newPoint.x = lastPoint.x + (Math.sin(angle) * i);
+                newPoint.y = lastPoint.y + (Math.cos(angle) * i);
+                newLine.push(newPoint);
+            }
         }
-
         return newLine;
     }
 
@@ -1448,10 +1501,12 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         comparePoints: comparePoints,
         midPointBetween: midPointBetween,
         createPathFromLocalCoordinates: createPathFromLocalCoordinates,
+        createPath: createPath,
+        createMultiPathFromLocalCoordinates: createMultiPathFromLocalCoordinates,
+        createMultiPath: createMultiPath,
         namePoint: namePoint,
         findPoint: findPoint,
         findShape: findShape,
-        createPath: createPath,
         turnWordToNumber: turnWordToNumber,
         extrudeHorizontalArc: extrudeHorizontalArc,
         distanceBetween: distanceBetween,

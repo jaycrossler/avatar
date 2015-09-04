@@ -1,8 +1,6 @@
 var firstNames = "Bob,Thomas,William,Waldo,Michael,Kicaid,Luccio,Johny,Donald,Morgan,Mouse,Sanya,Merlin,Rashid,Joseph".split(",");
 var lastNames = "Mariner,Observer,Odyssey,Pioneer,Ranger,Scout,Surveyor,Trailer".split(",");
 
-//TODO: All names are getting overwritten
-
 function getMousePos(canvas, evt) {
     var rect = canvas.getBoundingClientRect();
     return {
@@ -41,7 +39,7 @@ $(document).ready(function () {
     blueTemplate.ear_shape_options.push('Pointed');
     blueTemplate.eye_cloudiness = ['Pink'];
     blueTemplate.skin_colors_options = [
-        {skin:'#8888DD',cheek:'#aabbff'}
+        {skin: '#8888DD', cheek: '#aabbff'}
     ];
     blueTemplate.skin_shade_options = ['Preset'];
     av1 = new Avatar('set_data_template', 'Blue', blueTemplate);
@@ -63,7 +61,7 @@ $(document).ready(function () {
     av1 = new Avatar('set_data_template', 'Ogre', ogreTemplate);
 
 
-    av1.drawOrRedraw({rand_seed: 1, name: 'John Doe', race:'Blue', age: 100}, {canvas_name: 'demoCanvas'});
+    av1.drawOrRedraw({rand_seed: 1, name: 'John Doe', race: 'Blue', age: 100}, {canvas_name: 'demoCanvas'});
     setup_main_avatar();
 
     function setup_main_avatar() {
