@@ -125,15 +125,15 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 //            {decoration:"box-behind"},
             {feature: "neck", style: "lines"},
             {feature: "face", style: "lines"},
-            {feature: "eyes", style: "lines"}, //TODO: Drawing parts multiple times
-            {feature: "nose", style: "lines"},
-            {feature: "chin", style: "lines"},
+            {feature: "eye_position", style: "lines"},
+            {feature: "nose", style: "lines"}, //Uses: right eye intermost
+            {feature: "chin", style: "lines"}, //Uses: chin mid line, face
+            {feature: "mouth", style: "lines"}, //NOTE: Shown twice to predraw positions
+            {feature: "wrinkles", style: "lines"}, //Uses: face, left eye, right eye, lips, full nose, chin top line
+            {feature: "beard", style: "lines"}, //Uses: face, left eye
             {feature: "mouth", style: "lines"},
-            {feature: "wrinkles", style: "lines"},
-            {feature: "beard", style: "lines"},
-            {feature: "mouth", style: "lines"}, //NOTE: Mouth twice to catch wrinkle points
             {feature: "eyes", style: "lines"},
-            {feature: "hair", style: "lines"},
+            {feature: "hair", style: "lines"}, //Uses: face, left eye
             {feature: "ears", style: "lines"},
             {decoration: "name-plate"}
         ],

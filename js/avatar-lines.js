@@ -3,6 +3,8 @@
 //This set of functions adds rendering capabilities to avatar.js, specifically to draw things like human faces
 //-----------------------------------------
 
+//=====Line Styles==========
+//face
 new Avatar('add_render_function', {style: 'lines', feature: 'face', renderer: function (face_zones, avatar) {
     var f = face_zones;
     var a = avatar._private_functions;
@@ -57,6 +59,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'face', renderer: fu
     return shapes;
 }});
 
+//neck
 new Avatar('add_render_function', {style: 'lines', feature: 'neck', renderer: function (face_zones, avatar) {
     var f = face_zones;
     var a = avatar._private_functions;
@@ -104,6 +107,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'neck', renderer: fu
     return shapes;
 }});
 
+//ears
 new Avatar('add_render_function', {style: 'lines', feature: 'ears', renderer: function (face_zones, avatar) {
     var f = face_zones;
     var a = avatar._private_functions;
@@ -265,6 +269,71 @@ new Avatar('add_render_function', {style: 'lines', feature: 'ears', renderer: fu
     return shapes;
 }});
 
+//eye_positioner
+new Avatar('add_render_function', {style: 'lines', feature: 'eye_position', renderer: function (face_zones, avatar) {
+    //This doesn't draw anything, just pre-generates the positions that othes will use to guide off of
+    var f = face_zones;
+    var a = avatar._private_functions;
+    var face_options = avatar.face_options;
+    var lines = avatar.lines;
+
+    var rotation_amount = 4; //-6 to 15, sets emotion
+    if (face_options.eye_rotation == "Flat") {
+        rotation_amount = -2;
+    } else if (face_options.eye_rotation == "Small") {
+        rotation_amount = 2;
+    } else if (face_options.eye_rotation == "Medium") {
+        rotation_amount = 4;
+    } else if (face_options.eye_rotation == "Large") {
+        rotation_amount = 7;
+    } else if (face_options.eye_rotation == "Slanted") {
+        rotation_amount = 11;
+    }
+
+    var eye_squint = 1.4;
+    var width_eye = (f.eyes.right - f.eyes.left);
+    var height_eye = (f.eyes.bottom - f.eyes.top) * eye_squint;
+
+    var zone = f.eyes;
+    var eye_radius = 4.2;
+    var x = zone.left_x;
+    var y = zone.y;
+    var left_eye_line = [];
+    if (face_options.eye_shape == 'Almond') {
+        left_eye_line = a.transformShapeLine([
+            {type: 'almond-horizontal', modifier: 'left', radius: eye_radius},
+            {type: 'pinch', pinch_amount: 0.6, starting_step: -3, ending_step: 4},
+            {type: 'pinch', pinch_amount: 0.9, starting_step: -3, ending_step: 9}
+        ], face_options);
+    }
+
+    var left_eye = a.createPathFromLocalCoordinates(left_eye_line, {close_line: true}, width_eye, height_eye);
+    left_eye.x = x;
+    left_eye.y = y;
+    left_eye.rotation = rotation_amount;
+    lines.push({name: 'left eye', line: left_eye_line, shape: left_eye, scale_x: width_eye, scale_y: height_eye, x: x, y: y, rotation: rotation_amount});
+
+
+    zone = f.eyes;
+    x = zone.right_x;
+    y = zone.y;
+    var right_eye_line = a.transformShapeLine({type: 'reverse', direction: 'horizontal', axis: 0}, face_options, left_eye_line);
+    var right_eye = a.createPathFromLocalCoordinates(right_eye_line, {close_line: true}, width_eye, height_eye);
+
+    right_eye.x = x;
+    right_eye.y = y;
+    right_eye.rotation = -rotation_amount;
+    lines.push({name: 'right eye', line: right_eye_line, shape: right_eye, scale_x: width_eye, scale_y: height_eye, x: x, y: y, rotation: -rotation_amount});
+
+    var inner_point_x = a.comparePoints(right_eye_line, 'x', 'lowest');
+    var inner_point_y = a.comparePoints(right_eye_line, 'y', 'middle');
+    inner_point_x = x + (inner_point_x * width_eye / 2 / eye_radius);
+    inner_point_y = y + (inner_point_y * height_eye / 2 / eye_radius);
+    a.namePoint(avatar, 'right eye innermost', {x: inner_point_x, y: inner_point_y});
+
+}});
+
+//eyes
 new Avatar('add_render_function', {style: 'lines', feature: 'eyes', renderer: function (face_zones, avatar) {
     var f = face_zones;
     var a = avatar._private_functions;
@@ -529,12 +598,6 @@ new Avatar('add_render_function', {style: 'lines', feature: 'eyes', renderer: fu
     lines.push({name: 'right eye', line: right_eye_line, shape: right_eye, scale_x: width_eye, scale_y: height_eye, x: x, y: y, rotation: -rotation_amount});
     shapes.push(right_eye);
 
-    inner_point_x = a.comparePoints(right_eye_line, 'x', 'lowest');
-    inner_point_y = a.comparePoints(right_eye_line, 'y', 'middle');
-    inner_point_x = x + (inner_point_x * width_eye / 2 / eye_radius);
-    inner_point_y = y + (inner_point_y * height_eye / 2 / eye_radius);
-    a.namePoint(avatar, 'right eye innermost', {x: inner_point_x, y: inner_point_y});
-
 
     x = zone.right_x;
     y = zone.y - (f.thick_unit * 4);
@@ -629,6 +692,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'eyes', renderer: fu
     return shapes;
 }});
 
+//nose
 new Avatar('add_render_function', {style: 'lines', feature: 'nose', renderer: function (face_zones, avatar) {
     var f = face_zones;
     var a = avatar._private_functions;
@@ -779,37 +843,33 @@ new Avatar('add_render_function', {style: 'lines', feature: 'nose', renderer: fu
     shapes.push(l_l);
 
 
+    //TODO: These should connect to nose
     var mouth_high_left_line = [
         {x: -3.5, y: -4},
-        {x: -3, y: -2},
-        {x: -3.2, y: 0},
+        {x: -4, y: -2},
+        {x: -3.7, y: 0},
         {x: -3.5, y: 2}
     ];
     var l5 = a.createPathFromLocalCoordinates(mouth_high_left_line, {close_line: false, thickness: 0, color: face_options.skin_colors.deepshadow, fill_color: 'pink'}, width, height);
     l5.x = f.mouth.x;
     l5.y = f.mouth.y - (f.thick_unit * 24);
     l5.alpha = 0.5;
-    lines.push({name: 'mouth high left line', line: mouth_high_left_line, shape: l5, x: f.mouth.x, y: f.mouth.y - (f.thick_unit * 24), scale_x: width, scale_y: height});
+    lines.push({name: 'above lip left line', line: mouth_high_left_line, shape: l5, x: f.mouth.x, y: f.mouth.y - (f.thick_unit * 24), scale_x: width, scale_y: height});
     shapes.push(l5);
 
-
-    var mouth_high_right_line = [
-        {x: 3.5, y: -4},
-        {x: 3, y: -2},
-        {x: 3.2, y: 0},
-        {x: 3.5, y: 2}
-    ];
+    var mouth_high_right_line = a.transformShapeLine({type:'reverse'}, face_options, mouth_high_left_line);
     var l6 = a.createPathFromLocalCoordinates(mouth_high_right_line, {close_line: false, thickness: 0, color: face_options.skin_colors.deepshadow, fill_color: 'pink'}, width, height);
     l6.x = f.mouth.x;
     l6.y = f.mouth.y - (f.thick_unit * 24);
     l6.alpha = 0.5;
-    lines.push({name: 'mouth high right line', line: mouth_high_right_line, shape: l6, x: f.mouth.x, y: f.mouth.y - (f.thick_unit * 24), scale_x: width, scale_y: height});
+    lines.push({name: 'above lip right line', line: mouth_high_right_line, shape: l6, x: f.mouth.x, y: f.mouth.y - (f.thick_unit * 24), scale_x: width, scale_y: height});
     shapes.push(l6);
 
 
     return shapes;
 }});
 
+//hair
 new Avatar('add_render_function', {style: 'lines', feature: 'hair', renderer: function (face_zones, avatar) {
     var f = face_zones;
     var a = avatar._private_functions;
@@ -882,6 +942,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'hair', renderer: fu
     return shapes;
 }});
 
+//beard
 new Avatar('add_render_function', {style: 'lines', feature: 'beard', renderer: function (face_zones, avatar) {
     var f = face_zones;
     var a = avatar._private_functions;
@@ -969,6 +1030,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'beard', renderer: f
     return shapes;
 }});
 
+//wrinkles
 new Avatar('add_render_function', {style: 'lines', feature: 'wrinkles', renderer: function (face_zones, avatar) {
     var f = face_zones;
     var a = avatar._private_functions;
@@ -1183,8 +1245,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'wrinkles', renderer
 
         //Right chin mouth line
         var right_nose_round_top_point = nose_full_line[nose_full_line.length - 3];
-        var right_chin_line = a.transformLineToGlobalCoordinates(lines, 'chin top line');
-        var right_chin_line_point = a.comparePoints(right_chin_line, 'x', 'highest', true);
+        var right_chin_line_point = a.comparePoints(left_chin_line, 'x', 'highest', true);
 
         var right_nose_mouth_wrinkle = [];
 
@@ -1312,6 +1373,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'wrinkles', renderer
     return shapes;
 }});
 
+//chin
 new Avatar('add_render_function', {style: 'lines', feature: 'chin', renderer: function (face_zones, avatar) {
     var f = face_zones;
     var a = avatar._private_functions;
@@ -1447,6 +1509,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'chin', renderer: fu
     return shapes;
 }});
 
+//mouth
 new Avatar('add_render_function', {style: 'lines', feature: 'mouth', renderer: function (face_zones, avatar) {
     var f = face_zones;
     var a = avatar._private_functions;
@@ -1457,17 +1520,17 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mouth', renderer: f
     //These can change expression alot
     var mouth_width = 1; //.6 - 1.3
     if (face_options.mouth_width == "Tiny") {
-        mouth_width = .6;
+        mouth_width = .7;
     } else if (face_options.mouth_width == "Small") {
-        mouth_width = .75;
+        mouth_width = .8;
     } else if (face_options.mouth_width == "Short") {
         mouth_width = .9;
     } else if (face_options.mouth_width == "Normal") {
         mouth_width = 1;
     } else if (face_options.mouth_width == "Big") {
-        mouth_width = 1.1;
+        mouth_width = 1.05;
     } else if (face_options.mouth_width == "Wide") {
-        mouth_width = 1.2;
+        mouth_width = 1.1;
     }
 
     var lip_bottom_height = 0.5; // 0 - 2
@@ -1633,7 +1696,8 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mouth', renderer: f
     return shapes;
 }});
 
-//Circle Styles
+
+//=====Circle Styles==========
 new Avatar('add_render_function', {style: 'circles', feature: 'neck', renderer: function (face_zones, avatar) {
     var f = face_zones;
     var face_options = avatar.face_options;
