@@ -11,7 +11,6 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //TODO: Moving eyes with border around them
     //TODO: Outfits
     //TODO: Other Races
-    //TODO: Lip gradient
     //TODO: Check big noses don't go over eyes
 
     //TODO: Presave Eye shapes
@@ -1283,23 +1282,26 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             if (grad_length == 1) {
                 amount = gradient[0];
             } else {
-                var pos_floor = Math.floor(percent * (grad_length-1));
-                var pos_ceil = Math.ceil(percent * (grad_length-1));
+                var pos_percent = percent * (grad_length-1);
+                var pos_floor = Math.floor(pos_percent);
+                var pos_ceil = Math.ceil(pos_percent);
+
                 if (pos_floor == pos_ceil) {
                     amount = gradient[pos_floor];
                 } else {
-                    var val_floor = gradient[pos_floor];
-                    var val_ceil = gradient[pos_ceil];
-                    var val_perc = percent * (grad_length-1);
-                    var num_floor = pos_floor / (grad_length-1);
-                    var num_ceil = pos_ceil / (grad_length-1);
-                    var num_perc = (val_perc - num_floor) / (num_ceil - num_floor);
+                    var val_at_pos_floor = gradient[pos_floor];
+                    var val_at_pos_ceil = gradient[pos_ceil];
+
+                    var pos_percent_at_floor = pos_floor / (grad_length - 1);
+                    var pos_percent_at_ceil = pos_ceil / (grad_length - 1);
+
+                    var percent_between_floor_and_ceil = (percent - pos_percent_at_floor) / (pos_percent_at_ceil - pos_percent_at_floor);
                     if (isColor) {
-                        var color_floor = net.brehaut.Color(val_floor);
-                        var color_ceil = net.brehaut.Color(val_ceil);
-                        amount = color_floor.blend(color_ceil, num_perc).toString();
+                        var color_floor = net.brehaut.Color(val_at_pos_floor);
+                        var color_ceil = net.brehaut.Color(val_at_pos_ceil);
+                        amount = color_floor.blend(color_ceil, percent_between_floor_and_ceil).toString();
                     } else {
-                        amount = ((val_ceil - val_floor) * num_perc) + val_floor;
+                        amount = ((val_at_pos_ceil - val_at_pos_floor) * percent_between_floor_and_ceil) + val_at_pos_floor;
                     }
                 }
             }
@@ -1338,21 +1340,23 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             var color_now = amountFromVarOrRange (p1.color, style.line_color_gradients, color, percent, true);
             var alpha_now = amountFromVarOrRange (p1.alpha, style.alpha_gradients, alpha, percent);
 
-            line.graphics.beginStroke(color_now).setStrokeStyle(thickness_now);
+            if (thickness_now > 0) {
+                line.graphics.beginStroke(color_now).setStrokeStyle(thickness_now);
 
-            if (style.dot_array) {
-                line.graphics.drawEllipse(p1.x - (thickness / 2), p1.y - (thickness / 2), thickness, thickness);
-            } else {
-                line.graphics.moveTo(p1.x, p1.y).lineTo(p2.x, p2.y);
+                if (style.dot_array) {
+                    line.graphics.drawEllipse(p1.x - (thickness / 2), p1.y - (thickness / 2), thickness, thickness);
+                } else {
+                    line.graphics.moveTo(p1.x, p1.y).lineTo(p2.x, p2.y);
+                }
+
+                line.alpha = alpha_now;
+                if (style.x) line.x = style.x;
+                if (style.y) line.y = style.y;
+
+                if (style.rotation) line.rotation = style.rotation;
+
+                returnedShapes.push(line);
             }
-
-            line.alpha = alpha_now;
-            if (style.x) line.x = style.x;
-            if (style.y) line.y = style.y;
-
-            if (style.rotation) line.rotation = style.rotation;
-
-            returnedShapes.push(line);
         }
 
         return returnedShapes;
@@ -1557,6 +1561,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         createPath: createPath,
         createMultiPathFromLocalCoordinates: createMultiPathFromLocalCoordinates,
         createMultiPath: createMultiPath,
+        amountFromVarOrRange: amountFromVarOrRange,
         namePoint: namePoint,
         findPoint: findPoint,
         findShape: findShape,

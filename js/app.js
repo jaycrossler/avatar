@@ -39,7 +39,7 @@ $(document).ready(function () {
     blueTemplate.ear_shape_options.push('Pointed');
     blueTemplate.eye_cloudiness = ['Pink'];
     blueTemplate.skin_colors_options = [
-        {skin: '#8888DD', cheek: '#aabbff'}
+        {skin: '#8888DD', cheek: '#898add'}
     ];
     blueTemplate.skin_shade_options = ['Preset'];
     av1 = new Avatar('set_data_template', 'Blue', blueTemplate);
