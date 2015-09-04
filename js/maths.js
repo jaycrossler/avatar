@@ -71,14 +71,25 @@ maths.getRGBComponents = function (color) {
 maths.hexColorToRGBA = function (color, transparency) {
     var rgb;
     if (!color) return "rgba(0,0,0,1)";
+    var newColor, rgbArr;
     if (color.indexOf("rgb(")==0 && color.indexOf(",")>5) {
         //Is in format of rgb(215,159,102)
-        var newColor = color.substr(0,color.length-1);
+        newColor = color.substr(0, color.length - 1);
         newColor = newColor.substr(4);
-        var rgbArr = newColor.split(",");
+        rgbArr = newColor.split(",");
         rgb = {R: rgbArr[0], G: rgbArr[1], B: rgbArr[2]}
-    } else {
+    } else if (color.indexOf("rgba(")==0 && color.indexOf(",")>5) {
+        //Is in format of rgba(215,159,102,.6)
+        newColor = color.substr(0, color.length - 1);
+        newColor = newColor.substr(5);
+        rgbArr = newColor.split(",");
+        rgb = {R: rgbArr[0], G: rgbArr[1], B: rgbArr[2]}
+    } else if (color.indexOf("#")==0){
         rgb = maths.getRGBComponents(color);
+    } else {
+        //is likely a color name
+        newColor = net.brehaut.Color(color).toString();
+        rgb = maths.getRGBComponents(newColor);
     }
     transparency = transparency || 1;
     return "rgba(" + rgb.R + "," + rgb.G + "," + rgb.B + "," + transparency + ")";

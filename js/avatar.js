@@ -4,7 +4,6 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //TODO: Hair Peak have multiple shapes, apply more than one peak
     //TODO: Hair and beard use variables
     //TODO: Neck like coathanger shape with neck muscles
-    //TODO: Cheekbones
     //TODO: Scars and Jewlery
     //TODO: Sprite images
     //TODO: Emotions
@@ -13,11 +12,8 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //TODO: Other Races
     //TODO: Check big noses don't go over eyes
 
-    //TODO: Presave Eye shapes
-    //TODO: Check curve gets jag annd down
     //TODO: Three levels of cheek curves
     //TODO: Multiline function has shadow, offset shadow
-    //TODO: Have a wrinkle matrix for all three curves that gets heavier with age
     //TODO: Add in many eyebrows, overdraw with a canvas brush for bushiness
     //TODO: Eyes get eyelashes
     //TODO: Build an age-progression demo page
@@ -937,11 +933,11 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
                 if (options.direction == 'vertical') {
                     for (c = 0; c < existing_list.length; c++) {
-                        existing_list[c].y = axis - existing_list[c].y;
+                        existing_list[c].y = axis - (existing_list[c].y - axis);
                     }
                 } else {  //Assume horizontal
                     for (c = 0; c < existing_list.length; c++) {
-                        existing_list[c].x = axis - existing_list[c].x;
+                        existing_list[c].x = axis - (existing_list[c].x - axis);
                     }
                 }
 
@@ -1214,8 +1210,8 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
                 } else { //Assume Radial
                     line.graphics.beginRadialGradientFill(
                         style.fill_colors, style.fill_steps || [0, 1],
-                            style.x_offset || comparePoints(points, 'x', 'middle'), style.y_offset || comparePoints(points, 'y', 'middle'), 0,
-                            style.x_offset || comparePoints(points, 'x', 'middle'), style.y_offset || comparePoints(points, 'y', 'middle'), style.radius || 10);
+                            style.x_offset_start || style.x_offset || comparePoints(points, 'x', 'middle'), style.y_offset_start || style.y_offset || comparePoints(points, 'y', 'middle'), 0,
+                            style.x_offset_end || style.x_offset || comparePoints(points, 'x', 'middle'), style.y_offset_end ||style.y_offset || comparePoints(points, 'y', 'middle'), style.radius || 10);
                 }
             }
 
