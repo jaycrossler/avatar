@@ -1477,6 +1477,10 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mouth', renderer: f
 
     lip_top_top += lip_top_height;
 
+    if (face_options.face_shape == "Inverted Triangle") {
+        mouth_width *= .7;
+    }
+
     var lip_thickness = f.thick_unit * 2;
     var width = (f.mouth.right - f.mouth.left) / 2.6 * mouth_width;
     var height = (f.mouth.bottom - f.mouth.top);
