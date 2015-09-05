@@ -582,6 +582,9 @@ Helpers.exists= function() {
     }
     return allExist;
 };
+Helpers.distanceXY=function(p1, p2){
+    return Math.sqrt( (p1.x-p2.x)*(p1.x-p2.x) + (p1.y-p2.y)*(p1.y-p2.y) );
+};
 Helpers.isInArray=function(searchFor,searchIn,ignoreCase){
     if (!Helpers.exists(searchFor) || !Helpers.exists(searchIn)) return false;
     if (!Helpers.isArray(searchFor)) searchFor = [searchFor];

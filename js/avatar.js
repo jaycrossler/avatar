@@ -1055,6 +1055,19 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             var x_min = comparePoints(existing_list, 'x', 'lowest');
             result = Math.max(x_max - x_min, x_min - x_max);
 
+        } else if (attribute == 'closest') {
+            var closest_distance = Number.MAX_VALUE;
+            var closest_point = null;
+            for (var c=0; c<existing_list.length; c++){
+                var point = existing_list[c];
+                var dist = Helpers.distanceXY(point, cardinality);
+                if (dist < closest_distance) {
+                    closest_point = point;
+                    closest_distance = dist;
+                }
+            }
+            result = closest_point;
+
         } else {
             var lowest = Number.MAX_VALUE;
             var highest = Number.MIN_VALUE;
