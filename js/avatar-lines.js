@@ -1327,61 +1327,36 @@ new Avatar('add_render_function', {style: 'lines', feature: 'wrinkles', renderer
         }
 
         var curve_thicknessess1 = _.map(curve_thicknessess, function(b){
-            var mult = b*curve_thick1;
-            return mult > 8 ? 8 : mult});
+            return maths.clamp(b*curve_thick1,0,8)});
         var curve_thicknessess3 = _.map(curve_thicknessess, function(b){
-            var mult = b*curve_thick3;
-            return mult > 5 ? 5 : mult});
+            return maths.clamp(b*curve_thick3,0,5)});
 
-        var left_nose_curve1 = a.createMultiPath(left_nose_mouth_wrinkle, {
+        var curve_settings1 = {
             break_line_every: 5,
             thickness_gradients: curve_thicknessess1,
-            alpha: mouth_line_curve_alpha / alpha_widths[3],
+            alpha: maths.clamp(mouth_line_curve_alpha / alpha_widths[3],0,.6),
             line_color: face_options.skin_colors.darkflesh
-        });
-        left_nose_curve1.x = -(alpha_widths[6] * f.thick_unit);
-//        var left_nose_curve2 = a.createPath(left_nose_mouth_wrinkle, {
-//            thickness: alpha_widths[1] * f.thick_unit, line_color: face_options.skin_colors.cheek
-//        });
-//        left_nose_curve2.x = -(alpha_widths[7] * f.thick_unit);
-//        left_nose_curve2.alpha = mouth_line_curve_alpha / alpha_widths[4];
-
-        var left_nose_curve3 = a.createMultiPath(left_nose_mouth_wrinkle, {
+        };
+        var curve_settings3 = {
             break_line_every: 20,
             thickness_gradients: curve_thicknessess3,
-            alpha: mouth_line_curve_alpha / alpha_widths[5],
+            alpha: maths.clamp(mouth_line_curve_alpha / alpha_widths[5],0,.5),
             line_color: face_options.skin_colors.cheek
-        });
+        };
+
+        var left_nose_curve1 = a.createMultiPath(left_nose_mouth_wrinkle, curve_settings1);
+        left_nose_curve1.x = -(alpha_widths[6] * f.thick_unit);
+        var left_nose_curve3 = a.createMultiPath(left_nose_mouth_wrinkle, curve_settings3);
         left_nose_curve3.x = -(alpha_widths[8] * f.thick_unit);
 
-
-        var right_nose_curve1 = a.createMultiPath(right_nose_mouth_wrinkle, {
-            break_line_every: 5,
-            thickness_gradients: curve_thicknessess1,
-            alpha: mouth_line_curve_alpha / alpha_widths[3],
-            line_color: face_options.skin_colors.darkflesh
-        });
+        var right_nose_curve1 = a.createMultiPath(right_nose_mouth_wrinkle, curve_settings1);
         right_nose_curve1.x = (alpha_widths[6] * f.thick_unit);
-
-//        var right_nose_curve2 = a.createPath(right_nose_mouth_wrinkle, {
-//            thickness: alpha_widths[1] * f.thick_unit, line_color: face_options.skin_colors.cheek
-//        });
-//        right_nose_curve2.x = (alpha_widths[7] * f.thick_unit);
-//        right_nose_curve2.alpha = mouth_line_curve_alpha / alpha_widths[4];
-
-        var right_nose_curve3 = a.createMultiPath(right_nose_mouth_wrinkle, {
-            break_line_every: 20,
-            thickness_gradients: curve_thicknessess3,
-            alpha: mouth_line_curve_alpha / alpha_widths[5],
-            line_color: face_options.skin_colors.cheek
-        });
+        var right_nose_curve3 = a.createMultiPath(right_nose_mouth_wrinkle, curve_settings3);
         right_nose_curve3.x = (alpha_widths[8] * f.thick_unit);
 
         shapes.push(left_nose_curve1);
-//        shapes.push(left_nose_curve2);
         shapes.push(left_nose_curve3);
         shapes.push(right_nose_curve1);
-//        shapes.push(right_nose_curve2);
         shapes.push(right_nose_curve3);
     }
 
@@ -1415,7 +1390,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'wrinkles', renderer
         line_color: 'rgba(0,0,0,0)',
 //        fill_color: cheek_darker
         fill_colors: fill_colors, fill_method: 'radial',
-        fill_steps: fill_steps, radius: (f.thick_unit * 35)
+        fill_steps: fill_steps, radius: (f.thick_unit * 35)  //TODO: Make sure it doesn't go over face
     });
     right_cheek.x = eye_right_right - (f.thick_unit * 5);
     right_cheek.y = cheek_y;

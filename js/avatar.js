@@ -1,6 +1,11 @@
 var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //Uses jquery and Underscore and colors.js and createjs's easel.js
 
+    //TODO: Have a skull-width and jaw-width, and then combine this with thickness to determine face type
+    //TODO: Use age, thickness, and musculature to determine which muscles/lines to draw
+
+    //TODO: Generate points for each important face zone, generate all these first before rendering
+
     //TODO: Hair Peak have multiple shapes, apply more than one peak
     //TODO: Hair and beard use variables
     //TODO: Neck like coathanger shape with neck muscles
@@ -8,7 +13,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //TODO: Sprite images
     //TODO: Emotions
     //TODO: Moving eyes with border around them
-    //TODO: Outfits
+    //TODO: Outfits and standing avatar
     //TODO: Other Races
     //TODO: Check big noses don't go over eyes
 
