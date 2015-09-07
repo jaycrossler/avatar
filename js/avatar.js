@@ -1611,3 +1611,8 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
     return AvatarClass;
 })($, _, net, createjs, Helpers, maths);
+
+//TODO: Is this the best way to have helper functions?
+Avatar.getRaces = function(){
+    return new Avatar('get_races');
+};
