@@ -19,6 +19,12 @@ $(document).ready(function () {
     var canvas = $canvas[0];
     var context = canvas.getContext("2d");
 
+
+    ogreTemplate.rendering_order.push(
+        {decoration: 'highlight_rectangle', type: 'rectangle', p1: 'facezone topleft', p2: 'facezone bottomright', line_color: 'black', size: '4', alpha: 1, forceInBounds: true}
+    );
+
+
     function draw(e) {
         var pos = getMousePos(canvas, e);
 
@@ -35,33 +41,8 @@ $(document).ready(function () {
 //    var testWithTemplate = new Avatar('get_linked_template', 'Human');
 //    testWithTemplate.eye_color_options = ['Red','Yellow'];
 
-    var blueTemplate = new Avatar('copy_data_template', 'Human');
-    blueTemplate.ear_shape_options.push('Pointed');
-    blueTemplate.eye_cloudiness = ['Pink'];
-    blueTemplate.skin_colors_options = [
-        {skin: '#8888DD', cheek: '#898add'}
-    ];
-    blueTemplate.skin_shade_options = ['Preset'];
-    av1 = new Avatar('set_data_template', 'Blue', blueTemplate);
 
-
-    var ogreTemplate = new Avatar('copy_data_template', 'Human');
-    ogreTemplate.gender_options = ['Female'];
-    ogreTemplate.ear_shape_options.push('Pointed');
-    ogreTemplate.eye_color_options = ['Red', 'Pink', 'Purple', 'Yellow'];
-    ogreTemplate.eye_cloudiness = ['Pink', 'Blue', 'Misty'];
-    ogreTemplate.skin_colors_options = [
-        {name: 'Fair', highlights: 'rgb(40,202,30)', skin: 'rgb(50,185,50)'},
-        {name: 'Dark', highlights: 'rgb(80,80,80)', skin: 'rgb(80,185,70)'}
-    ];
-    ogreTemplate.skin_shade_options = ['Preset'];
-    ogreTemplate.rendering_order.push(
-        {decoration: 'highlight_rectangle', type: 'rectangle', p1: 'facezone topleft', p2: 'facezone bottomright', line_color: 'black', size: '4', alpha: 1, forceInBounds: true}
-    );
-    av1 = new Avatar('set_data_template', 'Ogre', ogreTemplate);
-
-
-    av1.drawOrRedraw({rand_seed: 1, name: 'John Doe', race: 'Blue', age: 100}, {canvas_name: 'demoCanvas'});
+    av1 = new Avatar({rand_seed: 1, name: 'John Doe', race: 'Navi', age: 100}, {canvas_name: 'demoCanvas'});
     setup_main_avatar();
 
     function setup_main_avatar() {

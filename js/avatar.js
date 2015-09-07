@@ -242,6 +242,17 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
         } else if (option1 == 'set_data_template') {
             this.data[option2] = option3;
+
+        } else if (option1 == 'get_races') {
+            var races = [];
+            for (var race in this.data) {
+                races.push(race);
+            }
+            return races;
+
+        } else if (option1 == '') {
+            return {details: 'avatar class initialized'};
+
         } else {
             this.drawOrRedraw(option1, option2, option3);
         }

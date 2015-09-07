@@ -1,5 +1,4 @@
 var av1;
-var seed = 0;
 $(document).ready(function () {
     var $canvas = $('canvas');
     var width = $canvas.width();
@@ -9,17 +8,17 @@ $(document).ready(function () {
     //Pull a pointer to the current avatar human template
     var AvatarRace = new Avatar('get_linked_template', 'Human');
 
-    //Add a new text decoration that shows the age
-    AvatarRace.decorations.push({name: "age-plate", type: 'rectangle', height: 16, docked: 'bottom', forceInBounds: true, font_size: 9,
-                    text: 'Age: {{age}}', text_color: 'black', line_color: 'brown', fill_color: 'white', alpha: 0.8});
+    //Take out any existing decorations
+    AvatarRace.rendering_order = _.filter(AvatarRace.rendering_order, function(dec){return !dec.decoration});
 
-    //Change the current Name-plate to be Age-Plate instead
-    var textBox = _.find(AvatarRace.rendering_order, function(rend){return rend.decoration == 'name-plate'});
-    textBox.decoration = 'age-plate';
+
+    //Add a new text decoration that shows the age
+    AvatarRace.rendering_order.push({decoration: "age-plate", type: 'rectangle', height: 12, docked: 'bottom', forceInBounds: true, font_size: 8,
+                                     text: 'Age: {{age}}', text_color: 'black', line_color: 'brown', fill_color: 'white', alpha: 0.8});
 
 
     //Create a random seed
-    seed = Helpers.randInt(300000);
+    var seed = parseInt(Math.random() * 300000);
 
     //Build a new avatar and set it up
     av1 = new Avatar({rand_seed: seed, age: 100}, {canvas_name: 'demoCanvas'});
