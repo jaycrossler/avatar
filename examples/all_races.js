@@ -18,13 +18,12 @@ $(document).ready(function () {
              text: 'Race: {{race}}', text_color: 'black', line_color: 'brown', fill_color: 'white', alpha: 0.8}
         );
 
-        //TODO: Pass in $Canvas object
         var $canvas = $("<canvas>")
             .attr({width: 320, height:400, id:'avatar_'+i})
             .css({width: 320, height:400})
             .appendTo($('#avatar_holder'));
 
-        var av = new Avatar({rand_seed: seed, race: race_name, age: 38}, {canvas_name: 'avatar_'+i});
+        var av = new Avatar({rand_seed: seed, race: race_name, age: 38}, {canvas_name: $canvas});
         avatars.push(av);
     });
 });

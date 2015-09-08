@@ -291,6 +291,11 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             this.stage_options.canvas_name = canvas_name;
         }
         if (this.stage_options.canvas_name) {
+            canvas_name = this.stage_options.canvas_name;
+            if (canvas_name && canvas_name instanceof jQuery) {
+                this.stage_options.canvas_name = canvas_name.attr('id') || canvas_name.selector || "canvas";
+                this.$canvas = canvas_name;
+            }
             var existing_stage = findStageByCanvas(this.stage_options.canvas_name);
             if (!this.$canvas && $(this.stage_options.canvas_name)) {
                 this.$canvas = $('#' + this.stage_options.canvas_name);
