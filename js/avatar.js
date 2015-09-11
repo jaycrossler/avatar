@@ -8,7 +8,6 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
     //TODO: Hair Peak have multiple shapes, apply more than one peak
     //TODO: Hair and beard use variables
-    //TODO: Neck like coathanger shape with neck muscles
     //TODO: Scars and Jewlery
     //TODO: Sprite images
     //TODO: Emotions
@@ -68,7 +67,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         chin_divot: null,
         chin_shape: null,
 
-        neck_size: 'Normal',
+        neck_size: null,
 
         eye_color: null,
         eye_shape: null,
@@ -80,7 +79,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
         hair_texture: 'Smooth',
         head_size: 'Normal',
-        hairiness: 'Normal',
+        hairiness: null,
         forehead_height: null,
         hair_color_roots: null,
 
@@ -124,6 +123,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     var _data = {'Human': {
         rendering_order: [
 //            {decoration:"box-behind"},
+            {feature: "shoulders", style: "lines"},
             {feature: "neck", style: "lines"},
             {feature: "face", style: "lines"},
             {feature: "eye_position", style: "lines"},
@@ -170,6 +170,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
 //        beard_color_options: "Hair,Yellow,Brown,Black,White,Gray,Dark Brown,Dark Yellow,Red".split(","),
         beard_style_options: "None,Full Chin,Chin Warmer,Soup Catcher,Thin Chin Wrap,Thin Low Chin Wrap".split(","),
+        neck_size_options: "Thick,Concave".split(","),
 
         nose_shape_options: "Flat,Wide,Thin,Turned up/perky,Normal,Hooked down,Bulbous,Giant Nostrils".split(","),
         nose_size_options: "Tiny,Small,Normal,Large,Big,Giant,Huge".split(","),
@@ -1236,7 +1237,6 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
                 line.graphics.beginFill(fill_color);
             } else if (style.fill_colors) {
                 if (style.fill_method == 'linear') {
-                    var x_offset_start =
                     line.graphics.beginLinearGradientFill(
                         style.fill_colors, style.fill_steps || [0, 1],
                             style.x_offset_start || -style.radius || 0, style.y_offset_start || 0,
