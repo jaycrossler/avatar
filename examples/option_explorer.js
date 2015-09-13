@@ -1,8 +1,6 @@
 var avatars=[];
 var seed = parseInt(Math.random() * 300000);
 
-//TODO: Add option 2
-
 var $canvas;
 var data_options = {};
 
@@ -11,7 +9,7 @@ $(document).ready(function () {
     $canvas = $("#avatar_canvas");
 
     //Get a link to the main template that we use to define avatars
-    data_options = new Avatar('copy_data_template');
+    data_options = new Avatar('get_linked_template');
 
     //Take out any existing decorations
     data_options.rendering_order = _.filter(data_options.rendering_order, function(dec){return !dec.decoration});
@@ -19,6 +17,9 @@ $(document).ready(function () {
     //Add a new text decoration that shows the age
     data_options.rendering_order.push({decoration: "text-plate", type: 'rectangle', height: 14, docked: 'bottom', forceInBounds: true, font_size: 10,
                                      text: '{{text}}', text_color: 'black', line_color: 'brown', fill_color: 'white', alpha: 0.8});
+
+    //Now, get just a copy for reference (so it doesn't get reset later)
+    data_options = new Avatar('copy_data_template');
 
     build_option_explorer('face_shape_options'); //TODO: Store via cookie or QS
     explore_options('face_shape_options');
@@ -29,27 +30,41 @@ function build_option_explorer(highlight_option_name){
     var $chooser = $('<select>');
     //------------------------
     $('<label>')
-        .text("Force:")
+        .text("Set:")
         .appendTo($chooser_holder);
-
     var $chooser_1 = $('<select>')
         .attr('id', 'chooser_1')
         .on('change', function(){
             var val = $(this).val();
-
             show_setting_options('chooser_1_setting','chooser_1', val);
-
         })
         .appendTo($chooser_holder);
-
     $('<label>')
         .text("To be:")
         .appendTo($chooser_holder);
-
     $('<select>')
         .attr('id', 'chooser_1_setting')
         .appendTo($chooser_holder);
 
+    $('<br>')
+        .appendTo($chooser_holder);
+    //------------------------
+    $('<label>')
+        .text("Set:")
+        .appendTo($chooser_holder);
+    var $chooser_2 = $('<select>')
+        .attr('id', 'chooser_2')
+        .on('change', function(){
+            var val = $(this).val();
+            show_setting_options('chooser_2_setting','chooser_2', val);
+        })
+        .appendTo($chooser_holder);
+    $('<label>')
+        .text("To be:")
+        .appendTo($chooser_holder);
+    $('<select>')
+        .attr('id', 'chooser_2_setting')
+        .appendTo($chooser_holder);
     $('<br>')
         .appendTo($chooser_holder);
 
@@ -76,6 +91,11 @@ function build_option_explorer(highlight_option_name){
         .text(' -- Set Value --')
         .appendTo($chooser_1);
 
+    $('<option>')
+        .attr({value: ''})
+        .text(' -- Set Value --')
+        .appendTo($chooser_2);
+
     for (var key in data_options) {
         if (key != "rendering_order" && key != "decorations") {
             var text = key;
@@ -90,7 +110,12 @@ function build_option_explorer(highlight_option_name){
                 $('<option>')
                     .attr({value: key})
                     .text(text)
-                    .appendTo($chooser_1)
+                    .appendTo($chooser_1);
+
+                $('<option>')
+                    .attr({value: key})
+                    .text(text)
+                    .appendTo($chooser_2);
             }
         }
     }
@@ -135,21 +160,20 @@ function show_setting_options (chooser_id, chooser_main_id, setting_name){
     });
     $chooser_select.off('change');
     $chooser_select.on('change', function(){
-//        //TODO: add second attr
-
-        var setting = $(this).val();
-        var option = $('#'+chooser_main_id).val();
-        if (_.str.endsWith(option,'_options')) {
-            option = option.substr(0, option.length - '_options'.length);
-        }
 
         var settings = {};
-        settings[option] = setting;
+        _.each(['1','2'], function(num){
+            var option = $('#chooser_'+num).val();
+            var setting = $('#chooser_'+num+'_setting').val();
+            if (_.str.endsWith(option,'_options')) {
+                option = option.substr(0, option.length - '_options'.length);
+            }
+            settings[option] = setting;
+        });
 
         var range_val = $('#option_range_select').val();
         explore_options(range_val, settings);
-
-    })
+    });
 }
 
 function explore_options(options_name, forced_attributes) {
@@ -180,7 +204,7 @@ function explore_options(options_name, forced_attributes) {
         avatars.push(av);
 
         //On every click, generate a new random seed for each face
-        av.registerEvent('face', function (avatar) {
+        av.registerEvent('face', function () {
              var text = " : new Avatar(" + av.getSeed(true)+ ");";
              $('#avatar_name').text(text);
 
