@@ -2,7 +2,6 @@ var avatars=[];
 var seed = parseInt(Math.random() * 300000);
 
 //TODO: Add option 2
-//TODO: Change chooser also change options
 
 var $canvas;
 var data_options = {};
@@ -17,14 +16,12 @@ $(document).ready(function () {
     //Take out any existing decorations
     data_options.rendering_order = _.filter(data_options.rendering_order, function(dec){return !dec.decoration});
 
-
     //Add a new text decoration that shows the age
     data_options.rendering_order.push({decoration: "text-plate", type: 'rectangle', height: 14, docked: 'bottom', forceInBounds: true, font_size: 10,
                                      text: '{{text}}', text_color: 'black', line_color: 'brown', fill_color: 'white', alpha: 0.8});
 
-
-    build_option_explorer('gender_options'); //TODO: Store via cookie or QS
-    explore_options('gender_options');
+    build_option_explorer('face_shape_options'); //TODO: Store via cookie or QS
+    explore_options('face_shape_options');
 
 });
 function build_option_explorer(highlight_option_name){
@@ -106,8 +103,10 @@ function build_option_explorer(highlight_option_name){
         .on('click', function(){
             seed = parseInt(Math.random() * 300000);
             _.each(avatars,function(av){
+                var face_options = av.getSeed();
+                face_options.rand_seed = seed;
                 av.face_options = null;
-                av.drawOrRedraw({rand_seed: seed});
+                av.drawOrRedraw(face_options);
 
                 $chooser.val('');
             });
@@ -174,15 +173,15 @@ function explore_options(options_name, forced_attributes) {
         avatar_options[option] = item_name;
         avatar_options['text'] = item_name; //Pass this to a decoration
 
-        var x = (i % 5) * 160;
-        var y = Math.floor(i / 5) * 200;
+        var x = (i % 6) * 170;
+        var y = Math.floor(i / 6) * 230;
 
         var av = new Avatar(avatar_options, {canvas_name: 'avatar_canvas', height:200, width:160, x:x, y:y});
         avatars.push(av);
 
         //On every click, generate a new random seed for each face
         av.registerEvent('face', function (avatar) {
-             var text = " : new Avatar(" + JSON.stringify(avatar_options)+ ");";
+             var text = " : new Avatar(" + av.getSeed(true)+ ");";
              $('#avatar_name').text(text);
 
          }, 'click');

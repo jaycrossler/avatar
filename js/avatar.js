@@ -267,6 +267,8 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             this.initialization_seed = null;
         }
 
+        this.initialization_options = face_options || this.initialization_options || {};
+
         this.face_options = $.extend({}, this.face_options || _face_options, face_options || {});
         this.stage_options = $.extend({}, this.stage_options || _stage_options, stage_options || {});
         this.event_list = this.event_list || [];
@@ -276,6 +278,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         face_options = face_options || {};
         var rand_seed = face_options.rand_seed || this.initialization_seed || Math.floor(Math.random() * 100000);
         this.initialization_seed = rand_seed;
+        this.initialization_options.rand_seed = rand_seed;
         //Set this random seed to be used throughout the avatar's livespan
         this.randomSetSeed(rand_seed);
 
@@ -328,6 +331,10 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
     //-----------------------------
     //Supporting functions
+    AvatarClass.prototype.getSeed = function(showAsString) {
+        var result = this.initialization_options || {};
+        return showAsString ? JSON.stringify(result) : result;
+    };
     AvatarClass.prototype.erase = function() {
         if (this.faceShapeCollection) {
             this.faceShapeCollection.removeAllChildren();
@@ -653,7 +660,11 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
         var face_zones = {neck: {}, face: {}, nose: {}, ears: {}, eyes: {}, chin: {}, hair: {}};
 
-        var height = (stage_options.height || stage_options.size || (stage.canvas.height * stage_options.percent_height)) * (1 - stage_options.buffer);
+        var height = stage_options.height || stage_options.size;
+        if (!height) {
+            height = (stage.canvas.height * stage_options.percent_height) * (1 - stage_options.buffer);
+        }
+
         var full_height = height;
 
         var age = maths.clamp(face_options.age, 4, 25);
