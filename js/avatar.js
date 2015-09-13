@@ -158,7 +158,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         ],
 
         gender_options: "Male,Female".split(","),
-        thickness_options: [-1, .5, 0, .5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6],  //TODO: Turn these to word options
+        thickness_options: [-1.5, -1, -.5, 0, .5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6],  //TODO: Turn these to word options
 
         face_shape_options: "Oblong,Oval,Round,Rectangular,Square,Triangular,Diamond,Inverted Triangle,Heart".split(","),
         chin_divot_options: "Double,Small,Large,Smooth".split(","),
@@ -306,16 +306,16 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
                 this.stage = existing_stage;
             } else {
                 this.stage = setupStage(this.stage_options.canvas_name);
+                if (!this.stage.canvas) {
+                    throw "The canvas was not properly initialized in the stage, maybe jquery hadn't finished building it yet."
+                }
                 addStageByCanvas({canvas_id: this.stage_options.canvas_name, $canvas: this.$canvas, stage: this.stage});
             }
         }
 
         //Draw the faces
         if (this.stage) {
-            if (this.faceShapeCollection) {
-                this.faceShapeCollection.removeAllChildren();
-                this.faceShapeCollection.visible = false;
-            }
+            this.erase();
             var face = this.buildFace();
             this.drawOnStage(face, this.stage);
             this.faceShapeCollection = face;
@@ -328,6 +328,12 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
     //-----------------------------
     //Supporting functions
+    AvatarClass.prototype.erase = function() {
+        if (this.faceShapeCollection) {
+            this.faceShapeCollection.removeAllChildren();
+            this.faceShapeCollection.visible = false;
+        }
+    };
     AvatarClass.prototype.getRaceData = function () {
         var race = this.face_options.race || getFirstRaceFromData();
         return _data[race] || _data[getFirstRaceFromData()];
@@ -611,7 +617,12 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
                         };
 
                         var text_template = _.template(font_text);
-                        font_text = text_template(avatar.face_options);
+                        try {
+                            font_text = text_template(avatar.face_options);
+                        } catch (ex) {
+                            //Decoration couldn't parse variable
+                            font_text = "";
+                        }
                     }
 
                     var text = new createjs.Text(font_text, font_size + "px " + font_name, font_color);
@@ -642,7 +653,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
         var face_zones = {neck: {}, face: {}, nose: {}, ears: {}, eyes: {}, chin: {}, hair: {}};
 
-        var height = (stage_options.size || (stage.canvas.height * stage_options.percent_height)) * (1 - stage_options.buffer);
+        var height = (stage_options.height || stage_options.size || (stage.canvas.height * stage_options.percent_height)) * (1 - stage_options.buffer);
         var full_height = height;
 
         var age = maths.clamp(face_options.age, 4, 25);
