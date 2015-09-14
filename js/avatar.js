@@ -384,14 +384,14 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         var skin_darken_amount, R, G, B;
         //Based on math from http://johnthemathguy.blogspot.com/2013/08/what-color-is-human-skin.html
         if (avatar.face_options.skin_shade == "Light") {
-            skin_darken_amount = turnWordToNumber(avatar.face_options.skin_shade_tint, -3, 2.2);
+            skin_darken_amount = turnWordToNumber(avatar.face_options.skin_shade_tint, -3.5, 0.5);
             R = 224.3 + 9.6 * skin_darken_amount;
             G = 193.1 + 17.0 * skin_darken_amount;
             B = 177.6 + 21.0 * skin_darken_amount;
             skinColor = net.brehaut.Color("rgb(" + parseInt(R) + "," + parseInt(G) + "," + parseInt(B) + ")");
             avatar.face_options.skin_colors = {name: "light:" + skin_darken_amount, skin: skinColor.toString()};
         } else if (avatar.face_options.skin_shade == "Dark") {
-            skin_darken_amount = turnWordToNumber(avatar.face_options.skin_shade_tint, -3, 1);
+            skin_darken_amount = turnWordToNumber(avatar.face_options.skin_shade_tint, -3.5, 3);
             R = 168.8 + 38.5 * skin_darken_amount;
             G = 122.5 + 32.1 * skin_darken_amount;
             B = 96.7 + 26.3 * skin_darken_amount;
@@ -420,9 +420,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             var gray_d = net.brehaut.Color('#dddddd');
             avatar.face_options.beard_color = hairColor.blend(gray_d, age_hair_percent).desaturateByRatio(age_hair_percent).toString();
         }
-
-
-    };
+    }
 
     AvatarClass.prototype.buildFace = function () {
         var container = new createjs.Container();
@@ -660,18 +658,16 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
         var face_zones = {neck: {}, face: {}, nose: {}, ears: {}, eyes: {}, chin: {}, hair: {}};
 
-        var height = stage_options.height || stage_options.size;
-        if (!height) {
-            height = (stage.canvas.height * stage_options.percent_height) * (1 - stage_options.buffer);
-        }
+        var height = (stage_options.height || stage_options.size || (stage.canvas.height * stage_options.percent_height)) * (1 - stage_options.buffer);
+//        if (!height) {
+//            height = (stage.canvas.height * stage_options.percent_height) * (1 - stage_options.buffer);
+//        }
 
         var full_height = height;
 
         var age = maths.clamp(face_options.age, 4, 25);
         var age_size = (50 + age) / 75;  //TODO: Use a Height in Inches
         height *= age_size;
-
-        stage_options.height = height;
 
         var height_offset = (stage_options.size || (stage.canvas.height * stage_options.percent_height)) * (stage_options.buffer / 2);
         stage_options.height_offset = height_offset;

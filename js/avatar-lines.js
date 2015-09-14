@@ -1135,6 +1135,9 @@ new Avatar('add_render_function', {style: 'lines', feature: 'wrinkles', renderer
     var nose_full_line = a.transformLineToGlobalCoordinates(lines, 'full nose');
     if (wrinkle_age > 16) {
         var mouth_line_curve_alpha = (wrinkle_age - 15) / 150;
+        if (face_options.gender == 'Female') {
+            mouth_line_curve_alpha /= 3;
+        }
 
         //Left chin mouth line
         var left_nose_round_top_point = nose_full_line[2];
@@ -1355,7 +1358,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'wrinkles', renderer
         cheekbone_lines.push("140-180");
     }
     if (face_options.gender == 'Female') {
-        cheekbone_lines.push("L");
+//        cheekbone_lines.push("L");
     }
 
     if (_.indexOf(cheekbone_lines, 'J') > -1) {
