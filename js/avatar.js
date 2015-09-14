@@ -1,27 +1,34 @@
 var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //Uses jquery and Underscore and colors.js and createjs's easel.js
 
+    //TODO: Multiline turn into line segments
+
     //TODO: Have a skull-width and jaw-width, and then combine this with thickness to determine face type
     //TODO: Use age, thickness, and musculature to determine which muscles/lines to draw
 
+    //TODO: Build constrainer to reduce points outside box
+
+    //TODO: Add oval decoration
+    //TODO: Add descendant page with Procyon
+
+    //TODO: Have a builder function to standardize and make reusable
     //TODO: Generate points for each important face zone, generate all these first before rendering
 
     //TODO: Hair Peak have multiple shapes, apply more than one peak
     //TODO: Hair and beard use variables
     //TODO: Scars and Jewlery
+    //TODO: Sag wrinkles when older
     //TODO: Sprite images
     //TODO: Emotions
     //TODO: Moving eyes with border around them
     //TODO: Outfits and standing avatar
-    //TODO: Other Races
+    //TODO: Add 3 Other Races
     //TODO: Check big noses don't go over eyes
 
     //TODO: Three levels of cheek curves
     //TODO: Multiline function has shadow, offset shadow
     //TODO: Add in many eyebrows, overdraw with a canvas brush for bushiness
     //TODO: Eyes get eyelashes
-    //TODO: Build an age-progression demo page
-    //TODO: Add horns for Hellboy style
 
 
     //-----------------------------
@@ -76,6 +83,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         eyelid_shape: null,
         eye_cloudiness: null,
         eyebrow_shape: null,
+        pupil_color: null,
 
         hair_texture: 'Smooth',
         head_size: 'Normal',
@@ -177,12 +185,14 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         nose_height_options: "Low,Normal,Raised".split(","),
 
         eye_spacing_options: "Squeezed,Pinched,Thin,Normal,Wide".split(","),
+        eye_size_options: "Small,Normal,Big".split(","),
         eye_shape_options: "Almond".split(","),
         eye_color_options: "Hazel,Amber,Green,Blue,Gray,Brown,Dark Brown,Black".split(","),
         eye_lids_options: "None,Smooth,Folded,Thick".split(","), //TODO
         eye_cloudiness_options: "Normal,Clear,Misty".split(","),
         eyebrow_shape_options: "Straight,Squiggle,Squiggle Flip,Slim,Lifted,Arch".split(","),
         eye_rotation_options: "Flat,Small,Medium,Large,Slanted".split(","),
+        pupil_color_options: "Black".split(","),
 
         ear_shape_options: "Round".split(","),
         ear_thickness_options: "Wide,Normal,Big,Tall,Splayed".split(","),
@@ -687,6 +697,30 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             eye_spacing = 0.02;
         }
 
+        var eye_size = 1;
+        if (face_options.eye_size == "Tiny") {
+            eye_size = .8;
+        } else if (face_options.eye_size == "Small") {
+            eye_size = .9;
+        } else if (face_options.eye_size == "Big") {
+            eye_size = 1.05;
+        } else if (face_options.eye_size == "Large") {
+            eye_size = 1.1;
+            eye_size += .01;
+        } else if (face_options.eye_size == "Massive") {
+            eye_size = 1.2;
+            eye_size += .02;
+        } else if (face_options.eye_size == "Big Eyed") {
+            eye_size = 1.3;
+            eye_spacing += .025;
+        } else if (face_options.eye_size == "Huge Eyed") {
+            eye_size = 1.4;
+            eye_spacing += .03;
+        } else if (face_options.eye_size == "Giant") {
+            eye_size = 1.5;
+            eye_spacing += .035;
+        }
+
         var mouth_height = 0.05;
         if (face_options.mouth_height == "Low") {
             mouth_height = 0.04;
@@ -751,12 +785,12 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         };
 
         face_zones.eyes = {
-            top: -half_height / 16,
-            bottom: 2 * half_height / 12,
+            top: (-half_height / 16) * eye_size,
+            bottom: (2 * half_height / 12) * eye_size,
             y: y + height_offset + (half_height * (0.8 + forehead_height)),
 
-            left: -half_height / 8,
-            right: 2 * half_height / 8,
+            left: (-half_height / 8) * eye_size,
+            right: (2 * half_height / 8) * eye_size,
             left_x: x + (half_height * (0.75 - eye_spacing)),
             right_x: x + (half_height * (1.25 + eye_spacing)),
 

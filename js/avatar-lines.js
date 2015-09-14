@@ -457,7 +457,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'eyes', renderer: fu
     var iris_lift = 1.3;
     var pupil_transparency = 0.7; //.1 - .9 for weird eyes, but .7 works best
     var iris_transparency = 0.5; //.1 - .9 for weird eyes, but .5 works best
-    var pupil_color = 'black'; //best dark colors, black or dark blue. red looks freaky
+    var pupil_color = face_options.pupil_color; //best dark colors, black or dark blue. red looks freaky
     var eyebrow_thick_start = 4;
     var eyebrow_thick_stop = 2 * f.thick_unit;
     var eye_squint = 1.4;
@@ -480,7 +480,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'eyes', renderer: fu
     if (face_options.eye_cloudiness == 'Clear') {
         eye_fill_colors = ["#fff", "#edd", "#444"];
     } else if (face_options.eye_cloudiness == 'Pink') {
-        eye_fill_colors = ["#fff", "#e88", "#444"];
+        eye_fill_colors = ["#fcc", "#e88", "#833"];
     } else if (face_options.eye_cloudiness == 'Dark') {
         eye_fill_colors = ["#fff", "#988", "#444"];
     } else if (face_options.eye_cloudiness == 'Misty') {
