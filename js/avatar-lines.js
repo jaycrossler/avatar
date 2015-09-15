@@ -922,15 +922,18 @@ new Avatar('add_render_function', {style: 'lines', feature: 'nose', renderer: fu
     var full_nose_line = a.transformShapeLine({type: 'smooth'}, face_options, nose_full_line);
     var alpha = 1;
 
-    var nose_top_color = net.brehaut.Color(face_options.skin_colors.skin).lightenByRatio(0.05).toString();
-    var face_bright_color = net.brehaut.Color(face_options.skin_colors.skin).lightenByRatio(0.1).toString();
-    var nose_fill_colors = [face_options.skin_colors.highlights, maths.hexColorToRGBA(nose_top_color, .9), maths.hexColorToRGBA(face_bright_color, 0.7)];
+    var nose_top_color = net.brehaut.Color(face_options.skin_colors.skin).lightenByRatio(0.07).toString();
+    var face_bright_color = net.brehaut.Color(face_options.skin_colors.skin).lightenByRatio(0.03).toString();
+    var nose_fill_colors = [
+        face_options.skin_colors.highlights,
+        maths.hexColorToRGBA(nose_top_color, .6),
+        maths.hexColorToRGBA(face_bright_color,.25)];
     var nose_fill_steps = [0, .7, 1];
 
     var full_nose = a.createPathFromLocalCoordinates(full_nose_line, {
         close_line: true, thickness: f.thick_unit * .2, line_color: 'rgba(0,0,0,0)',
         fill_colors: nose_fill_colors, fill_method: 'radial',
-        fill_steps: nose_fill_steps, y_offset: (5 * f.thick_unit), radius: (80 * f.thick_unit)
+        fill_steps: nose_fill_steps, y_offset: (5 * f.thick_unit), radius: (50 * f.thick_unit)
     }, width, height);
     full_nose.x = zone.x;
     full_nose.y = zone.y;
@@ -1327,12 +1330,12 @@ new Avatar('add_render_function', {style: 'lines', feature: 'wrinkles', renderer
 
 
     //Cheek color ovals
-    var right_cheek_oval = a.transformShapeLine({type: 'oval',radius: 60 * f.thick_unit});
+    var right_cheek_oval = head_line;//a.transformShapeLine({type: 'oval',radius: 60 * f.thick_unit});
     var skin_lighter = maths.hexColorToRGBA(face_options.skin_colors.skin,.1);
-    var cheek_darker = maths.hexColorToRGBA(face_options.skin_colors.skin,.7);
+    var cheek_darker = maths.hexColorToRGBA(face_options.skin_colors.skin,1);
 
     var fill_colors = [cheek_darker, skin_lighter];
-    var fill_steps = [.5, 1];
+    var fill_steps = [.1, 1];
 
     var nose_bottom_y = a.comparePoints(nose_full_line, 'y', 'highest');
     var cheek_y = (nose_bottom_y + mid_y) / 2;
@@ -1340,28 +1343,25 @@ new Avatar('add_render_function', {style: 'lines', feature: 'wrinkles', renderer
     var right_cheek = a.createPath(right_cheek_oval, {
         close_line: true, thickness: f.thick_unit,
         line_color: 'rgba(0,0,0,0)',
-//        fill_color: cheek_darker
         fill_colors: fill_colors, fill_method: 'radial',
-        fill_steps: fill_steps, radius: (f.thick_unit * 35)  //TODO: Make sure it doesn't go over face
+        x_offset_start: eye_right_right - (f.thick_unit * 5),
+        x_offset_end: eye_right_right - (f.thick_unit * 5),
+        y_offset_start: cheek_y,
+        y_offset_end: cheek_y,
+        fill_steps: fill_steps, radius: (f.thick_unit * 75)
     });
-    right_cheek.x = eye_right_right - (f.thick_unit * 5);
-    right_cheek.y = cheek_y;
-    right_cheek.scaleX = 1.3;
-    right_cheek.scaleY = .8;
     shapes.push(right_cheek);
 
-
     var left_cheek = a.createPath(right_cheek_oval, {
-        close_line: true, thickness: f.thick_unit,
-        line_color: 'rgba(0,0,0,0)',
-//        fill_color: cheek_darker
-        fill_colors: fill_colors, fill_method: 'radial',
-        fill_steps: fill_steps, radius: (f.thick_unit * 35)
-    });
-    left_cheek.x = eye_left_left + (f.thick_unit * 5);
-    left_cheek.y = cheek_y;
-    left_cheek.scaleX = 1.3;
-    left_cheek.scaleY = .8;
+            close_line: true, thickness: f.thick_unit,
+            line_color: 'rgba(0,0,0,0)',
+            fill_colors: fill_colors, fill_method: 'radial',
+            x_offset_start: eye_left_left + (f.thick_unit * 5),
+            x_offset_end: eye_left_left + (f.thick_unit * 5),
+            y_offset_start: cheek_y,
+            y_offset_end: cheek_y,
+            fill_steps: fill_steps, radius: (f.thick_unit * 75)
+        });
     shapes.push(left_cheek);
 
 

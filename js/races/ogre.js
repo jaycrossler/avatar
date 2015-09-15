@@ -1,7 +1,5 @@
 var ogreTemplate = new Avatar('copy_data_template', 'Human');
 
-ogreTemplate.gender_options = ['Female'];
-
 ogreTemplate.ear_shape_options.push('Pointed');
 
 ogreTemplate.eye_color_options = ['Red', 'Pink', 'Purple', 'Yellow'];
