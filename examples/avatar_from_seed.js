@@ -58,6 +58,7 @@ $(document).ready(function () {
         {feature: "wrinkles", style: "lines"}, //Uses: face, left eye, right eye, lips, full nose, chin top line
         {feature: "beard", style: "lines"}, //Uses: face, left eye
         {feature: "mouth", style: "lines"},
+        {feature: "mustache", style: "lines"},
         {feature: "eyes", style: "lines"},
         {feature: "hair", style: "lines"}, //Uses: face, left eye
         {feature: "ears", style: "lines"}

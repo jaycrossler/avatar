@@ -877,13 +877,15 @@ new Avatar('add_render_function', {style: 'lines', feature: 'nose', renderer: fu
         {x: 0, y: 8}
 
     ];
+    var x = zone.x;
+    var y = zone.y;
     var nose_bottom_squiggle = a.createPathFromLocalCoordinates(nose_line, {
         close_line: true, thickness: 1.2 * thickness,
         color: face_options.skin_colors.deepshadow, fill_color: face_options.skin_colors.deepshadow
     }, width, height);
-    nose_bottom_squiggle.x = zone.x;
-    nose_bottom_squiggle.y = zone.y;
-    lines.push({name: 'nose bottom line', line: nose_line, shape: nose_bottom_squiggle});
+    nose_bottom_squiggle.x = x;
+    nose_bottom_squiggle.y = y;
+    lines.push({name: 'nose bottom line', line: nose_line, shape: nose_bottom_squiggle, x:x, y:y, scale_x: width, scale_y:height});
 
 
     //Sides of nose, that get taller based on size

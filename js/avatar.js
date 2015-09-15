@@ -28,7 +28,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
     //-----------------------------
     //Private Global variables
-    var VERSION = '0.0.5',
+    var VERSION = '0.0.6',
         summary = 'Drawing procedurally rendered people on HTML5 canvas.',
         author = 'Jay Crossler - http://github.com/jaycrossler',
         file_name = 'avatar.js';
@@ -47,6 +47,9 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         hair_color: null,
         beard_color: null,
         beard_style: null,
+        mustache_style: null,
+        mustache_width: null,
+        mustache_height: null,
         skin_texture: 'Normal',
         teeth_condition: 'Normal',
         lip_color: null,
@@ -173,6 +176,9 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
 //        beard_color_options: "Hair,Yellow,Brown,Black,White,Gray,Dark Brown,Dark Yellow,Red".split(","),
         beard_style_options: "None,Full Chin,Chin Warmer,Soup Catcher,Thin Chin Wrap,Thin Low Chin Wrap".split(","),
+        mustache_style_options: "None,Handlebar".split(","),
+        mustache_width_options: "Small,Short,Medium,Long,Large".split(","),
+        mustache_height_options: "Small,Short,Medium,Long,Large".split(","),
         neck_size_options: "Thick,Concave".split(","),
 
         nose_shape_options: "Flat,Wide,Thin,Turned up/perky,Normal,Hooked down,Bulbous,Giant Nostrils".split(","),
@@ -363,10 +369,12 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         stage.addChild(face);
         stage.update();
     };
-    function turnWordToNumber(word, min, max) {
-        var options = "Darkest,Darker,Dark,Very Low,Low,Less,Below,Reduce,Raised,Above,More,High,Very High,Bright,Brighter,Brightest".split(",");
+    function turnWordToNumber(word, min, max, options) {
+        options = options || "Darkest,Darker,Dark,Very Low,Low,Less,Below,Reduce,Raised,Above,More,High,Very High,Bright,Brighter,Brightest";
+        if (typeof options == "string") options = options.split(",");
+
         var pos = _.indexOf(options, word);
-        var val = 0;
+        var val = (min+max)/2;
         if (pos > -1) {
             var percent = pos / options.length;
             val = min + (percent * (max - min));
@@ -1009,7 +1017,26 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
                         existing_list[c].x = axis - (existing_list[c].x - axis);
                     }
                 }
+            } else if (type == 'shift') {
+                if (options.starting_step !== undefined) starting_step = (existing_list.length + options.starting_step) % (existing_list.length);
+                if (options.ending_step !== undefined) ending_step = (existing_list.length + options.ending_step) % (existing_list.length);
 
+                if (starting_step < ending_step) {
+                    for (c = starting_step; c < ending_step; c++) {
+                        existing_list[c].x += options.x_offset || 0;
+                        existing_list[c].y += options.y_offset || 0;
+                    }
+                } else {
+                    for (c = 0; c < ending_step; c++) {
+                        existing_list[c].x += options.x_offset || 0;
+                        existing_list[c].y += options.y_offset || 0;
+                    }
+                    for (c = starting_step; c < existing_list.length; c++) {
+                        existing_list[c].x += options.x_offset || 0;
+                        existing_list[c].y += options.y_offset || 0;
+                    }
+
+                }
 
             } else if (type == 'pinch') {
                 if (options.starting_step !== undefined) starting_step = (existing_list.length + options.starting_step) % (existing_list.length);
