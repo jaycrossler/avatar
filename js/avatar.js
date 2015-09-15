@@ -1,12 +1,8 @@
 var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //Uses jquery and Underscore and colors.js and createjs's easel.js
 
-    //TODO: Multiline turn into line segments
-
     //TODO: Have a skull-width and jaw-width, and then combine this with thickness to determine face type
     //TODO: Use age, thickness, and musculature to determine which muscles/lines to draw
-
-    //TODO: Build constrainer to reduce points outside box
 
     //TODO: Add oval decoration
     //TODO: Add descendant page with Procyon
@@ -16,13 +12,12 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
     //TODO: Hair Peak have multiple shapes, apply more than one peak
     //TODO: Hair and beard use variables
-    //TODO: Scars and Jewlery
+    //TODO: Scars and Jewelery
     //TODO: Sag wrinkles when older
     //TODO: Sprite images
     //TODO: Emotions
     //TODO: Moving eyes with border around them
     //TODO: Outfits and standing avatar
-    //TODO: Add 3 Other Races
     //TODO: Check big noses don't go over eyes
 
     //TODO: Three levels of cheek curves
@@ -1403,7 +1398,6 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
         var color = style.line_color || 'black';
         var thickness = style.thickness || 1;
-        var alpha = style.alpha || 1;
 
         if (style.break_line_every) {
             points = hydratePointsAlongLine(points, style.break_line_every, true);
@@ -1411,8 +1405,8 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
         var returnedShapes = [];
 
+        var line = new createjs.Shape();
         for (var i = 1; i < points.length; i++) {
-            var line = new createjs.Shape();
 
             var p1 = points[i - 1];
             var p2 = points[i];
@@ -1423,7 +1417,6 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             var percent = (i / points.length);
             var thickness_now = amountFromVarOrRange(p1.thickness, style.thickness_gradients, thickness, percent);
             var color_now = amountFromVarOrRange(p1.color, style.line_color_gradients, color, percent, true);
-            var alpha_now = amountFromVarOrRange(p1.alpha, style.alpha_gradients, alpha, percent);
 
             if (thickness_now > 0) {
                 line.graphics.beginStroke(color_now).setStrokeStyle(thickness_now);
@@ -1435,16 +1428,17 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
                 } else {
                     line.graphics.moveTo(p1.x, p1.y).lineTo(p2.x, p2.y);
                 }
-
-                line.alpha = alpha_now;
-                if (style.x) line.x = style.x;
-                if (style.y) line.y = style.y;
-
-                if (style.rotation) line.rotation = style.rotation;
-
-                returnedShapes.push(line);
             }
         }
+
+        if (style.alpha !== undefined) line.alpha = style.alpha;
+        if (style.x) line.x = style.x;
+        if (style.y) line.y = style.y;
+        if (style.rotation) line.rotation = style.rotation;
+
+        line.graphics.endStroke();
+
+        returnedShapes.push(line);
 
         return returnedShapes;
     }
@@ -1557,89 +1551,93 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         var constrained_line = [];
 
         var last_crossed = null;
+        var last_point = null;
         _.each(poly_line, function(point, i){
-
-            var i_last = (i-1+poly_line.length) % poly_line.length;
-            var line_start = poly_line[i_last]; //Find previous point, or last point if less
-            var line_end = point;
-
-            var cross_points = [];
-            var cross_top = checkLineIntersection(line_start, line_end, box.tl, {x:box.br.x, y:box.tl.y}, 'top');
-            if (cross_top.onLine1 && cross_top.onLine2) cross_points.push(cross_top);
-
-            var cross_right = checkLineIntersection(line_start, line_end, box.br, {x:box.br.x, y:box.tl.y}, 'right');
-            if (cross_right.onLine1 && cross_right.onLine2) cross_points.push(cross_right);
-
-            var cross_bottom = checkLineIntersection(line_start, line_end, box.br, {x:box.tl.x, y:box.br.y}, 'bottom');
-            if (cross_bottom.onLine1 && cross_bottom.onLine2) cross_points.push(cross_bottom);
-
-            var cross_left = checkLineIntersection(line_start, line_end, box.tl, {x:box.tl.x, y:box.br.y}, 'left');
-            if (cross_left.onLine1 && cross_left.onLine2) cross_points.push(cross_left);
-
-
-            //The closest should be the next in line
-            cross_points = cross_points.sort(function(point_crossed){ return Helpers.distanceXY(point, point_crossed)});
-            cross_points = cross_points.reverse();
-
             var directionOfCurrentPoint = whereIsPointInBox(point, box);
+            if (!last_point || !last_point.inside || !directionOfCurrentPoint.inside) {
+                var i_last = (i - 1 + poly_line.length) % poly_line.length;
+                var line_start = poly_line[i_last]; //Find previous point, or last point if less
+                var line_end = point;
 
-            _.each(cross_points, function(cross_point){
-                var point_clone = _.clone(point);
-                point_clone.line = true;
-                point_clone.x = cross_point.x;
-                point_clone.y = cross_point.y;
+                //Track where points crossed boundary lines
+                var cross_points = [];
+                var cross_top = checkLineIntersection(line_start, line_end, box.tl, {x: box.br.x, y: box.tl.y}, 'top');
+                if (cross_top.onLine1 && cross_top.onLine2) cross_points.push(cross_top);
 
+                var cross_right = checkLineIntersection(line_start, line_end, box.br, {x: box.br.x, y: box.tl.y}, 'right');
+                if (cross_right.onLine1 && cross_right.onLine2) cross_points.push(cross_right);
 
-                if (last_crossed && (cross_point.crossed != last_crossed)) {
-                    //Cover corner points
-                    var point_clone2 = _.clone(point);
-                    point_clone2.line = true;
+                var cross_bottom = checkLineIntersection(line_start, line_end, box.br, {x: box.tl.x, y: box.br.y}, 'bottom');
+                if (cross_bottom.onLine1 && cross_bottom.onLine2) cross_points.push(cross_bottom);
 
-                    if ((cross_point.crossed == 'top' && last_crossed == 'right') || (cross_point.crossed == 'right' && last_crossed == 'top')) {
-                        point_clone2.x = box.br.x;
-                        point_clone2.y = box.tl.y;
-                        constrained_line.push(point_clone2);
-                    } else if ((cross_point.crossed == 'top' && last_crossed == 'left') || (cross_point.crossed == 'left' && last_crossed == 'top')) {
-                        point_clone2.x = box.tl.x;
-                        point_clone2.y = box.tl.y;
-                        constrained_line.push(point_clone2);
-                    } else if ((cross_point.crossed == 'bottom' && last_crossed == 'right') || (cross_point.crossed == 'right' && last_crossed == 'bottom')) {
-                        point_clone2.x = box.br.x;
-                        point_clone2.y = box.br.y;
-                        constrained_line.push(point_clone2);
-                    } else if ((cross_point.crossed == 'bottom' && last_crossed == 'left') || (cross_point.crossed == 'left' && last_crossed == 'bottom')) {
-                        point_clone2.x = box.tl.x;
-                        point_clone2.y = box.br.y;
-                        constrained_line.push(point_clone2);
-                    } else if (cross_point.crossed == 'right' && last_crossed == 'left') {
+                var cross_left = checkLineIntersection(line_start, line_end, box.tl, {x: box.tl.x, y: box.br.y}, 'left');
+                if (cross_left.onLine1 && cross_left.onLine2) cross_points.push(cross_left);
+
+                //The closest should be the next in line
+                cross_points = cross_points.sort(function (point_crossed) {
+                    return Helpers.distanceXY(point, point_crossed)
+                });
+                cross_points = cross_points.reverse();
+
+                //For all points that cross the boundary, add cross points and corner points
+                _.each(cross_points, function (cross_point) {
+                    var point_clone = _.clone(point);
+                    point_clone.line = true;
+                    point_clone.x = cross_point.x;
+                    point_clone.y = cross_point.y;
+
+                    if (last_crossed && (cross_point.crossed != last_crossed)) {
+                        //Cover corner points
+                        var point_clone2 = _.clone(point);
+                        point_clone2.line = true;
+
+                        if ((cross_point.crossed == 'top' && last_crossed == 'right') || (cross_point.crossed == 'right' && last_crossed == 'top')) {
+                            point_clone2.x = box.br.x;
+                            point_clone2.y = box.tl.y;
+                            constrained_line.push(point_clone2);
+                        } else if ((cross_point.crossed == 'top' && last_crossed == 'left') || (cross_point.crossed == 'left' && last_crossed == 'top')) {
+                            point_clone2.x = box.tl.x;
+                            point_clone2.y = box.tl.y;
+                            constrained_line.push(point_clone2);
+                        } else if ((cross_point.crossed == 'bottom' && last_crossed == 'right') || (cross_point.crossed == 'right' && last_crossed == 'bottom')) {
+                            point_clone2.x = box.br.x;
+                            point_clone2.y = box.br.y;
+                            constrained_line.push(point_clone2);
+                        } else if ((cross_point.crossed == 'bottom' && last_crossed == 'left') || (cross_point.crossed == 'left' && last_crossed == 'bottom')) {
+                            point_clone2.x = box.tl.x;
+                            point_clone2.y = box.br.y;
+                            constrained_line.push(point_clone2);
+                        } else if (cross_point.crossed == 'right' && last_crossed == 'left') {
 //                        if (directionOfCurrentPoint.bottom) { //TODO: This wont work for everything
-                        point_clone2.x = box.tl.x;
-                        point_clone2.y = box.br.y;
-                        constrained_line.push(point_clone2);
-                        var p3 = _.clone(point_clone2);
-                        p3.x = box.br.x;
-                        constrained_line.push(p3);
-                    } else if (cross_point.crossed == 'left' && last_crossed == 'right') {
+                            point_clone2.x = box.tl.x;
+                            point_clone2.y = box.br.y;
+                            constrained_line.push(point_clone2);
+                            var p3 = _.clone(point_clone2);
+                            p3.x = box.br.x;
+                            constrained_line.push(p3);
+                        } else if (cross_point.crossed == 'left' && last_crossed == 'right') {
 //                        if (directionOfCurrentPoint.bottom) { //TODO: This wont work for everything
-                        point_clone2.x = box.tl.x;
-                        point_clone2.y = box.br.y;
-                        var p3 = _.clone(point_clone2);
-                        p3.x = box.br.x;
-                        constrained_line.push(point_clone2);
-                        constrained_line.push(p3);
-                    }
+                            point_clone2.x = box.tl.x;
+                            point_clone2.y = box.br.y;
+                            var p3 = _.clone(point_clone2);
+                            p3.x = box.br.x;
+                            constrained_line.push(point_clone2);
+                            constrained_line.push(p3);
+                        }
 //                    last_crossed = cross_point.crossed;
-                }
-                constrained_line.push(point_clone);
+                    }
+                    constrained_line.push(point_clone);
 
-                if (cross_point.crossed) {
-                    last_crossed = cross_point.crossed;
-                }
-            });
-
+                    if (cross_point.crossed) {
+                        last_crossed = cross_point.crossed;
+                    }
+                });
+            }
             if (directionOfCurrentPoint.inside) {
                 constrained_line.push(_.clone(point));
             }
+
+            last_point = point;
         });
 
         return constrained_line;
@@ -1835,6 +1833,8 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         findPoint: findPoint,
         findShape: findShape,
         turnWordToNumber: turnWordToNumber,
+        whereIsPointInBox: whereIsPointInBox,
+        checkLineIntersection: checkLineIntersection,
         extrudeHorizontalArc: extrudeHorizontalArc,
         distanceBetween: distanceBetween,
         constrainPolyLineToBox: constrainPolyLineToBox,
