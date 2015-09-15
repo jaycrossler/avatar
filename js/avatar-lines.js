@@ -73,17 +73,19 @@ new Avatar('add_render_function', {style: 'lines', feature: 'shoulders', rendere
         {x: -5, y: -9},
         {x: -10, y: 0},
         {x: -10, y: 0},
+        {x: -10, y: 10},
 
+        {x: 10, y: 10},
         {x: 10, y: 0},
         {x: 10, y: 0},
         {x: 5, y: -9},
         {x: 4, y: -10}
     ];
 
-    var scale_y = f.thick_unit * 60;
+    var scale_y = f.thick_unit * 80;
     var scale_x = f.thick_unit * 200;
     var x = f.neck.x;
-    var y = f.neck.y + (f.thick_unit * 275);
+    var y = f.neck.y + (f.thick_unit * 300);
 
     var skin_lighter = net.brehaut.Color(face_options.skin_colors.skin).toString();
     var skin_bright = net.brehaut.Color(face_options.skin_colors.skin).lightenByRatio(0.05).toString();
@@ -91,11 +93,19 @@ new Avatar('add_render_function', {style: 'lines', feature: 'shoulders', rendere
     var fill_colors = [skin_bright, skin_lighter, cheek_darker, skin_lighter, skin_bright];
     var fill_steps = [0, .25, .5, .75, 1];
 
-    var shoulder_shape = a.createPathFromLocalCoordinates(shoulder_shape_line, {
+    var image_tl = a.findPoint(avatar, 'facezone topleft');
+    var image_br = a.findPoint(avatar, 'facezone bottomright');
+
+    var shoulder_shape_line_global = a.transformPathFromLocalCoordinates(shoulder_shape_line, scale_x, scale_y, x, y);
+
+
+    shoulder_shape_line_global = a.constrainPolyLineToBox(shoulder_shape_line_global, {tl:image_tl, br:image_br});
+
+    var shoulder_shape = a.createPath(shoulder_shape_line_global, {
         fill_method: 'linear', fill_colors: fill_colors, fill_steps: fill_steps,
         line_color: face_options.skin_colors.highlights, radius: (f.thick_unit * 300),
-        close_line: true, x: x, y: y
-    }, scale_x, scale_y);
+        close_line: true
+    });
     lines.push({name: 'shoulder', line: shoulder_shape_line, shape: shoulder_shape, scale_x: scale_x, scale_y: scale_y, x: x, y: y});
     shapes = shapes.concat(shoulder_shape);
 
@@ -123,24 +133,42 @@ new Avatar('add_render_function', {style: 'lines', feature: 'neck', renderer: fu
         neck_width *= 0.9;
     }
 
+    var image_tl = a.findPoint(avatar, 'facezone topleft');
+    var image_br = a.findPoint(avatar, 'facezone bottomright');
+
     var zone = f.neck;
     var scale_x = (zone.right - zone.left) * neck_width;
-    var scale_y = (zone.bottom - zone.top) / 1.5;
+    var scale_y = (zone.bottom - zone.top) / 1.2;
 
-    var neck_color = net.brehaut.Color(face_options.skin_colors.skin).darkenByRatio(0.1).toString();
+    var skin_lighter = net.brehaut.Color(face_options.skin_colors.skin).toString();
+    var skin_bright = net.brehaut.Color(face_options.skin_colors.skin).lightenByRatio(0.05).toString();
+    var cheek_darker = net.brehaut.Color(face_options.skin_colors.cheek).darkenByRatio(0.05).toString();
+    var fill_colors = [cheek_darker, skin_lighter, skin_bright, skin_lighter, cheek_darker];
+    var fill_steps = [0, .25, .5, .75, 1];
+
+    var x = zone.x;
+    var y = zone.y + (f.thick_unit * 195);
+
+    var neck_draw_options = {
+        fill_method: 'linear', fill_colors: fill_colors, fill_steps: fill_steps,
+        line_color: 'blank',
+        close_line: true
+    };
 
     var neck_line, neck;
     if (face_options.neck_size == 'Concave') {
         neck_line = a.transformShapeLine({type: 'neck', radius: 5, curvature: neck_curvature}, face_options);
-        neck = a.createPathFromLocalCoordinates(neck_line, {close_line: true, line_color: face_options.skin_colors.cheek, fill_color: neck_color}, scale_x, scale_y);
-        neck.x = zone.x;
-        neck.y = zone.y + (f.thick_unit * 175);
-        lines.push({name: 'neck', line: neck_line, shape: neck, scale_x: scale_x, scale_y: scale_y, x: zone.x, y: zone.y});
+        neck_line = a.transformPathFromLocalCoordinates(neck_line, scale_x, scale_y, x, y);
+        neck_line = a.constrainPolyLineToBox(neck_line, {tl:image_tl, br:image_br});
+
+        neck = a.createPath(neck_line, neck_draw_options);
+
+        lines.push({name: 'neck', line: neck_line, shape: neck});
         shapes.push(neck);
 
     } else if (face_options.neck_size == 'Thick') {
 
-        var neck_shape_line = [
+        neck_line = [
             {x: -10, y: -10},
             {x: -10, y: -9},
             {x: -9, y: 0},
@@ -154,11 +182,8 @@ new Avatar('add_render_function', {style: 'lines', feature: 'neck', renderer: fu
             {x: 10, y: -10}
         ];
 
-//        scale_x = (zone.right - zone.left) / 2.3;
         scale_y = (zone.bottom - zone.top) / 2.3;
         scale_x = (f.face.right - f.face.left) / 3.4;
-        var x = zone.x;
-        var y = zone.y + (f.thick_unit * 175);
 
         if (face_options.gender == 'Female') {
             scale_x *= .9;
@@ -167,22 +192,12 @@ new Avatar('add_render_function', {style: 'lines', feature: 'neck', renderer: fu
             scale_x *= .9;
         }
 
-        var skin_lighter = net.brehaut.Color(face_options.skin_colors.skin).toString();
-        var skin_bright = net.brehaut.Color(face_options.skin_colors.skin).lightenByRatio(0.05).toString();
-        var cheek_darker = net.brehaut.Color(face_options.skin_colors.cheek).darkenByRatio(0.05).toString();
-        var fill_colors = [cheek_darker, skin_lighter, skin_bright, skin_lighter, cheek_darker];
-        var fill_steps = [0, .25, .5, .75, 1];
+        neck_line = a.transformPathFromLocalCoordinates(neck_line, scale_x, scale_y, x ,y);
+        neck_line = a.constrainPolyLineToBox(neck_line, {tl:image_tl, br:image_br});
+        neck = a.createPath(neck_line, neck_draw_options);
 
-
-        var neck_shape = a.createPathFromLocalCoordinates(neck_shape_line, {
-            fill_method: 'linear', fill_colors: fill_colors, fill_steps: fill_steps,
-            line_color: face_options.skin_colors.cheek, radius: (f.thick_unit * 100),
-            close_line: true, x: x, y: y
-        }, scale_x, scale_y);
-        lines.push({name: 'neck', line: neck_shape_line, shape: neck_shape, scale_x: scale_x, scale_y: scale_y, x: x, y: y});
-        shapes = shapes.concat(neck_shape);
-
-
+        lines.push({name: 'neck', line: neck_line, shape: neck});
+        shapes = shapes.concat(neck);
     }
 
     if (face_options.gender == 'Male') {

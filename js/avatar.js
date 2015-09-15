@@ -130,7 +130,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //-----------------------------
     var _data = {'Human': {
         rendering_order: [
-//            {decoration:"box-behind"},
+            {decoration:"box-behind"},
             {feature: "shoulders", style: "lines"},
             {feature: "neck", style: "lines"},
             {feature: "face", style: "lines"},
@@ -341,11 +341,11 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
     //-----------------------------
     //Supporting functions
-    AvatarClass.prototype.getSeed = function(showAsString) {
+    AvatarClass.prototype.getSeed = function (showAsString) {
         var result = this.initialization_options || {};
         return showAsString ? JSON.stringify(result) : result;
     };
-    AvatarClass.prototype.erase = function() {
+    AvatarClass.prototype.erase = function () {
         if (this.faceShapeCollection) {
             this.faceShapeCollection.removeAllChildren();
             this.faceShapeCollection.visible = false;
@@ -1132,7 +1132,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         } else if (attribute == 'closest') {
             var closest_distance = Number.MAX_VALUE;
             var closest_point = null;
-            for (var c=0; c<existing_list.length; c++){
+            for (var c = 0; c < existing_list.length; c++) {
                 var point = existing_list[c];
                 var dist = Helpers.distanceXY(point, cardinality);
                 if (dist < closest_distance) {
@@ -1261,6 +1261,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         style = style || {};
 
         var color = style.line_color || style.color || 'black';
+        if (color == 'blank') color = 'rgba(0,0,0,0)';
         var thickness = style.thickness || 1;
         var fill_color = style.fill_color || null;
 
@@ -1291,13 +1292,13 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
                 if (style.fill_method == 'linear') {
                     line.graphics.beginLinearGradientFill(
                         style.fill_colors, style.fill_steps || [0, 1],
-                            style.x_offset_start || -style.radius || 0, style.y_offset_start || 0,
-                            style.x_offset_end || style.radius || 0, style.y_offset_end || 0)
+                            style.x_offset_start || -style.radius || comparePoints(points, 'x', 'lowest') || 0, style.y_offset_start || 0,
+                            style.x_offset_end || style.radius  || comparePoints(points, 'x', 'highest')|| 0, style.y_offset_end || 0)
                 } else { //Assume Radial
                     line.graphics.beginRadialGradientFill(
                         style.fill_colors, style.fill_steps || [0, 1],
                             style.x_offset_start || style.x_offset || comparePoints(points, 'x', 'middle'), style.y_offset_start || style.y_offset || comparePoints(points, 'y', 'middle'), 0,
-                            style.x_offset_end || style.x_offset || comparePoints(points, 'x', 'middle'), style.y_offset_end ||style.y_offset || comparePoints(points, 'y', 'middle'), style.radius || 10);
+                            style.x_offset_end || style.x_offset || comparePoints(points, 'x', 'middle'), style.y_offset_end || style.y_offset || comparePoints(points, 'y', 'middle'), style.radius || 10);
                 }
             }
 
@@ -1347,15 +1348,12 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         }
     }
 
-
-
-
     function createMultiPathFromLocalCoordinates(points_local, style, width_radius, height_radius) {
         var points = transformPathFromLocalCoordinates(points_local, width_radius, height_radius);
         return createMultiPath(points, style);
     }
 
-    function amountFromVarOrRange (point_amount, gradient, setting, percent, isColor) {
+    function amountFromVarOrRange(point_amount, gradient, setting, percent, isColor) {
         var amount = setting;
 
         if (point_amount) {
@@ -1366,7 +1364,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             if (grad_length == 1) {
                 amount = gradient[0];
             } else {
-                var pos_percent = percent * (grad_length-1);
+                var pos_percent = percent * (grad_length - 1);
                 var pos_floor = Math.floor(pos_percent);
                 var pos_ceil = Math.ceil(pos_percent);
 
@@ -1393,6 +1391,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
         return amount;
     }
+
     function createMultiPath(points, style) {
         if (!points || !points.length || points.length < 2) return null;
         style = style || {};
@@ -1415,23 +1414,23 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         for (var i = 1; i < points.length; i++) {
             var line = new createjs.Shape();
 
-            var p1 = points[i-1];
+            var p1 = points[i - 1];
             var p2 = points[i];
-            var p3 = points[i+1];
+            var p3 = points[i + 1];
 
             //TODO: get p3 and do a mid for quads?
 
             var percent = (i / points.length);
-            var thickness_now = amountFromVarOrRange (p1.thickness, style.thickness_gradients, thickness, percent);
-            var color_now = amountFromVarOrRange (p1.color, style.line_color_gradients, color, percent, true);
-            var alpha_now = amountFromVarOrRange (p1.alpha, style.alpha_gradients, alpha, percent);
+            var thickness_now = amountFromVarOrRange(p1.thickness, style.thickness_gradients, thickness, percent);
+            var color_now = amountFromVarOrRange(p1.color, style.line_color_gradients, color, percent, true);
+            var alpha_now = amountFromVarOrRange(p1.alpha, style.alpha_gradients, alpha, percent);
 
             if (thickness_now > 0) {
                 line.graphics.beginStroke(color_now).setStrokeStyle(thickness_now);
 
                 if (style.dot_array) {
                     line.graphics.drawEllipse(p1.x - (thickness / 2), p1.y - (thickness / 2), thickness, thickness);
-                } else if (!p1.line && p3){
+                } else if (!p1.line && p3) {
                     line.graphics.moveTo(p1.x, p1.y).quadraticCurveTo(p2.x, p2.y, p3.x, p3.y);
                 } else {
                     line.graphics.moveTo(p1.x, p1.y).lineTo(p2.x, p2.y);
@@ -1449,7 +1448,6 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
         return returnedShapes;
     }
-
 
     function extrudeHorizontalArc(linePoints, distX, distY, distPeak) {
         //Have distY be positive to do an inner arc
@@ -1555,6 +1553,189 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         return newLine;
     }
 
+    function constrainPolyLineToBox(poly_line, box) {
+        var constrained_line = [];
+
+        var last_crossed = null;
+        _.each(poly_line, function(point, i){
+
+            var i_last = (i-1+poly_line.length) % poly_line.length;
+            var line_start = poly_line[i_last]; //Find previous point, or last point if less
+            var line_end = point;
+
+            var cross_points = [];
+            var cross_top = checkLineIntersection(line_start, line_end, box.tl, {x:box.br.x, y:box.tl.y}, 'top');
+            if (cross_top.onLine1 && cross_top.onLine2) cross_points.push(cross_top);
+
+            var cross_right = checkLineIntersection(line_start, line_end, box.br, {x:box.br.x, y:box.tl.y}, 'right');
+            if (cross_right.onLine1 && cross_right.onLine2) cross_points.push(cross_right);
+
+            var cross_bottom = checkLineIntersection(line_start, line_end, box.br, {x:box.tl.x, y:box.br.y}, 'bottom');
+            if (cross_bottom.onLine1 && cross_bottom.onLine2) cross_points.push(cross_bottom);
+
+            var cross_left = checkLineIntersection(line_start, line_end, box.tl, {x:box.tl.x, y:box.br.y}, 'left');
+            if (cross_left.onLine1 && cross_left.onLine2) cross_points.push(cross_left);
+
+
+            //The closest should be the next in line
+            cross_points = cross_points.sort(function(point_crossed){ return Helpers.distanceXY(point, point_crossed)});
+            cross_points = cross_points.reverse();
+
+            var directionOfCurrentPoint = whereIsPointInBox(point, box);
+
+            _.each(cross_points, function(cross_point){
+                var point_clone = _.clone(point);
+                point_clone.line = true;
+                point_clone.x = cross_point.x;
+                point_clone.y = cross_point.y;
+
+
+                if (last_crossed && (cross_point.crossed != last_crossed)) {
+                    //Cover corner points
+                    var point_clone2 = _.clone(point);
+                    point_clone2.line = true;
+
+                    if ((cross_point.crossed == 'top' && last_crossed == 'right') || (cross_point.crossed == 'right' && last_crossed == 'top')) {
+                        point_clone2.x = box.br.x;
+                        point_clone2.y = box.tl.y;
+                        constrained_line.push(point_clone2);
+                    } else if ((cross_point.crossed == 'top' && last_crossed == 'left') || (cross_point.crossed == 'left' && last_crossed == 'top')) {
+                        point_clone2.x = box.tl.x;
+                        point_clone2.y = box.tl.y;
+                        constrained_line.push(point_clone2);
+                    } else if ((cross_point.crossed == 'bottom' && last_crossed == 'right') || (cross_point.crossed == 'right' && last_crossed == 'bottom')) {
+                        point_clone2.x = box.br.x;
+                        point_clone2.y = box.br.y;
+                        constrained_line.push(point_clone2);
+                    } else if ((cross_point.crossed == 'bottom' && last_crossed == 'left') || (cross_point.crossed == 'left' && last_crossed == 'bottom')) {
+                        point_clone2.x = box.tl.x;
+                        point_clone2.y = box.br.y;
+                        constrained_line.push(point_clone2);
+                    } else if (cross_point.crossed == 'right' && last_crossed == 'left') {
+//                        if (directionOfCurrentPoint.bottom) { //TODO: This wont work for everything
+                        point_clone2.x = box.tl.x;
+                        point_clone2.y = box.br.y;
+                        constrained_line.push(point_clone2);
+                        var p3 = _.clone(point_clone2);
+                        p3.x = box.br.x;
+                        constrained_line.push(p3);
+                    } else if (cross_point.crossed == 'left' && last_crossed == 'right') {
+//                        if (directionOfCurrentPoint.bottom) { //TODO: This wont work for everything
+                        point_clone2.x = box.tl.x;
+                        point_clone2.y = box.br.y;
+                        var p3 = _.clone(point_clone2);
+                        p3.x = box.br.x;
+                        constrained_line.push(point_clone2);
+                        constrained_line.push(p3);
+                    }
+//                    last_crossed = cross_point.crossed;
+                }
+                constrained_line.push(point_clone);
+
+                if (cross_point.crossed) {
+                    last_crossed = cross_point.crossed;
+                }
+            });
+
+            if (directionOfCurrentPoint.inside) {
+                constrained_line.push(_.clone(point));
+            }
+        });
+
+        return constrained_line;
+    }
+
+    function whereIsPointInBox(point, box) {
+        // point = {x, y}
+        // box = {tl.x, tl.y, br.x, br.y}
+
+        var whereIsPoint = {};
+        if (point.x <= box.br.x && point.x >= box.tl.x &&
+            point.y <= box.br.y && point.y >= box.tl.y) {
+            whereIsPoint.inside = true;
+        } else if (point.x >= box.br.x) {
+            if (point.y < box.tl.y) {
+                whereIsPoint.top = true;
+                whereIsPoint.right = true;
+            } else if (point.y > box.br.y) {
+                whereIsPoint.bottom = true;
+                whereIsPoint.right = true;
+            } else {
+                whereIsPoint.middle = true;
+                whereIsPoint.right = true;
+            }
+        } else if (point.x <= box.tl.x) {
+            if (point.y < box.tl.y) {
+                whereIsPoint.top = true;
+                whereIsPoint.left = true;
+            } else if (point.y > box.br.y) {
+                whereIsPoint.bottom = true;
+                whereIsPoint.left = true;
+            } else {
+                whereIsPoint.middle = true;
+                whereIsPoint.left = true;
+            }
+        } else {
+            if (point.y < box.tl.y) {
+                whereIsPoint.top = true;
+                whereIsPoint.middle = true;
+            } else if (point.y > box.br.y) {
+                whereIsPoint.bottom = true;
+                whereIsPoint.middle = true;
+            } else {
+                whereIsPoint.inside = true;
+            }
+        }
+
+        return whereIsPoint;
+    }
+
+    function checkLineIntersection(line1Start, line1End, line2Start, line2End, crossedName) {
+        //From: http://jsfiddle.net/justin_c_rounds/Gd2S2/
+        // if the lines intersect, the result contains the x and y of the intersection (treating the lines as infinite)
+        // and booleans for whether line segment 1 or line segment 2 contain the point
+
+        var denominator, a, b, numerator1, numerator2, result = {
+            x: null,
+            y: null,
+            onLine1: false,
+            onLine2: false
+        };
+        denominator = ((line2End.y - line2Start.y) * (line1End.x - line1Start.x)) - ((line2End.x - line2Start.x) * (line1End.y - line1Start.y));
+        if (denominator == 0) {
+            return result;
+        }
+        a = line1Start.y - line2Start.y;
+        b = line1Start.x - line2Start.x;
+        numerator1 = ((line2End.x - line2Start.x) * a) - ((line2End.y - line2Start.y) * b);
+        numerator2 = ((line1End.x - line1Start.x) * a) - ((line1End.y - line1Start.y) * b);
+        a = numerator1 / denominator;
+        b = numerator2 / denominator;
+
+        // if we cast these lines infinitely in both directions, they intersect here:
+        result.x = line1Start.x + (a * (line1End.x - line1Start.x));
+        result.y = line1Start.y + (a * (line1End.y - line1Start.y));
+
+        // it is worth noting that this should be the same as:
+        // x = line2Start.x + (b * (line2End.x - line2Start.x));
+        // y = line2Start.x + (b * (line2End.y - line2Start.y));
+
+        // if line1 is a segment and line2 is infinite, they intersect if:
+        if (a > 0 && a < 1) {
+            result.onLine1 = true;
+        }
+        // if line2 is a segment and line1 is infinite, they intersect if:
+        if (b > 0 && b < 1) {
+            result.onLine2 = true;
+        }
+        if (crossedName) {
+            result.crossed = crossedName;
+        }
+        // if line1 and line2 are segments, they intersect if both of the above are true
+        return result;
+    }
+
+
     //---------------------
     //Stage management
     function setupStage(canvas) {
@@ -1656,6 +1837,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         turnWordToNumber: turnWordToNumber,
         extrudeHorizontalArc: extrudeHorizontalArc,
         distanceBetween: distanceBetween,
+        constrainPolyLineToBox: constrainPolyLineToBox,
         angleBetween: angleBetween,
         hydratePointsAlongLine: hydratePointsAlongLine,
         setupStage: setupStage,
@@ -1670,6 +1852,6 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 })($, _, net, createjs, Helpers, maths);
 
 //TODO: Is this the best way to have helper functions?
-Avatar.getRaces = function(){
+Avatar.getRaces = function () {
     return new Avatar('get_races');
 };

@@ -1,14 +1,6 @@
 var firstNames = "Bob,Thomas,William,Waldo,Michael,Kicaid,Luccio,Johny,Donald,Morgan,Mouse,Sanya,Merlin,Rashid,Joseph".split(",");
 var lastNames = "Mariner,Observer,Odyssey,Pioneer,Ranger,Scout,Surveyor,Trailer".split(",");
 
-function getMousePos(canvas, evt) {
-    var rect = canvas.getBoundingClientRect();
-    return {
-        x: evt.clientX - rect.left,
-        y: evt.clientY - rect.top
-    };
-}
-
 var av1;
 $(document).ready(function () {
     var $canvas = $('canvas');
@@ -16,30 +8,10 @@ $(document).ready(function () {
     var height = $canvas.height();
     var size = 130;
 
-    var canvas = $canvas[0];
-    var context = canvas.getContext("2d");
-
 
     ogreTemplate.rendering_order.push(
         {decoration: 'highlight_rectangle', type: 'rectangle', p1: 'facezone topleft', p2: 'facezone bottomright', line_color: 'black', size: '4', alpha: 1, forceInBounds: true}
     );
-
-
-    function draw(e) {
-        var pos = getMousePos(canvas, e);
-
-        context.fillStyle = "#000000";
-//        context.fillRect (pos.x, pos.y, 4, 4);
-        $('#avatar_name').text("x=" + pos.x + " : y=" + pos.y);
-
-    }
-
-    canvas.addEventListener('mousemove', draw, false);
-
-//    $canvas.width($(window).width());
-
-//    var testWithTemplate = new Avatar('get_linked_template', 'Human');
-//    testWithTemplate.eye_color_options = ['Red','Yellow'];
 
 
     av1 = new Avatar({rand_seed: 1, name: 'John Doe', race: 'Navi', age: 100}, {canvas_name: 'demoCanvas'});
