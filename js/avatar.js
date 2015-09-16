@@ -176,7 +176,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
 //        beard_color_options: "Hair,Yellow,Brown,Black,White,Gray,Dark Brown,Dark Yellow,Red".split(","),
         beard_style_options: "None,Full Chin,Chin Warmer,Soup Catcher,Thin Chin Wrap,Thin Low Chin Wrap".split(","),
-        mustache_style_options: "None,Handlebar".split(","),
+        mustache_style_options: "None,Propeller,Butterfly,Fu Manchu,Lower Dali,Dali,Sparrow,Zappa,Anchor,Copstash,Handlebar,Low Handlebar,Long Curled Handlebar,Curled Handlebar".split(","),
         mustache_width_options: "Small,Short,Medium,Long,Large".split(","),
         mustache_height_options: "Small,Short,Medium,Long,Large".split(","),
         neck_size_options: "Thick,Concave".split(","),
@@ -191,7 +191,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         eye_color_options: "Hazel,Amber,Green,Blue,Gray,Brown,Dark Brown,Black".split(","),
         eye_lids_options: "None,Smooth,Folded,Thick".split(","), //TODO
         eye_cloudiness_options: "Normal,Clear,Misty".split(","),
-        eyebrow_shape_options: "Straight,Squiggle,Squiggle Flip,Slim,Lifted,Arch".split(","),
+        eyebrow_shape_options: "Straight,Squiggle,Squiggle Flip,Slim,Lifted,Arch,Thick Arch,Caterpiller,Wide Caterpiller".split(","),
         eye_rotation_options: "Flat,Small,Medium,Large,Slanted".split(","),
         pupil_color_options: "Black".split(","),
 
@@ -927,7 +927,12 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     function transformShapeLine(options_lists, face_options, existing_list) {
         if (!_.isArray(options_lists)) options_lists = [options_lists];
 
-        existing_list = existing_list || [];
+        if (existing_list) {
+            existing_list = JSON.parse(JSON.stringify(existing_list));
+        } else {
+            existing_list = [];
+        }
+
         _.each(options_lists, function (options) {
             var type = options.type || 'circle';
             var steps = options.steps || 18;

@@ -618,6 +618,30 @@ new Avatar('add_render_function', {style: 'lines', feature: 'eyes', renderer: fu
             {x: -2, y: -5, thickness: 8 * f.thick_unit},
             {x: -10, y: 2}
         ];
+    } else if (face_options.eyebrow_shape == "Caterpiller") {
+        left_eyebrow_line_top = [
+            {x: 11, y: 6},
+            {x: -1, y: -2},
+            {x: -6, y: -2},
+            {x: -10, y: 1},
+            {x: -13, y: 5}
+        ];
+        eyebrow_thick_stop = eyebrow_thick_start *= 1.5;
+    } else if (face_options.eyebrow_shape == "Wide Caterpiller") {
+        left_eyebrow_line_top = [
+            {x: 11, y: 6},
+            {x: 2, y: -2},
+            {x: -6, y: -2},
+            {x: -13, y: 7}
+        ];
+        eyebrow_thick_stop = eyebrow_thick_start * 1.5;
+    } else if (face_options.eyebrow_shape == "Thick Arch") {
+        left_eyebrow_line_top = [
+            {x: 11, y: 6},
+            {x: -5, y: -2},
+            {x: -14, y: 7}
+        ];
+        eyebrow_thick_stop = eyebrow_thick_start * 1.5;
     }
 
     x = zone.left_x;

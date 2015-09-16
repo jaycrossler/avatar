@@ -39,6 +39,21 @@ $(document).ready(function () {
             av.erase();
         }
         av = new Avatar({rand_seed: seed}, {height:300, canvas_name: $canvas});
+        av.unregisterEvent('all');
+        av.registerEvent('face', function (avatar) {
+            seed = parseInt(Math.random() * 300000);
+            $seed_number.val(seed);
+
+            avatar.face_options = null;
+            avatar.drawOrRedraw({rand_seed: seed});
+
+            var text = avatar.face_options.name || "Avatar";
+            text += " : new Avatar({rand_seed: " + avatar.initialization_seed + "});";
+            $('#avatar_name').text(text);
+
+        });
+
+
     }
 
     $seed_number.on('keypress',generateAvatar);
