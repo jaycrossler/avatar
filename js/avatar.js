@@ -4,6 +4,8 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //TODO: Have a skull-width and jaw-width, and then combine this with thickness to determine face type
     //TODO: Use age, thickness, and musculature to determine which muscles/lines to draw
 
+    //TODO: Beard lines are a little off
+
     //TODO: Add oval decoration
     //TODO: Add descendant page with Procyon
 
@@ -47,6 +49,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         hair_color: null,
         beard_color: null,
         beard_style: null,
+        stubble_style: null,
         mustache_style: null,
         mustache_width: null,
         mustache_height: null,
@@ -128,7 +131,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //-----------------------------
     var _data = {'Human': {
         rendering_order: [
-            {decoration:"box-behind"},
+            {decoration: "box-behind"},
             {feature: "shoulders", style: "lines"},
             {feature: "neck", style: "lines"},
             {feature: "face", style: "lines"},
@@ -174,11 +177,12 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         hair_style_options: "Bald,Bowl,Bowl with Peak,Bowl with Big Peak".split(","),
         hairiness_options: "Bald,Thin Hair,Thick Hair,Hairy,Fuzzy,Bearded,Covered in Hair,Fury".split(","), //TODO
 
-//        beard_color_options: "Hair,Yellow,Brown,Black,White,Gray,Dark Brown,Dark Yellow,Red".split(","),
+        beard_color_options: "Hair,Yellow,Brown,Black,White,Gray,Dark Brown,Dark Yellow,Red".split(","),
         beard_style_options: "None,Full Chin,Chin Warmer,Soup Catcher,Thin Chin Wrap,Thin Low Chin Wrap".split(","),
         mustache_style_options: "None,Propeller,Butterfly,Fu Manchu,Lower Dali,Dali,Sparrow,Zappa,Anchor,Copstash,Handlebar,Low Handlebar,Long Curled Handlebar,Curled Handlebar".split(","),
         mustache_width_options: "Small,Short,Medium,Long,Large".split(","),
         mustache_height_options: "Small,Short,Medium,Long,Large".split(","),
+        stubble_style_options: "None,Light,Medium,Heavy".split(","),
         neck_size_options: "Thick,Concave".split(","),
 
         nose_shape_options: "Flat,Wide,Thin,Turned up/perky,Normal,Hooked down,Bulbous,Giant Nostrils".split(","),
@@ -284,6 +288,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         this.stage_options = $.extend({}, this.stage_options || _stage_options, stage_options || {});
         this.event_list = this.event_list || [];
         this.registered_points = this.registered_points || [];
+        this.textures = this.textures || [];
 
         //Determine the random seed to use.  Either use the one passed in, the existing one, or a random one.
         face_options = face_options || {};
@@ -300,6 +305,8 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         for (var key in race_data) {
             this.randomFaceOption(key, true, true);
         }
+
+        generateTextures(this);
 
         //Find the canvas that the stage should be drawn on (possibly multiple stages per canvas)
         if (canvas_name) {
@@ -374,7 +381,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         if (typeof options == "string") options = options.split(",");
 
         var pos = _.indexOf(options, word);
-        var val = (min+max)/2;
+        var val = (min + max) / 2;
         if (pos > -1) {
             var percent = pos / options.length;
             val = min + (percent * (max - min));
@@ -860,6 +867,58 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     }
 
     //-----------------------------
+    //Textures
+    function generateTextures(avatar) {
+        _.each(avatar.textures, function(tex){
+            delete tex;
+        });
+        avatar.textures = [];
+
+        //TODO: Have this run once for the entire class?
+        var canvas = document.createElement('canvas');
+        canvas.width = 64;
+        canvas.height = 64;
+        var context = canvas.getContext('2d');
+
+        var hair_tinted_gray = avatar.face_options.beard_color;
+        var hair_tinted_gray2 = avatar.face_options.beard_color;
+
+        if (avatar.face_options.hair_color && hair_tinted_gray && hair_tinted_gray == 'Hair'){
+            hair_tinted_gray = avatar.face_options.hair_color;
+            hair_tinted_gray2 = avatar.face_options.hair_color;
+        }
+        if (!hair_tinted_gray) {
+            hair_tinted_gray = net.brehaut.Color('#666').toString();
+            hair_tinted_gray2 = net.brehaut.Color('#888').toString();
+        }
+        hair_tinted_gray = net.brehaut.Color('#666').blend(net.brehaut.Color(hair_tinted_gray),.1).toString();
+        hair_tinted_gray2 = net.brehaut.Color('#888').blend(net.brehaut.Color(hair_tinted_gray2),.2).toString();
+
+        addRandomLines(context, avatar.face_options, 64, 100, 4, hair_tinted_gray);
+        addRandomLines(context, avatar.face_options, 64, 200, 3, hair_tinted_gray2);
+        addRandomLines(context, avatar.face_options, 64, 300, 6, '#444');
+
+        avatar.textures.push({name: 'stubble lines', canvas: canvas, context: context});
+    }
+
+    function addRandomLines(context, face_options, context_size, number, length, color) {
+        context.strokeStyle = color;
+        for (var i = 0; i < number; i++) {
+            var x = randInt(context_size, face_options);
+            var y = randInt(context_size, face_options);
+            var x_off = randInt(length * 2, face_options) - length;
+            var y_off = randInt(length * 2, face_options) - length;
+
+            context.beginPath();
+            context.moveTo(x, y);
+            context.lineTo(x + x_off, y + y_off);
+            context.closePath();
+            context.stroke()
+        }
+        return context;
+    }
+
+    //-----------------------------
     //Drawing Helpers
 
     function addSceneChildren(container, children) {
@@ -1211,14 +1270,20 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     }
 
     //Point and line tracking
-    function findShape(lines, name) {
+    function findShape(lines, name, empty_value, attribute_name) {
         var shape = _.find(lines, function (shape) {
             return shape.name == name
         });
-        if (!shape) {
+        if (!shape && !attribute_name) {
             console.error("avatar.js - Error: " + name + " not found when trying to 'findShape'");
         }
-        return shape || {};
+        var result;
+        if (attribute_name && shape && shape[attribute_name]) {
+            result = shape[attribute_name];
+        } else {
+            result = shape || (typeof empty_value == "undefined" ? {} : empty_value);
+        }
+        return result;
     }
 
     function findPoint(avatar, name) {
@@ -1313,7 +1378,10 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
             line.graphics.beginStroke(color).setStrokeStyle(thickness);
 
-            if (fill_color) {
+            //TODO: Have multiple fills?
+            if (style.fill_canvas) {
+                line.graphics.beginBitmapFill(style.fill_canvas)
+            } else if (fill_color) {
                 line.graphics.beginFill(fill_color);
             } else if (style.fill_colors) {
                 var x_offset_start, x_offset_end, y_offset_start, y_offset_end, radius, fill_steps;
@@ -1615,7 +1683,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
         var last_crossed = null;
         var last_point = null;
-        _.each(poly_line, function(point, i){
+        _.each(poly_line, function (point, i) {
             var directionOfCurrentPoint = whereIsPointInBox(point, box);
             if (!last_point || !last_point.inside || !directionOfCurrentPoint.inside) {
                 var i_last = (i - 1 + poly_line.length) % poly_line.length;

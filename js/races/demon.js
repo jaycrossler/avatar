@@ -119,6 +119,7 @@ demonTemplate.thickness_options = [3,4,5,6];
 
 demonTemplate.hair_style_options = ['Bald'];
 demonTemplate.beard_style_options = ['None'];
+demonTemplate.stubble_style_options = ['None'];
 demonTemplate.wrinkle_resistance_options = ['Very Low', 'Low', 'Less'];
 
 demonTemplate.skin_shade_options = ['Preset'];
