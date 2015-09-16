@@ -1827,11 +1827,22 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mouth', renderer: f
         ];
     }
 
-    var lip_mid_color = net.brehaut.Color(face_options.lip_color).darkenByRatio(.3).toString();
+    var lip_top_color, lip_mid_color, lip_line_color;
+    if (face_options.gender == 'Male') {
+        var skin_color = net.brehaut.Color(face_options.skin_colors.skin);
+        lip_top_color = net.brehaut.Color(face_options.lip_color).blend(skin_color, 1).toString();
+        lip_mid_color = net.brehaut.Color(face_options.lip_color).darkenByRatio(0.3).toString();
+        lip_line_color = 'blank';
+    } else {
+        lip_top_color = net.brehaut.Color(face_options.lip_color).darkenByRatio(0.1).toString();
+        lip_mid_color = net.brehaut.Color(face_options.lip_color).darkenByRatio(0.3).toString();
+        lip_line_color = face_options.skin_colors.deepshadow;
+    }
+
     var l = a.createPathFromLocalCoordinates(mouth_top_line, {
         close_line: true, thickness: lip_thickness,
-        line_color: face_options.skin_colors.deepshadow, fill_method: 'linear',
-        fill_colors: [face_options.lip_color, lip_mid_color, face_options.lip_color],
+        line_color: lip_line_color, fill_method: 'linear',
+        fill_colors: [lip_top_color, lip_mid_color, lip_top_color],
         fill_steps: [0,.5,1], y_offset_start: -height/2, y_offset_end: height/2,
         x_offset_start:0, x_offset_end:0
     }, width, height);

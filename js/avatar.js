@@ -11,7 +11,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //TODO: Generate points for each important face zone, generate all these first before rendering
 
     //TODO: Hair Peak have multiple shapes, apply more than one peak
-    //TODO: Hair and beard use variables
+    //TODO: More Hair and Beard Options
     //TODO: Scars and Jewelery
     //TODO: Sag wrinkles when older
     //TODO: Sprite images
@@ -1316,16 +1316,27 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             if (fill_color) {
                 line.graphics.beginFill(fill_color);
             } else if (style.fill_colors) {
+                var x_offset_start, x_offset_end, y_offset_start, y_offset_end, radius, fill_steps;
                 if (style.fill_method == 'linear') {
+                    x_offset_start = assignNumbersInOrder(style.x_offset_start, -style.radius, comparePoints(points, 'x', 'lowest'), 0);
+                    x_offset_end = assignNumbersInOrder(style.x_offset_end, style.radius, comparePoints(points, 'x', 'highest'), 0);
+                    y_offset_start = assignNumbersInOrder(style.y_offset_start, 0);
+                    y_offset_end = assignNumbersInOrder(style.y_offset_end, 0);
+                    fill_steps = style.fill_steps || [0, 1];
+
                     line.graphics.beginLinearGradientFill(
-                        style.fill_colors, style.fill_steps || [0, 1],
-                            style.x_offset_start || -style.radius || comparePoints(points, 'x', 'lowest') || 0, style.y_offset_start || 0,
-                            style.x_offset_end || style.radius  || comparePoints(points, 'x', 'highest')|| 0, style.y_offset_end || 0)
+                        style.fill_colors, fill_steps, x_offset_start, y_offset_start, x_offset_end, y_offset_end)
+
                 } else { //Assume Radial
+                    x_offset_start = assignNumbersInOrder(style.x_offset_start, style.x_offset, comparePoints(points, 'x', 'middle'), 0);
+                    x_offset_end = assignNumbersInOrder(style.x_offset_end, style.x_offset, comparePoints(points, 'x', 'middle'), 0);
+                    y_offset_start = assignNumbersInOrder(style.y_offset_start, style.y_offset, comparePoints(points, 'y', 'middle'), 0);
+                    y_offset_end = assignNumbersInOrder(style.y_offset_end, style.y_offset, comparePoints(points, 'y', 'middle'), 0);
+                    fill_steps = style.fill_steps || [0, 1];
+                    radius = style.radius || 10;
+
                     line.graphics.beginRadialGradientFill(
-                        style.fill_colors, style.fill_steps || [0, 1],
-                            style.x_offset_start || style.x_offset || comparePoints(points, 'x', 'middle'), style.y_offset_start || style.y_offset || comparePoints(points, 'y', 'middle'), 0,
-                            style.x_offset_end || style.x_offset || comparePoints(points, 'x', 'middle'), style.y_offset_end || style.y_offset || comparePoints(points, 'y', 'middle'), style.radius || 10);
+                        style.fill_colors, fill_steps, x_offset_start, y_offset_start, 0, x_offset_end, y_offset_end, radius);
                 }
             }
 
@@ -1373,6 +1384,26 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         } else {
             return returnedShapes;
         }
+    }
+
+    function assignNumbersInOrder(num1, num2, num3, num4, num5) {
+        var result = num1;
+        if (typeof num1 != 'number' || isNaN(num1)) {
+            result = num2;
+            if (typeof num2 != 'number' || isNaN(num2)) {
+                result = num3;
+                if (typeof num3 != 'number' || isNaN(num3)) {
+                    result = num4;
+                    if (typeof num4 != 'number' || isNaN(num4)) {
+                        result = num5;
+                        if (typeof num5 != 'number' || isNaN(num5)) {
+                            result = 0;
+                        }
+                    }
+                }
+            }
+        }
+        return result
     }
 
     function createMultiPathFromLocalCoordinates(points_local, style, width_radius, height_radius) {
