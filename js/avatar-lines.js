@@ -507,8 +507,6 @@ new Avatar('add_render_function', {style: 'lines', feature: 'eyes', renderer: fu
 
     //TODO: Have eyebrow patterns shift
 
-    //TODO: Build a builder function
-
     //Scales
     var width_eye = (f.eyes.right - f.eyes.left);
     var height_eye = (f.eyes.bottom - f.eyes.top) * eye_squint;

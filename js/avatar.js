@@ -190,7 +190,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         nose_size_options: "Tiny,Small,Normal,Large,Big,Giant,Huge".split(","),
         nose_height_options: "Low,Normal,Raised".split(","),
 
-        eye_spacing_options: "Squeezed,Pinched,Thin,Normal,Wide".split(","),
+        eye_spacing_options: "Pinched,Thin,Normal,Wide".split(","),
         eye_size_options: "Small,Normal,Big".split(","),
         eye_shape_options: "Almond".split(","),
         eye_color_options: "Hazel,Amber,Green,Blue,Gray,Brown,Dark Brown,Black".split(","),
@@ -706,7 +706,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         } else if (face_options.eye_spacing == "Thin") {
             eye_spacing = 0.01;
         } else if (face_options.eye_spacing == "Wide") {
-            eye_spacing = 0.02;
+            eye_spacing = 0.013;
         }
 
         var eye_size = 1;
@@ -721,16 +721,16 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             eye_size += .01;
         } else if (face_options.eye_size == "Massive") {
             eye_size = 1.2;
-            eye_size += .02;
+            eye_size += .017;
         } else if (face_options.eye_size == "Big Eyed") {
             eye_size = 1.3;
-            eye_spacing += .025;
+            eye_spacing += .022;
         } else if (face_options.eye_size == "Huge Eyed") {
             eye_size = 1.4;
-            eye_spacing += .03;
+            eye_spacing += .026;
         } else if (face_options.eye_size == "Giant") {
             eye_size = 1.5;
-            eye_spacing += .035;
+            eye_spacing += .03;
         }
 
         var mouth_height = 0.05;
