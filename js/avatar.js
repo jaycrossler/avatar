@@ -18,7 +18,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //TODO: Sag wrinkles when older
     //TODO: Sprite images
     //TODO: Emotions
-    //TODO: Moving eyes with border around them
+    //TODO: Moving eyes
     //TODO: Outfits and standing avatar
     //TODO: Check big noses don't go over eyes
 
@@ -85,6 +85,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         eye_cloudiness: null,
         eyebrow_shape: null,
         pupil_color: null,
+        eye_sunken: null,
 
         hair_texture: 'Smooth',
         head_size: 'Normal',
@@ -198,6 +199,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         eyebrow_shape_options: "Straight,Squiggle,Squiggle Flip,Slim,Lifted,Arch,Thick Arch,Caterpiller,Wide Caterpiller".split(","),
         eye_rotation_options: "Flat,Small,Medium,Large,Slanted".split(","),
         pupil_color_options: "Black".split(","),
+        eye_sunken_options: "Cavernous,Deep,Dark,Light,Smooth,None".split(","),
 
         ear_shape_options: "Round".split(","),
         ear_thickness_options: "Wide,Normal,Big,Tall,Splayed".split(","),

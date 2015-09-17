@@ -99,7 +99,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'shoulders', rendere
     var shoulder_shape_line_global = a.transformPathFromLocalCoordinates(shoulder_shape_line, scale_x, scale_y, x, y);
 
 
-    shoulder_shape_line_global = a.constrainPolyLineToBox(shoulder_shape_line_global, {tl:image_tl, br:image_br});
+    shoulder_shape_line_global = a.constrainPolyLineToBox(shoulder_shape_line_global, {tl: image_tl, br: image_br});
 
     var shoulder_shape = a.createPath(shoulder_shape_line_global, {
         fill_method: 'linear', fill_colors: fill_colors, fill_steps: fill_steps,
@@ -159,7 +159,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'neck', renderer: fu
     if (face_options.neck_size == 'Concave') {
         neck_line = a.transformShapeLine({type: 'neck', radius: 5, curvature: neck_curvature}, face_options);
         neck_line = a.transformPathFromLocalCoordinates(neck_line, scale_x, scale_y, x, y);
-        neck_line = a.constrainPolyLineToBox(neck_line, {tl:image_tl, br:image_br});
+        neck_line = a.constrainPolyLineToBox(neck_line, {tl: image_tl, br: image_br});
 
         neck = a.createPath(neck_line, neck_draw_options);
 
@@ -192,8 +192,8 @@ new Avatar('add_render_function', {style: 'lines', feature: 'neck', renderer: fu
             scale_x *= .9;
         }
 
-        neck_line = a.transformPathFromLocalCoordinates(neck_line, scale_x, scale_y, x ,y);
-        neck_line = a.constrainPolyLineToBox(neck_line, {tl:image_tl, br:image_br});
+        neck_line = a.transformPathFromLocalCoordinates(neck_line, scale_x, scale_y, x, y);
+        neck_line = a.constrainPolyLineToBox(neck_line, {tl: image_tl, br: image_br});
         neck = a.createPath(neck_line, neck_draw_options);
 
         lines.push({name: 'neck', line: neck_line, shape: neck});
@@ -520,6 +520,81 @@ new Avatar('add_render_function', {style: 'lines', feature: 'eyes', renderer: fu
 
     eyebrow_thick_start *= f.thick_unit;
 
+
+    var eyeliner_color = face_options.skin_colors.darkflesh;
+    var eyeliner_alpha = eyeline_transparency;
+    var eyeliner_thickness = f.thick_unit * 5;
+    if (face_options.gender == "Female") {
+        eyeliner_color = '#000';
+        eyeliner_alpha = .6;
+        eyeliner_thickness = f.thick_unit * 2;
+    }
+
+    var sunken_color = '#500';
+    var sunken_amount = 0.6;
+    var socket_size = 65;
+    var socket_y_offset = 1;
+    if (face_options.eye_sunken == "Cavernous") {
+        sunken_color = '#A00';
+        sunken_amount = 0.8;
+        socket_size = 72;
+        socket_y_offset = 3;
+    } else if (face_options.eye_sunken == "Deep") {
+        sunken_color = '#400';
+        sunken_amount = 0.6;
+        socket_size = 73;
+        socket_y_offset = 2;
+    } else if (face_options.eye_sunken == "Dark") {
+        sunken_color = '#000';
+        sunken_amount = 0.4;
+        socket_size = 85;
+        socket_y_offset = 1;
+    } else if (face_options.eye_sunken == "Smooth") {
+        sunken_color = '#100';
+        sunken_amount = 0.2;
+        socket_size = 70;
+        socket_y_offset = 0;
+    } else if (face_options.eye_sunken == "None") {
+        sunken_amount = 0;
+        socket_y_offset = 0;
+    }
+
+
+    //Eye background color ovals
+    var right_eyesocket_oval = a.transformShapeLine({type: 'oval', radius: width_eye * .75});
+
+    var skin_lighter = net.brehaut.Color(face_options.skin_colors.skin).blend(net.brehaut.Color(sunken_color), 0.05).toString();
+    skin_lighter = maths.hexColorToRGBA(skin_lighter, .8);
+    var skin_darker = net.brehaut.Color(face_options.skin_colors.skin).blend(net.brehaut.Color(sunken_color), sunken_amount).toString();
+    skin_lighter = maths.hexColorToRGBA(skin_lighter, .02);
+
+    var fill_colors = [skin_darker, skin_lighter, 'rgba(0,0,0,0)'];
+    var fill_steps = [0,.85, 1];
+
+    var left_eyesocket = a.createPath(right_eyesocket_oval, {
+        close_line: true, thickness: f.thick_unit,
+        line_color: 'rgba(0,0,0,0)',
+        fill_colors: fill_colors, fill_method: 'radial',
+        fill_steps: fill_steps, radius: (f.thick_unit * socket_size)
+    });
+    left_eyesocket.x = f.eyes.left_x;
+    left_eyesocket.y = f.eyes.y + (socket_y_offset * f.thick_unit);
+    left_eyesocket.scaleY = .6;
+    shapes.push(left_eyesocket);
+
+
+    var right_eyesocket = a.createPath(right_eyesocket_oval, {
+        close_line: true, thickness: f.thick_unit,
+        line_color: 'rgba(0,0,0,0)',
+        fill_colors: fill_colors, fill_method: 'radial',
+        fill_steps: fill_steps, radius: (f.thick_unit * socket_size)
+    });
+    right_eyesocket.x = f.eyes.right_x;
+    right_eyesocket.y = f.eyes.y + (socket_y_offset * f.thick_unit);;
+    right_eyesocket.scaleY = .6;
+    shapes.push(right_eyesocket);
+
+
     //Left Eye
     var zone = f.eyes;
     var eye_radius = 4.2;
@@ -654,7 +729,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'eyes', renderer: fu
     eyebrow_fade_color = eyebrow_fade_color.toString();
 
     var left_eyebrow_top = a.createMultiPathFromLocalCoordinates(left_eyebrow_line_top, {
-        break_line_every:5,
+        break_line_every: 5,
         line_color_gradients: [face_options.hair_color, eyebrow_fade_color],
         thickness_gradients: [eyebrow_thick_start, eyebrow_thick_stop],
         x: x, y: y, rotation: rotation_amount + eyebrow_rotation
@@ -696,9 +771,12 @@ new Avatar('add_render_function', {style: 'lines', feature: 'eyes', renderer: fu
     zone = f.eyes;
     x = zone.left_x;
     y = zone.y;
-    var left_eye_round = a.createPathFromLocalCoordinates(left_eye_line, {close_line: true, line_color: face_options.skin_colors.darkflesh}, width_eye, height_eye);
+    var left_eye_round = a.createPathFromLocalCoordinates(left_eye_line, {
+        close_line: true, line_color: eyeliner_color, thickness: eyeliner_thickness
+    }, width_eye, height_eye);
     left_eye_round.x = x;
     left_eye_round.y = y;
+    left_eye_round.alpha = eyeliner_alpha;
     left_eye_round.rotation = rotation_amount;
     lines.push({name: 'left eye round', line: left_eye_line, shape: left_eye_round, scale_x: width_eye, scale_y: height_eye, x: x, y: y});
     shapes.push(left_eye_round);
@@ -761,14 +839,13 @@ new Avatar('add_render_function', {style: 'lines', feature: 'eyes', renderer: fu
     y = zone.y - (f.thick_unit * 1.5 * eyebrow_height);
     var right_eyebrow_line_top = a.transformShapeLine({type: 'reverse', direction: 'horizontal', axis: 0}, face_options, left_eyebrow_line_top);
     var right_eyebrow_top = a.createMultiPathFromLocalCoordinates(right_eyebrow_line_top, {
-        break_line_every:5,
+        break_line_every: 5,
         line_color_gradients: [face_options.hair_color, eyebrow_fade_color],
         thickness_gradients: [eyebrow_thick_start, eyebrow_thick_stop],
         x: x, y: y, rotation: -rotation_amount - eyebrow_rotation, alpha: eyebrow_transparency
     }, width_eyebrow, height_eyebrow);
     lines.push({name: 'right eyebrow top set', line: right_eyebrow_line_top, shape: right_eyebrow_top, scale_x: width_eye, scale_y: height_eye, x: x, y: y, rotation: -rotation_amount - eyebrow_rotation, alpha: eyebrow_transparency});
     shapes = shapes.concat(right_eyebrow_top);
-
 
 
     inner_point_x = a.comparePoints(right_eyebrow_line_top, 'x', 'lowest');
@@ -804,9 +881,12 @@ new Avatar('add_render_function', {style: 'lines', feature: 'eyes', renderer: fu
     zone = f.eyes;
     x = zone.right_x;
     y = zone.y;
-    var right_eye_round = a.createPathFromLocalCoordinates(right_eye_line, {close_line: true, line_color: face_options.skin_colors.darkflesh}, width_eye, height_eye);
+    var right_eye_round = a.createPathFromLocalCoordinates(right_eye_line, {
+        close_line: true, line_color: eyeliner_color, thickness: eyeliner_thickness
+    }, width_eye, height_eye);
     right_eye_round.x = x;
     right_eye_round.y = y;
+    right_eye_round.alpha = eyeliner_alpha;
     right_eye_round.rotation = -rotation_amount;
     lines.push({name: 'right eye round', line: right_eye_line, shape: right_eye_round, scale_x: width_eye, scale_y: height_eye, x: x, y: y, rotation: -rotation_amount});
     shapes.push(right_eye_round);
@@ -909,7 +989,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'nose', renderer: fu
     }, width, height);
     nose_bottom_squiggle.x = x;
     nose_bottom_squiggle.y = y;
-    lines.push({name: 'nose bottom line', line: nose_line, shape: nose_bottom_squiggle, x:x, y:y, scale_x: width, scale_y:height});
+    lines.push({name: 'nose bottom line', line: nose_line, shape: nose_bottom_squiggle, x: x, y: y, scale_x: width, scale_y: height});
 
 
     //Sides of nose, that get taller based on size
@@ -953,7 +1033,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'nose', renderer: fu
     var nose_fill_colors = [
         face_options.skin_colors.highlights,
         maths.hexColorToRGBA(nose_top_color, .6),
-        maths.hexColorToRGBA(face_bright_color,.25)];
+        maths.hexColorToRGBA(face_bright_color, .25)];
     var nose_fill_steps = [0, .7, 1];
 
     var full_nose = a.createPathFromLocalCoordinates(full_nose_line, {
@@ -996,7 +1076,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'nose', renderer: fu
     lines.push({name: 'above lip left line', line: mouth_high_left_line, shape: l5, x: f.mouth.x, y: f.mouth.y - (f.thick_unit * 24), scale_x: width, scale_y: height});
     shapes.push(l5);
 
-    var mouth_high_right_line = a.transformShapeLine({type:'reverse'}, face_options, mouth_high_left_line);
+    var mouth_high_right_line = a.transformShapeLine({type: 'reverse'}, face_options, mouth_high_left_line);
     var l6 = a.createPathFromLocalCoordinates(mouth_high_right_line, {close_line: false, thickness: 0, color: face_options.skin_colors.deepshadow, fill_color: 'pink'}, width, height);
     l6.x = f.mouth.x;
     l6.y = f.mouth.y - (f.thick_unit * 24);
@@ -1043,7 +1123,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'wrinkles', renderer
             {x: -1, y: 0},
             {x: -.5, y: -.5},
             {x: 0, y: -.5},
-            {x:.5, y: -.5},
+            {x: .5, y: -.5},
             {x: 1, y: 0},
             {x: 3, y: -.5},
             {x: 4, y: 0}
@@ -1209,11 +1289,11 @@ new Avatar('add_render_function', {style: 'lines', feature: 'wrinkles', renderer
         }
 
         var mid_point;
-        mid_point = (mouth_left_point.y + left_nose_round_top_point.y) /2 - (f.thick_unit*5);
-        left_nose_mouth_wrinkle.push({x: mouth_left_point.x-(f.thick_unit), y:mid_point});
+        mid_point = (mouth_left_point.y + left_nose_round_top_point.y) / 2 - (f.thick_unit * 5);
+        left_nose_mouth_wrinkle.push({x: mouth_left_point.x - (f.thick_unit), y: mid_point});
 
-        mid_point = (mouth_left_point.y + left_nose_round_top_point.y) /2;
-        left_nose_mouth_wrinkle.push({x: mouth_left_point.x, y:mid_point});
+        mid_point = (mouth_left_point.y + left_nose_round_top_point.y) / 2;
+        left_nose_mouth_wrinkle.push({x: mouth_left_point.x, y: mid_point});
 
 
         if (face_options.wrinkle_mouth_height == "Far Up") {
@@ -1256,11 +1336,11 @@ new Avatar('add_render_function', {style: 'lines', feature: 'wrinkles', renderer
             mouth_right_point.x -= (f.thick_unit * 8)
         }
 
-        mid_point = (mouth_right_point.y + right_nose_round_top_point.y) /2 - (f.thick_unit*5);
-        right_nose_mouth_wrinkle.push({x: mouth_right_point.x+(f.thick_unit), y:mid_point});
+        mid_point = (mouth_right_point.y + right_nose_round_top_point.y) / 2 - (f.thick_unit * 5);
+        right_nose_mouth_wrinkle.push({x: mouth_right_point.x + (f.thick_unit), y: mid_point});
 
-        mid_point = (mouth_right_point.y + right_nose_round_top_point.y) /2;
-        right_nose_mouth_wrinkle.push({x: mouth_right_point.x, y:mid_point});
+        mid_point = (mouth_right_point.y + right_nose_round_top_point.y) / 2;
+        right_nose_mouth_wrinkle.push({x: mouth_right_point.x, y: mid_point});
 
         if (face_options.wrinkle_mouth_height == "Far Up") {
             mouth_right_point.y -= (f.thick_unit * 10)
@@ -1278,7 +1358,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'wrinkles', renderer
 
         // Add 3 lines of different thickness to each side
         //                  -thick---   -alpha-  -movex-
-        var alpha_widths = [16, 8, 10, 5, 4,.5, 10, 2, 1];
+        var alpha_widths = [16, 8, 10, 5, 4, .5, 10, 2, 1];
 
         var curve_thick1 = alpha_widths[0] * f.thick_unit;
         var curve_thick3 = alpha_widths[2] * f.thick_unit;
@@ -1288,40 +1368,42 @@ new Avatar('add_render_function', {style: 'lines', feature: 'wrinkles', renderer
             curve_thick3 /= 4;
         }
 
-        var curve_thicknessess = [1,.5,.2,.1,0,.05,0];
+        var curve_thicknessess = [1, .5, .2, .1, 0, .05, 0];
 
         if (face_options.wrinkle_pattern_mouth == "None") {
             curve_thicknessess = [0];
         } else if (face_options.wrinkle_pattern_mouth == "Gentle") {
-            curve_thicknessess = [.4,.3,.2,.1,.1,.05,.1];
+            curve_thicknessess = [.4, .3, .2, .1, .1, .05, .1];
         } else if (face_options.wrinkle_pattern_mouth == "Straight") {
             curve_thicknessess = [1, .7, .6, .4, .5, .4, .3];
         } else if (face_options.wrinkle_pattern_mouth == "Middle") {
-            curve_thicknessess = [.3,.2,.7,.7,.6,.1,0];
+            curve_thicknessess = [.3, .2, .7, .7, .6, .1, 0];
         } else if (face_options.wrinkle_pattern_mouth == "Bottom") {
-            curve_thicknessess = [.3,.1,0,.3,.3,.7,.6];
+            curve_thicknessess = [.3, .1, 0, .3, .3, .7, .6];
         } else if (face_options.wrinkle_pattern_mouth == "Heavy") {
-            curve_thicknessess = [1,.9,.8,.9,.7,.8,.4];
+            curve_thicknessess = [1, .9, .8, .9, .7, .8, .4];
         }
-        for (var piece=0;piece<curve_thicknessess.length;piece++){
-            curve_thicknessess[piece] *= (wrinkle_age/200);
+        for (var piece = 0; piece < curve_thicknessess.length; piece++) {
+            curve_thicknessess[piece] *= (wrinkle_age / 200);
         }
 
-        var curve_thicknessess1 = _.map(curve_thicknessess, function(b){
-            return maths.clamp(b*curve_thick1,0,8)});
-        var curve_thicknessess3 = _.map(curve_thicknessess, function(b){
-            return maths.clamp(b*curve_thick3,0,5)});
+        var curve_thicknessess1 = _.map(curve_thicknessess, function (b) {
+            return maths.clamp(b * curve_thick1, 0, 8)
+        });
+        var curve_thicknessess3 = _.map(curve_thicknessess, function (b) {
+            return maths.clamp(b * curve_thick3, 0, 5)
+        });
 
         var curve_settings1 = {
             break_line_every: 5,
             thickness_gradients: curve_thicknessess1,
-            alpha: maths.clamp(mouth_line_curve_alpha / alpha_widths[3],0,.6),
+            alpha: maths.clamp(mouth_line_curve_alpha / alpha_widths[3], 0, .6),
             line_color: face_options.skin_colors.darkflesh
         };
         var curve_settings3 = {
             break_line_every: 20,
             thickness_gradients: curve_thicknessess3,
-            alpha: maths.clamp(mouth_line_curve_alpha / alpha_widths[5],0,.5),
+            alpha: maths.clamp(mouth_line_curve_alpha / alpha_widths[5], 0, .5),
             line_color: face_options.skin_colors.cheek
         };
 
@@ -1354,11 +1436,10 @@ new Avatar('add_render_function', {style: 'lines', feature: 'wrinkles', renderer
     var eye_left_left = a.comparePoints(left_eye_line, 'x', 'lowest');
 
 
-
     //Cheek color ovals
     var right_cheek_oval = head_line;//a.transformShapeLine({type: 'oval',radius: 60 * f.thick_unit});
-    var skin_lighter = maths.hexColorToRGBA(face_options.skin_colors.skin,.1);
-    var cheek_darker = maths.hexColorToRGBA(face_options.skin_colors.skin,1);
+    var skin_lighter = maths.hexColorToRGBA(face_options.skin_colors.skin, .1);
+    var cheek_darker = maths.hexColorToRGBA(face_options.skin_colors.skin, 1);
 
     var fill_colors = [cheek_darker, skin_lighter];
     var fill_steps = [.1, 1];
@@ -1379,15 +1460,15 @@ new Avatar('add_render_function', {style: 'lines', feature: 'wrinkles', renderer
     shapes.push(right_cheek);
 
     var left_cheek = a.createPath(right_cheek_oval, {
-            close_line: true, thickness: f.thick_unit,
-            line_color: 'rgba(0,0,0,0)',
-            fill_colors: fill_colors, fill_method: 'radial',
-            x_offset_start: eye_left_left + (f.thick_unit * 5),
-            x_offset_end: eye_left_left + (f.thick_unit * 5),
-            y_offset_start: cheek_y,
-            y_offset_end: cheek_y,
-            fill_steps: fill_steps, radius: (f.thick_unit * 75)
-        });
+        close_line: true, thickness: f.thick_unit,
+        line_color: 'rgba(0,0,0,0)',
+        fill_colors: fill_colors, fill_method: 'radial',
+        x_offset_start: eye_left_left + (f.thick_unit * 5),
+        x_offset_end: eye_left_left + (f.thick_unit * 5),
+        y_offset_start: cheek_y,
+        y_offset_end: cheek_y,
+        fill_steps: fill_steps, radius: (f.thick_unit * 75)
+    });
     shapes.push(left_cheek);
 
 
@@ -1405,15 +1486,15 @@ new Avatar('add_render_function', {style: 'lines', feature: 'wrinkles', renderer
     if (_.indexOf(cheekbone_lines, 'J') > -1) {
 
         mid_x = a.comparePoints(head_line, 'x', 'highest');
-        right_cheekbone_wrinkle.push({x:mid_x, y:mid_y});
+        right_cheekbone_wrinkle.push({x: mid_x, y: mid_y});
 
         x = mid_x - (f.thick_unit * 30);
         y = mid_y + (f.thick_unit * 25);
 
-        right_cheekbone_wrinkle.push({x:x, y:y});
-        right_cheekbone_wrinkle.push({x:x, y:y}); //TODO: Play with these
+        right_cheekbone_wrinkle.push({x: x, y: y});
+        right_cheekbone_wrinkle.push({x: x, y: y}); //TODO: Play with these
 
-        right_cheekbone_wrinkle.push({x:eye_right_right, y:mouth_right_point.y});
+        right_cheekbone_wrinkle.push({x: eye_right_right, y: mouth_right_point.y});
 
         var chin_point = _.clone(chin_bottom_line_right);
         chin_point.y += 20 * f.thick_unit;
@@ -1424,18 +1505,18 @@ new Avatar('add_render_function', {style: 'lines', feature: 'wrinkles', renderer
             break_line_every: 20,
             thickness_gradients: [16 * f.thick_unit, 3.5 * f.thick_unit, 0],
             line_color: face_options.skin_colors.darkflesh,
-            alpha:.25
+            alpha: .25
         });
         shapes.push(right_cheekbone_wrinkle_curve1);
 
 
         axis = a.comparePoints(chin_bottom_line, 'x', 'middle');
-        left_cheekbone_wrinkle = a.transformShapeLine({type:'reverse',axis:axis}, face_options, right_cheekbone_wrinkle);
+        left_cheekbone_wrinkle = a.transformShapeLine({type: 'reverse', axis: axis}, face_options, right_cheekbone_wrinkle);
         left_cheekbone_wrinkle_curve1 = a.createPath(left_cheekbone_wrinkle, {
             break_line_every: 20,
             thickness_gradients: [16 * f.thick_unit, 3.5 * f.thick_unit, 0],
             line_color: face_options.skin_colors.darkflesh,
-            alpha:.25
+            alpha: .25
         });
         shapes.push(left_cheekbone_wrinkle_curve1);
 
@@ -1447,49 +1528,48 @@ new Avatar('add_render_function', {style: 'lines', feature: 'wrinkles', renderer
         break_line_every: 20, dot_array: false,
         thickness_gradients: [12 * f.thick_unit, 3.5 * f.thick_unit, 0],
         line_color: face_options.skin_colors.darkflesh,
-        alpha:wrinkle_age/200
+        alpha: wrinkle_age / 200
     };
 
     if (_.indexOf(cheekbone_lines, '140-180') > -1) {
 
         mid_x = a.comparePoints(head_line, 'x', 'highest');
 
-        right_cheekbone_wrinkle.push({x:mid_x-(5*f.thick_unit), y:mid_y+(3* f.thick_unit)});
-        right_cheekbone_wrinkle.push({x:mid_x-(10*f.thick_unit), y:mid_y-(1* f.thick_unit)});
+        right_cheekbone_wrinkle.push({x: mid_x - (5 * f.thick_unit), y: mid_y + (3 * f.thick_unit)});
+        right_cheekbone_wrinkle.push({x: mid_x - (10 * f.thick_unit), y: mid_y - (1 * f.thick_unit)});
 
         right_nose_round_top_point = nose_full_line[nose_full_line.length - 3];
 
-        right_cheekbone_wrinkle.push({x:eye_right_right, y:right_nose_round_top_point.y});
-        right_cheekbone_wrinkle.push({x:eye_right_right-(10*f.thick_unit), y:right_nose_round_top_point.y+(6*f.thick_unit) });
+        right_cheekbone_wrinkle.push({x: eye_right_right, y: right_nose_round_top_point.y});
+        right_cheekbone_wrinkle.push({x: eye_right_right - (10 * f.thick_unit), y: right_nose_round_top_point.y + (6 * f.thick_unit) });
 
         //Curves 1
         right_cheekbone_wrinkle_curve1 = a.createPath(right_cheekbone_wrinkle, cheek_line_options);
         shapes.push(right_cheekbone_wrinkle_curve1);
         axis = a.comparePoints(chin_bottom_line, 'x', 'middle');
-        left_cheekbone_wrinkle = a.transformShapeLine({type:'reverse',axis:axis}, face_options, right_cheekbone_wrinkle);
+        left_cheekbone_wrinkle = a.transformShapeLine({type: 'reverse', axis: axis}, face_options, right_cheekbone_wrinkle);
         left_cheekbone_wrinkle_curve1 = a.createPath(left_cheekbone_wrinkle, cheek_line_options);
         shapes.push(left_cheekbone_wrinkle_curve1);
 
 
-
         var right_cheekbone_wrinkle2 = [];
-        right_cheekbone_wrinkle2.push({x:eye_right_right, y:right_nose_round_top_point.y});
+        right_cheekbone_wrinkle2.push({x: eye_right_right, y: right_nose_round_top_point.y});
 
-        right_cheekbone_wrinkle2.push({x:eye_right_right, y:right_nose_round_top_point.y});
+        right_cheekbone_wrinkle2.push({x: eye_right_right, y: right_nose_round_top_point.y});
 
-        right_cheekbone_wrinkle2.push({x:eye_right_right-(1 *f.thick_unit), y:mouth_right_point.y});
+        right_cheekbone_wrinkle2.push({x: eye_right_right - (1 * f.thick_unit), y: mouth_right_point.y});
 
 
         var chin_point = _.clone(chin_bottom_line_right);
         chin_point.y += 20 * f.thick_unit;
         var newPoint = a.comparePoints(head_line, 'closest', chin_point);
-        right_cheekbone_wrinkle2.push({x:newPoint.x, y:newPoint.y-(2 * f.thick_unit)});
+        right_cheekbone_wrinkle2.push({x: newPoint.x, y: newPoint.y - (2 * f.thick_unit)});
 
         //Curves 2
         var right_cheekbone_wrinkle_curve2 = a.createPath(right_cheekbone_wrinkle2, cheek_line_options);
         shapes.push(right_cheekbone_wrinkle_curve2);
         axis = a.comparePoints(chin_bottom_line, 'x', 'middle');
-        left_cheekbone_wrinkle = a.transformShapeLine({type:'reverse',axis:axis}, face_options, right_cheekbone_wrinkle2);
+        left_cheekbone_wrinkle = a.transformShapeLine({type: 'reverse', axis: axis}, face_options, right_cheekbone_wrinkle2);
         var left_cheekbone_wrinkle_curve2 = a.createPath(left_cheekbone_wrinkle, cheek_line_options);
         shapes.push(left_cheekbone_wrinkle_curve2);
 
@@ -1501,9 +1581,9 @@ new Avatar('add_render_function', {style: 'lines', feature: 'wrinkles', renderer
 
         mid_x = a.comparePoints(head_line, 'x', 'highest');
         x = mid_x - (f.thick_unit * 10);
-        right_cheekbone_wrinkle.push({x:x, y:mid_y});
+        right_cheekbone_wrinkle.push({x: x, y: mid_y});
 
-        right_cheekbone_wrinkle.push({x:eye_right_right, y:mouth_right_point.y});
+        right_cheekbone_wrinkle.push({x: eye_right_right, y: mouth_right_point.y});
 
         chin_bottom_line_right.x += 10 * f.thick_unit;
         right_cheekbone_wrinkle.push(chin_bottom_line_right);
@@ -1512,17 +1592,17 @@ new Avatar('add_render_function', {style: 'lines', feature: 'wrinkles', renderer
             break_line_every: 20,
             thickness_gradients: [12 * f.thick_unit, 3.5 * f.thick_unit, 0],
             line_color: face_options.skin_colors.darkflesh,
-            alpha:.25
+            alpha: .25
         });
         shapes.push(right_cheekbone_wrinkle_curve1);
 
         axis = a.comparePoints(chin_bottom_line, 'x', 'middle');
-        left_cheekbone_wrinkle = a.transformShapeLine({type:'reverse',axis:axis}, face_options, right_cheekbone_wrinkle);
+        left_cheekbone_wrinkle = a.transformShapeLine({type: 'reverse', axis: axis}, face_options, right_cheekbone_wrinkle);
         left_cheekbone_wrinkle_curve1 = a.createPath(left_cheekbone_wrinkle, {
             break_line_every: 20,
             thickness_gradients: [12 * f.thick_unit, 3.5 * f.thick_unit, 0],
             line_color: face_options.skin_colors.darkflesh,
-            alpha:.25
+            alpha: .25
         });
         shapes.push(left_cheekbone_wrinkle_curve1);
     }
@@ -1843,8 +1923,8 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mouth', renderer: f
         close_line: true, thickness: lip_thickness,
         line_color: lip_line_color, fill_method: 'linear',
         fill_colors: [lip_top_color, lip_mid_color, lip_top_color],
-        fill_steps: [0,.5,1], y_offset_start: -height/2, y_offset_end: height/2,
-        x_offset_start:0, x_offset_end:0
+        fill_steps: [0, .5, 1], y_offset_start: -height / 2, y_offset_end: height / 2,
+        x_offset_start: 0, x_offset_end: 0
     }, width, height);
     l.x = f.mouth.x;
     l.y = f.mouth.y;
