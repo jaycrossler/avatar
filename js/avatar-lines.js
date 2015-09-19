@@ -56,6 +56,40 @@ new Avatar('add_render_function', {style: 'lines', feature: 'face', renderer: fu
     lines.push({name: 'face', line: face_line, shape: face, scale_x: radius_x, scale_y: radius_y, x: zone.x, y: zone.y});
     shapes.push(face);
 
+
+    var acne_alpha = 0;
+    if (face_options.acne_style == "Very Light") {
+        acne_alpha = 0.1;
+    } else if (face_options.acne_style == "Light") {
+        acne_alpha = 0.3;
+    } else if (face_options.acne_style == "Medium") {
+        acne_alpha = 0.5;
+    } else if (face_options.acne_style == "Heavy") {
+        acne_alpha = .7;
+    }
+    if (face_options.age > 25) {
+        acne_alpha *= .8;
+    } else if (face_options.age > 35) {
+        acne_alpha *= .5;
+    } else if (face_options.age > 45) {
+        acne_alpha *= .2;
+    } else if (face_options.age < 12) {
+        acne_alpha *= .2;
+    }
+
+    var skin_texture_fill_canvas = a.findShape(avatar.textures, 'face spots', null, 'canvas');
+    var face_overlay = a.createPathFromLocalCoordinates(face_line, {
+            close_line: true, line_color: 'blank',
+            fill_canvas: skin_texture_fill_canvas
+        },
+        radius_x, radius_y);
+    face_overlay.x = zone.x;
+    face_overlay.y = zone.y;
+    face_overlay.alpha = acne_alpha;
+    lines.push({name: 'face spots', line: face_line, shape: face_overlay, scale_x: radius_x, scale_y: radius_y, x: zone.x, y: zone.y});
+    shapes.push(face_overlay);
+
+
     return shapes;
 }});
 
