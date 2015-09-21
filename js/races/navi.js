@@ -5,9 +5,9 @@ naviTemplate.ear_shape_options.push('Pointed');
 naviTemplate.eye_cloudiness = ['Pink'];
 
 naviTemplate.skin_colors_options = [
-    {skin: '#8888EE', cheek: '#898add'},
+    {skin: '#8888EE', cheek: '#898acc'},
     {skin: '#8888CC', cheek: '#898add'},
-    {skin: '#8080DD', cheek: '#898add'},
+    {skin: '#8080DD', cheek: '#898aee'},
     {skin: '#9090DD', cheek: '#898add'}
 ];
 naviTemplate.skin_shade_options = ['Preset'];

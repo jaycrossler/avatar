@@ -116,9 +116,16 @@ function build_option_explorer(highlight_option_name, set1, set2) {
         .text(' -- Set Value --')
         .appendTo($chooser_2);
 
+    var data_items = [];
     for (var key in data_options) {
-        if (key != "rendering_order" && key != "decorations") {
-            var text = key;
+        data_items.push(key);
+    }
+    data_items = data_items.sort();
+    for (var i=0; i<data_items.length; i++) {
+        var key = data_items[i];
+        var text = key;
+
+        if (text != "rendering_order" && text != "decorations") {
             if (_.str.endsWith(text, '_options')) {
                 text = text.substr(0, text.length - '_options'.length);
 

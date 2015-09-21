@@ -180,7 +180,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mustache', renderer
     var shapes = [];
 
     var mustache_style = face_options.mustache_style;
-    if (face_options.gender == 'Female') mustache_style = 'None';
+    if (face_options.gender == 'Female' || face_options.age < 18) mustache_style = 'None';
 
     var mustache_width_mod = face_options.mustache_width;
     var mustache_height_mod = face_options.mustache_height;

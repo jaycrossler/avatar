@@ -77,7 +77,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'face', renderer: fu
         acne_alpha *= .2;
     }
 
-    var skin_texture_fill_canvas = a.findShape(avatar.textures, 'face spots', null, 'canvas');
+    var skin_texture_fill_canvas = a.findShape(avatar.textures, 'face bumps', null, 'canvas');
     var face_overlay = a.createPathFromLocalCoordinates(face_line, {
             close_line: true, line_color: 'blank',
             fill_canvas: skin_texture_fill_canvas
@@ -86,8 +86,20 @@ new Avatar('add_render_function', {style: 'lines', feature: 'face', renderer: fu
     face_overlay.x = zone.x;
     face_overlay.y = zone.y;
     face_overlay.alpha = acne_alpha;
-    lines.push({name: 'face spots', line: face_line, shape: face_overlay, scale_x: radius_x, scale_y: radius_y, x: zone.x, y: zone.y});
+    lines.push({name: 'face bumps', line: face_line, shape: face_overlay, scale_x: radius_x, scale_y: radius_y, x: zone.x, y: zone.y});
     shapes.push(face_overlay);
+
+
+    var skin_texture_fill_canvas2 = a.findShape(avatar.textures, 'face spots', null, 'canvas');
+    var face_overlay2 = a.createPathFromLocalCoordinates(face_line, {
+            close_line: true, line_color: 'blank',
+            fill_canvas: skin_texture_fill_canvas2
+        },
+        radius_x, radius_y);
+    face_overlay2.x = zone.x;
+    face_overlay2.y = zone.y;
+    face_overlay2.alpha = acne_alpha * 2;
+    shapes.push(face_overlay2);
 
 
     return shapes;
@@ -201,7 +213,6 @@ new Avatar('add_render_function', {style: 'lines', feature: 'neck', renderer: fu
         shapes.push(neck);
 
     } else if (face_options.neck_size == 'Thick') {
-
         neck_line = [
             {x: -10, y: -10},
             {x: -10, y: -9},
@@ -217,7 +228,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'neck', renderer: fu
         ];
 
         scale_y = (zone.bottom - zone.top) / 2.3;
-        scale_x = (f.face.right - f.face.left) / 3.4;
+        scale_x = (f.face.right - f.face.left) / 3.5;
 
         if (face_options.gender == 'Female') {
             scale_x *= .9;
@@ -578,7 +589,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'eyes', renderer: fu
         socket_y_offset = 2;
     } else if (face_options.eye_sunken == "Dark") {
         sunken_color = '#000';
-        sunken_amount = 0.4;
+        sunken_amount = 0.55;
         socket_size = 85;
         socket_y_offset = 1;
     } else if (face_options.eye_sunken == "Smooth") {
@@ -744,6 +755,14 @@ new Avatar('add_render_function', {style: 'lines', feature: 'eyes', renderer: fu
         eyebrow_thick_stop = eyebrow_thick_start * 1.5;
     } else if (face_options.eyebrow_shape == "Thick Arch") {
         left_eyebrow_line_top = [
+            {x: 11, y: 6},
+            {x: -5, y: -2},
+            {x: -14, y: 7}
+        ];
+        eyebrow_thick_stop = eyebrow_thick_start * 1.5;
+    } else if (face_options.eyebrow_shape == "Unibrow") {
+        left_eyebrow_line_top = [
+            {x: 20, y: 6},
             {x: 11, y: 6},
             {x: -5, y: -2},
             {x: -14, y: 7}

@@ -22,13 +22,13 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
     //TODO: Three levels of cheek curves
     //TODO: Multiline function has shadow, offset shadow
-    //TODO: Add in many eyebrows, overdraw with a canvas brush for bushiness
     //TODO: Eyes get eyelashes
+    //TODO: Iris smaller with variable shapes, pattern in retina
 
 
     //-----------------------------
     //Private Global variables
-    var VERSION = '0.0.6',
+    var VERSION = '0.0.7',
         summary = 'Drawing procedurally rendered people on HTML5 canvas.',
         author = 'Jay Crossler - http://github.com/jaycrossler',
         file_name = 'avatar.js';
@@ -52,6 +52,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         mustache_width: null,
         mustache_height: null,
         acne_style: null,
+        acne_amount: null,
         skin_texture: 'Normal',
         teeth_condition: 'Normal',
         lip_color: null,
@@ -172,6 +173,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
         face_shape_options: "Oblong,Oval,Round,Rectangular,Square,Triangular,Diamond,Inverted Triangle,Heart".split(","),
         acne_style_options: "None,Very Light,Light,Medium,Heavy".split(","),
+        acne_amount_options: 'None,Very Light,Light,Few,Some,Spattering,Speckled,Heavy,Very Heavy'.split(","),
         chin_divot_options: "Double,Small,Large,Smooth".split(","),
         chin_shape_options: "Pronounced,Smooth".split(","),
 
@@ -197,7 +199,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         eye_color_options: "Hazel,Amber,Green,Blue,Gray,Brown,Dark Brown,Black".split(","),
         eye_lids_options: "None,Smooth,Folded,Thick".split(","), //TODO
         eye_cloudiness_options: "Normal,Clear,Misty".split(","),
-        eyebrow_shape_options: "Straight,Squiggle,Squiggle Flip,Slim,Lifted,Arch,Thick Arch,Caterpiller,Wide Caterpiller".split(","),
+        eyebrow_shape_options: "Straight,Squiggle,Squiggle Flip,Slim,Lifted,Arch,Thick Arch,Caterpiller,Wide Caterpiller,Unibrow".split(","),
         eye_rotation_options: "Flat,Small,Medium,Large,Slanted".split(","),
         pupil_color_options: "Black".split(","),
         eye_sunken_options: "Cavernous,Deep,Dark,Light,Smooth,None".split(","),
@@ -298,7 +300,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         var rand_seed = face_options.rand_seed || this.initialization_seed || Math.floor(Math.random() * 100000);
         this.initialization_seed = rand_seed;
         this.initialization_options.rand_seed = rand_seed;
-        //Set this random seed to be used throughout the avatar's livespan
+        //Set this random seed to be used throughout the avatar's lifespan
         this.randomSetSeed(rand_seed);
 
         //Determine the race, and pick random variables to use for unspecified values
@@ -339,9 +341,10 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         if (this.stage) {
             this.erase();
 
+            this.randomSetSeed(rand_seed);
             generateSkinAndHairColors(this);
-
             generateTextures(this);
+
             this.randomSetSeed(rand_seed); //Reset the random seed after textures are generated
 
             var face = this.buildFace();
@@ -438,7 +441,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         if (!avatar.face_options.skin_colors.deepshadow) avatar.face_options.skin_colors.deepshadow = skinColor.darkenByRatio(.4).toString();
 
         //TODO: Hair color should be more affected by age and stress?
-        var age_hair_percent = Math.min(Math.max(0, avatar.face_options.age - 55) / 60, 1);
+        var age_hair_percent = Math.min(Math.max(0, avatar.face_options.age - 35) / 60, 1);
         var hairColor = net.brehaut.Color(avatar.face_options.hair_color_roots);
         if (!avatar.face_options.hair_color) {
             var gray = net.brehaut.Color('#eeeeee');
@@ -460,6 +463,8 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
         //Loop through each rendering order and draw each layer
         _.each(race_data.rendering_order || [], function (layer) {
+            avatar.randomSetSeed(avatar.face_options.rand_seed); //Reset the random seed before each rendering
+
             if (layer.decoration) {
                 addSceneChildren(container, buildDecoration(avatar, layer));
 
@@ -677,7 +682,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         return shapes;
     }
 
-    function getHeightOfStage(avatar){
+    function getHeightOfStage(avatar) {
         var stage = avatar.stage;
         var stage_options = avatar.stage_options;
 
@@ -692,7 +697,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
         var resolution = height / 200;
 
-        return {height: height, height_offset: height_offset, full_height:full_height, age_size:age_size, resolution: resolution};
+        return {height: height, height_offset: height_offset, full_height: full_height, age_size: age_size, resolution: resolution};
     }
 
     function buildFaceZones(avatar) {
@@ -841,7 +846,6 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
                 left_x: x + (half_height * (0.75 - eye_spacing)),
                 right_x: x + (half_height * (1.25 + eye_spacing))
             }
-
         };
 
         face_zones.ears = {
@@ -887,7 +891,9 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     function generateTextures(avatar) {
         //TODO: Have Some of these run for the entire class?
 
-        avatar.textures = _.without(avatar.textures, function(tex){return tex.type == 'single use'});
+        avatar.textures = _.without(avatar.textures, function (tex) {
+            return tex.type == 'single use'
+        });
         avatar.textures = [];
 
         var height_object = getHeightOfStage(avatar);
@@ -898,7 +904,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         var hair_tinted_gray = avatar.face_options.beard_color;
         var hair_tinted_gray2 = avatar.face_options.beard_color;
 
-        if (avatar.face_options.hair_color && hair_tinted_gray && hair_tinted_gray == 'Hair'){
+        if (avatar.face_options.hair_color && hair_tinted_gray && hair_tinted_gray == 'Hair') {
             hair_tinted_gray = avatar.face_options.hair_color;
             hair_tinted_gray2 = avatar.face_options.hair_color;
         }
@@ -906,8 +912,8 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             hair_tinted_gray = net.brehaut.Color('#666666').toString();
             hair_tinted_gray2 = net.brehaut.Color('#888888').toString();
         }
-        hair_tinted_gray = net.brehaut.Color('#444444').blend(net.brehaut.Color(hair_tinted_gray),.1).toString();
-        hair_tinted_gray2 = net.brehaut.Color('#666666').blend(net.brehaut.Color(hair_tinted_gray2),.2).toString();
+        hair_tinted_gray = net.brehaut.Color('#444444').blend(net.brehaut.Color(hair_tinted_gray), .1).toString();
+        hair_tinted_gray2 = net.brehaut.Color('#666666').blend(net.brehaut.Color(hair_tinted_gray2), .2).toString();
 
         var canvas_size = 64;
         //Build Stubble texture
@@ -916,9 +922,9 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         canvas.height = canvas_size;
         var context = canvas.getContext('2d');
 
-        addRandomLines(context, avatar.face_options, canvas_size, resolution * 80, resolution * 4, resolution/2, hair_tinted_gray);
-        addRandomLines(context, avatar.face_options, canvas_size, resolution * 140, resolution, resolution/2, hair_tinted_gray2);
-        addRandomLines(context, avatar.face_options, canvas_size, resolution * 300, resolution * 8, resolution/2, '#444');
+        addRandomLines(context, avatar.face_options, canvas_size, resolution * 80, resolution * 4, resolution / 2, hair_tinted_gray);
+        addRandomLines(context, avatar.face_options, canvas_size, resolution * 140, resolution, resolution / 2, hair_tinted_gray2);
+        addRandomLines(context, avatar.face_options, canvas_size, resolution * 300, resolution * 8, resolution / 2, '#444');
         avatar.textures.push({type: 'single use', name: 'stubble lines', canvas: canvas, context: context});
 
 
@@ -927,23 +933,35 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         canvas3.height = canvas_size;
         var context3 = canvas.getContext('2d');
 
-        addRandomLines(context3, avatar.face_options, canvas_size, resolution * 80, resolution/2, resolution * 4, hair_tinted_gray);
-        addRandomLines(context3, avatar.face_options, canvas_size, resolution * 140, resolution/2, resolution, hair_tinted_gray2);
+        addRandomLines(context3, avatar.face_options, canvas_size, resolution * 80, resolution / 2, resolution * 4, hair_tinted_gray);
+        addRandomLines(context3, avatar.face_options, canvas_size, resolution * 140, resolution / 2, resolution, hair_tinted_gray2);
         avatar.textures.push({type: 'single use', name: 'hair horizontal lines', canvas: canvas3, context: context3});
 
 
         var skin_color = avatar.face_options.skin_colors.skin;
-        var face_reddish = net.brehaut.Color(skin_color).lightenByRatio(.02).toString();
-        var face_brownish = net.brehaut.Color(skin_color).darkenByRatio(.01).toString();
+        var skin_lighter_2 = net.brehaut.Color(skin_color).lightenByRatio(.02).toString();
+        var skin_darker_1 = net.brehaut.Color(skin_color).darkenByRatio(.01).toString();
 
         //Build Skin texture
         var canvas2 = document.createElement('canvas');
         canvas2.width = canvas_size;
         canvas2.height = canvas_size;
         var context2 = canvas2.getContext('2d');
-        addRandomSpots(context2, avatar.face_options, canvas_size, resolution * 10, resolution * 1.5, face_reddish);
-        addRandomSpots(context2, avatar.face_options, canvas_size, resolution * 10, resolution * 1.5, face_brownish);
-        avatar.textures.push({type: 'single use', name: 'face spots', canvas: canvas2, context: context2});
+        addRandomSpots(context2, avatar.face_options, canvas_size, resolution * 10, resolution * 1.5, skin_lighter_2);
+        addRandomSpots(context2, avatar.face_options, canvas_size, resolution * 10, resolution * 1.5, skin_darker_1);
+        avatar.textures.push({type: 'single use', name: 'face bumps', canvas: canvas2, context: context2});
+
+
+        //Build Acne texture
+        var acne_amount = turnWordToNumber(avatar.face_options.acne_amount, 0, 9, 'None,Very Light,Light,Few,Some,Spattering,Speckled,Heavy,Very Heavy');
+
+        var face_reddish = net.brehaut.Color(skin_color).blend(net.brehaut.Color('#f00'), .15).toString();
+        var canvas4 = document.createElement('canvas');
+        canvas4.width = canvas_size * 5;
+        canvas4.height = canvas_size * 5;
+        var context4 = canvas4.getContext('2d');
+        addRandomSpots(context4, avatar.face_options, canvas_size * 5, resolution * acne_amount, resolution * 2, face_reddish);
+        avatar.textures.push({type: 'single use', name: 'face spots', canvas: canvas4, context: context4});
 
 
     }
@@ -953,11 +971,12 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         for (var i = 0; i < number; i++) {
             var x = randInt(context_size, face_options);
             var y = randInt(context_size, face_options);
+            var rad = randInt(radius, face_options);
 
             context.fillStyle = color;
             context.beginPath();
             context.moveTo(x, y);
-            context.arc(x, y, parseInt(radius),0,2*Math.PI);
+            context.arc(x, y, parseInt(rad), 0, 2 * Math.PI);
             context.closePath();
             context.fill();
             context.stroke();
