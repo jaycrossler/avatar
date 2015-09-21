@@ -4,12 +4,10 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //TODO: Have a skull-width and jaw-width, and then combine this with thickness to determine face type
     //TODO: Use age, thickness, and musculature to determine which muscles/lines to draw
 
-    //TODO: Beard lines are a little off
-
     //TODO: Add oval decoration
     //TODO: Add descendant page with Procyon
 
-    //TODO: Have a builder function to standardize and make reusable
+    //TODO: Have a shape builder function to standardize and make reusable
     //TODO: Generate points for each important face zone, generate all these first before rendering
 
     //TODO: Hair Peak have multiple shapes, apply more than one peak
@@ -144,6 +142,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             {feature: "wrinkles", style: "lines"}, //Uses: face, left eye, right eye, lips, full nose, chin top line
             {feature: "beard", style: "lines"}, //Uses: face, left eye
             {feature: "mouth", style: "lines"},
+            {feature: "mustache", style: "lines"},
             {feature: "eyes", style: "lines"},
             {feature: "hair", style: "lines"}, //Uses: face, left eye
             {feature: "ears", style: "lines"},
@@ -921,6 +920,16 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         addRandomLines(context, avatar.face_options, canvas_size, resolution * 140, resolution, resolution/2, hair_tinted_gray2);
         addRandomLines(context, avatar.face_options, canvas_size, resolution * 300, resolution * 8, resolution/2, '#444');
         avatar.textures.push({type: 'single use', name: 'stubble lines', canvas: canvas, context: context});
+
+
+        var canvas3 = document.createElement('canvas');
+        canvas3.width = canvas_size;
+        canvas3.height = canvas_size;
+        var context3 = canvas.getContext('2d');
+
+        addRandomLines(context3, avatar.face_options, canvas_size, resolution * 80, resolution/2, resolution * 4, hair_tinted_gray);
+        addRandomLines(context3, avatar.face_options, canvas_size, resolution * 140, resolution/2, resolution, hair_tinted_gray2);
+        avatar.textures.push({type: 'single use', name: 'hair horizontal lines', canvas: canvas3, context: context3});
 
 
         var skin_color = avatar.face_options.skin_colors.skin;

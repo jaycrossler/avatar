@@ -6,7 +6,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'beard', renderer: f
     var lines = avatar.lines;
     var shapes = [];
 
-    var beard_style = face_options.beard_style;
+    var beard_style = _.clone(face_options.beard_style);
     if (face_options.gender == 'Female' || face_options.age < 18) beard_style = 'None';
 
     var stubble_style = face_options.stubble_style;
@@ -166,8 +166,6 @@ new Avatar('add_render_function', {style: 'lines', feature: 'beard', renderer: f
         });
         full_beard_texture.alpha = beard_alpha;
         shapes = shapes.concat(full_beard_texture);
-
-
     }
     return shapes;
 }});
@@ -398,6 +396,17 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mustache', renderer
         mustache_shape.y = y;
         lines.push({name: 'mustache', line: mustache_outline, shape: mustache_shape, x: x, y: y, alpha: alpha, scale_x: width, scale_y: height});
         shapes.push(mustache_shape);
+
+
+        var hair_canvas = a.findShape(avatar.textures, 'stubble lines', null, 'canvas');
+        var mustache_shape_texture = a.createPath(mustache_outline, {
+            close_line: true, line_color: 'blank', fill_canvas: hair_canvas
+        });
+        mustache_shape_texture.alpha = 0.2;
+        mustache_shape_texture.x = x;
+        mustache_shape_texture.y = y;
+        shapes.push(mustache_shape_texture);
+
     }
 
 

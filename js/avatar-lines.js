@@ -223,7 +223,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'neck', renderer: fu
             scale_x *= .9;
         }
         if (face_options.face_shape == 'Inverted Triangle') {
-            scale_x *= .9;
+            scale_x *= .8;
         }
 
         neck_line = a.transformPathFromLocalCoordinates(neck_line, scale_x, scale_y, x, y);
