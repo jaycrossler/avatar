@@ -61,11 +61,11 @@ new Avatar('add_render_function', {style: 'lines', feature: 'face', renderer: fu
     if (face_options.acne_style == "Very Light") {
         acne_alpha = 0.1;
     } else if (face_options.acne_style == "Light") {
-        acne_alpha = 0.3;
+        acne_alpha = 0.2;
     } else if (face_options.acne_style == "Medium") {
-        acne_alpha = 0.5;
+        acne_alpha = 0.3;
     } else if (face_options.acne_style == "Heavy") {
-        acne_alpha = .7;
+        acne_alpha = 0.4;
     }
     if (face_options.age > 25) {
         acne_alpha *= .8;

@@ -64,8 +64,15 @@ new Avatar('add_render_function', {style: 'lines', feature: 'hair', renderer: fu
         full_hair_line = a.transformShapeLine({type: 'smooth'}, face_options, full_hair_line);
         var outer_hair = a.createPath(full_hair_line, {close_line: true, thickness: f.thick_unit * 2, color: color, fill_color: fill_color});
         lines.push({name: 'full hair', line: full_hair_line, shape: outer_hair, x: zone.x, y: zone.y, scale_x: 1, scale_y: 1});
-
         shapes = shapes.concat(outer_hair);
+
+        var stubble_fill_canvas = a.findShape(avatar.textures, 'stubble lines', null, 'canvas');
+        var outer_hair_texture = a.createPath(full_hair_line, {
+            close_line: true, line_color: 'blank', fill_canvas: stubble_fill_canvas
+        });
+        outer_hair_texture.alpha = 0.2;
+        shapes = shapes.concat(outer_hair_texture);
+
 
     }
     return shapes;

@@ -7,10 +7,12 @@ new Avatar('add_render_function', {style: 'lines', feature: 'beard', renderer: f
     var shapes = [];
 
     var beard_style = face_options.beard_style;
-    if (face_options.gender == 'Female') beard_style = 'None';
+    if (face_options.gender == 'Female' || face_options.age < 18) beard_style = 'None';
 
     var stubble_style = face_options.stubble_style;
-    if (face_options.gender == 'Female') stubble_style = 'None';
+    if (face_options.gender == 'Female' || face_options.age < 15) stubble_style = 'None';
+
+    if (beard_style == "None" && stubble_style == "None") return shapes;
 
     var stubble_alpha = 0.3;
     if (stubble_style == "Light") {
@@ -21,46 +23,56 @@ new Avatar('add_render_function', {style: 'lines', feature: 'beard', renderer: f
         stubble_alpha = 0.7;
     }
 
-    var hair_line_level_adjust = 5;
     var inner_hair_x = 0;
     var inner_hair_y = 3;
     var outer_hair_x = .5;
     var outer_hair_y = .5;
-    var alpha = 0.95;
+    var beard_alpha = 0.95;
 
-    if (beard_style == 'None' || face_options.age < 18) {
+    if (beard_style == 'None') {
         //Skip
     } else if (beard_style == 'Full Chin') {
-        hair_line_level_adjust = 10;
         inner_hair_y = 12;
         outer_hair_x = 1;
         outer_hair_y = 2;
-        alpha = .9;
+        beard_alpha = .9;
     } else if (beard_style == 'Chin Warmer') {
-        hair_line_level_adjust = 1;
         inner_hair_y = 10;
         outer_hair_x = .5;
         outer_hair_y = .5;
-        alpha = .8;
+        beard_alpha = .8;
     } else if (beard_style == 'Soup Catcher') {
-        hair_line_level_adjust = 1;
         inner_hair_y = 13;
         outer_hair_x = 1;
         outer_hair_y = 10;
-        alpha = .9;
+        beard_alpha = .9;
     } else if (beard_style == 'Thin Chin Wrap') {
-        hair_line_level_adjust = 1;
         inner_hair_y = 1;
         outer_hair_x = 0;
         outer_hair_y = .2;
-        alpha = .4;
+        beard_alpha = .4;
     } else if (beard_style == 'Thin Low Chin Wrap') {
-        hair_line_level_adjust = 10;
         inner_hair_x = 1;
         inner_hair_y = 1;
         outer_hair_x = 0;
         outer_hair_y = .2;
-        alpha = .3;
+        beard_alpha = .3;
+    }
+    if (face_options.age < 20) {  //TODO: Make this a scaling function
+        inner_hair_x *= .25;
+        inner_hair_y *= .25;
+        outer_hair_x *= .25;
+        outer_hair_y *= .25;
+    } else if (face_options.age < 23) {
+        inner_hair_x *= .5;
+        inner_hair_y *= .5;
+        outer_hair_x *= .5;
+        outer_hair_y *= .5;
+    } else if (face_options.age < 26) {
+        inner_hair_x *= .75;
+        inner_hair_y *= .75;
+        outer_hair_x *= .75;
+        outer_hair_y *= .75;
     }
 
     var color = _.clone(face_options.beard_color || face_options.hair_color);
@@ -74,12 +86,28 @@ new Avatar('add_render_function', {style: 'lines', feature: 'beard', renderer: f
     var head_line = a.transformLineToGlobalCoordinates(lines, 'face');
     var eye_line = a.transformLineToGlobalCoordinates(lines, 'left eye');
     var nose_bottom_line = a.transformLineToGlobalCoordinates(lines, 'nose bottom line');
+
+    var hair_line_level_adjust = 1;
     var beard_line = a.lineSegmentCompared(head_line, eye_line, 'below', hair_line_level_adjust * 10 * f.thick_unit);
+
+//    var eye_line_bottom_y = a.comparePoints(eye_line, 'y','highest');
+//    var beard_line_left = a.comparePoints(eye_line, 'x','lowest');
+//    var beard_line_right = a.comparePoints(eye_line, 'x','highest');
+//    var beard_line_bottom = a.comparePoints(eye_line, 'y','highest');
+//
+//    //TODO: Get to same component space
+//    beard_line = a.constrainPolyLineToBox(beard_line, {
+//        tl:{x:beard_line_left,y:eye_line_bottom_y},
+//        br:{x:beard_line_right, y:beard_line_bottom}});
+
+    var beard = a.createPath(beard_line, {thickness: f.thick_unit * 5, line_color: face_options.hair_color});
+    lines.push({name: 'beard line', line: beard_line, shape: beard, x: 0, y: 0, scale_x: 1, scale_y: 1});
+    //Note: this just added the beard as a reference line without showing it
 
     var nose_bottom_line_bottom_point = a.comparePoints(nose_bottom_line, "y", "highest");
 
+    var stubble_fill_canvas = a.findShape(avatar.textures, 'stubble lines', null, 'canvas');
     if (beard_style == "None" && stubble_style != "None" && beard_line && beard_line.length && beard_line.length > 2) {
-        var stubble_fill_canvas = a.findShape(avatar.textures, 'stubble lines', null, 'canvas');
         var inner_stubble_line = a.extrudeHorizontalArc(beard_line, 0, -f.thick_unit * 100);
 
         var inner_stubble_line_top_point = a.comparePoints(inner_stubble_line, "y", "highest");
@@ -88,28 +116,32 @@ new Avatar('add_render_function', {style: 'lines', feature: 'beard', renderer: f
             inner_stubble_line = a.transformShapeLine({type: 'shift', y_offset: -lower_by}, face_options, inner_stubble_line);
         }
 
-
         var full_stubble_line = beard_line.concat(inner_stubble_line.reverse());
         full_stubble_line = a.transformShapeLine({type: 'smooth'}, face_options, full_stubble_line);
 
+
         var full_stubble = a.createPath(full_stubble_line, {
-            close_line: true, thickness: f.thick_unit * .5, line_color: 'blank',
-            fill_canvas: stubble_fill_canvas,
+            close_line: true, line_color: 'blank',
             fill_color: '#444'
         });
-        full_stubble.alpha = stubble_alpha;
-        lines.push({name: 'full stubble', line: full_stubble_line, shape: full_stubble, alpha: alpha});
+        full_stubble.alpha = stubble_alpha/4;
+        lines.push({name: 'full stubble', line: full_stubble_line, shape: full_stubble, alpha: beard_alpha});
         shapes = shapes.concat(full_stubble);
+
+        var full_stubble_texture = a.createPath(full_stubble_line, {
+            close_line: true, line_color: 'blank',
+            fill_canvas: stubble_fill_canvas
+        });
+        full_stubble_texture.alpha = stubble_alpha;
+        shapes = shapes.concat(full_stubble_texture);
     }
 
     if (beard_style != "None" && beard_line && beard_line.length && beard_line.length > 2) {
-        var beard = a.createPath(beard_line, {thickness: f.thick_unit * 5, line_color: face_options.hair_color});
-        lines.push({name: 'beard line', line: beard_line, shape: beard, x: 0, y: 0, scale_x: 1, scale_y: 1});
-//            shapes.push(beard);
 
         var inner_hair_line = a.extrudeHorizontalArc(beard_line, -f.thick_unit * inner_hair_x * 10, -f.thick_unit * inner_hair_y * 10);
         var outer_hair_line = a.extrudeHorizontalArc(beard_line, -f.thick_unit * outer_hair_x * 10, f.thick_unit * outer_hair_y * 10);
 
+        //TODO: Adjust differently by ear
         var inner_hair_line_top_point = a.comparePoints(inner_hair_line, "y", "highest");
         if (inner_hair_line_top_point < nose_bottom_line_bottom_point) {
             var lower_by = inner_hair_line_top_point - nose_bottom_line_bottom_point;
@@ -119,13 +151,22 @@ new Avatar('add_render_function', {style: 'lines', feature: 'beard', renderer: f
         var full_beard_line = outer_hair_line.concat(inner_hair_line.reverse());
         full_beard_line = a.transformShapeLine({type: 'smooth'}, face_options, full_beard_line);
 
+
         var full_beard = a.createPath(full_beard_line, {
             close_line: true, thickness: f.thick_unit * .5, line_color: color,
             fill_color: fill_color
         });
-        full_beard.alpha = alpha;
-        lines.push({name: 'full beard', line: full_beard_line, shape: full_beard, x: 0, y: 0, scale_x: 1, scale_y: 1, alpha: alpha});
+        full_beard.alpha = beard_alpha;
+        lines.push({name: 'full beard', line: full_beard_line, shape: full_beard, x: 0, y: 0, scale_x: 1, scale_y: 1, alpha: beard_alpha});
         shapes = shapes.concat(full_beard);
+
+        var full_beard_texture = a.createPath(full_beard_line, {
+            close_line: true, line_color: 'blank',
+            fill_canvas: stubble_fill_canvas
+        });
+        full_beard_texture.alpha = beard_alpha;
+        shapes = shapes.concat(full_beard_texture);
+
 
     }
     return shapes;
