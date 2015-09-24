@@ -43,8 +43,12 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         era: 'Industrial',
         thickness: 0,
         cleanliness: 0,
+
         hair_style: null,
+        hair_pattern: null,
+        hair_texture: 'Smooth',
         hair_color: null,
+
         beard_color: null,
         beard_style: null,
         stubble_style: null,
@@ -87,7 +91,6 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         pupil_color: null,
         eye_sunken: null,
 
-        hair_texture: 'Smooth',
         head_size: 'Normal',
         hairiness: null,
         forehead_height: null,
@@ -178,7 +181,8 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         chin_shape_options: "Pronounced,Smooth".split(","),
 
         hair_color_roots_options: "Yellow,Brown,Black,White,Gray,Dark Brown,Dark Yellow,Red".split(","),
-        hair_style_options: "Bald,Bowl,Bowl with Peak,Bowl with Big Peak".split(","),
+        hair_style_options: "Bald,Droopy".split(","),
+        hair_pattern_options: "Mid Bump,Side Part,Eye Droop,Bowl,Bowl with Peak,Bowl with Big Peak,".split(","),
         hairiness_options: "Bald,Thin Hair,Thick Hair,Hairy,Fuzzy,Bearded,Covered in Hair,Fury".split(","), //TODO
 
         beard_color_options: "Hair,Black,Gray".split(","),
@@ -1969,59 +1973,6 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         return result;
     }
 
-    function createHairPattern(options, zone, hair_line) {
-        //Can take in numbers like '123123' or '212,1231,53' and make hair
-
-        var type = options.type || 'droopy';
-        var pattern = options.pattern || '0,12321231,0';
-        var head_width = comparePoints(hair_line,'width');
-        var hair_left = comparePoints(hair_line,'x','lowest');
-
-        var head_height = zone.bottom + zone.top;
-
-        var hair_pieces = pattern.split(",");
-        var left_hair, mid_hair, right_hair;
-        if (hair_pieces.length == 1) {
-            left_hair = [];
-            mid_hair = '' + parseInt(hair_pieces[0]);
-            right_hair = [];
-        } else if (hair_pieces.length == 3) {
-            left_hair = '' + parseInt(hair_pieces[0]);
-            mid_hair = '' + parseInt(hair_pieces[1]);
-            right_hair = '' + parseInt(hair_pieces[2]);
-        }
-
-        var head_slice_width = head_width / (mid_hair.length);
-        var head_slice_height = head_height / 12;
-
-        //TODO: Handle left and right
-        var new_hair_line = [];
-        _.each(mid_hair, function (length_number, i) {
-            var x = hair_left + (i * head_slice_width);
-
-            var height = parseInt(length_number) * head_slice_height;
-            var hair_line_height = comparePoints(hair_line,'crosses x', x);
-            var y = hair_line_height + height;
-
-            new_hair_line.push({x: x, y: y});
-//            new_hair_line.push({
-//                x: zone.x+zone.left+(i * head_slice_width),
-//                y: zone.y+zone.top+height
-//            });
-
-        });
-
-//        var spacing = comparePoints(hair_line, 'width') / hair_line.length;
-//
-//        var hair_spaced = hydratePointsAlongLine(new_hair_line, spacing, true);
-//        _.each(new_hair_line, function(nhl, i){
-//            nhl.y += hair_spaced[i].y;
-//        });
-
-
-        return hair_line.concat(new_hair_line.reverse());
-    }
-
     //---------------------
     //Stage management
     function setupStage(canvas) {
@@ -2128,7 +2079,6 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         constrainPolyLineToBox: constrainPolyLineToBox,
         angleBetween: angleBetween,
         hydratePointsAlongLine: hydratePointsAlongLine,
-        createHairPattern: createHairPattern,
         setupStage: setupStage,
         findStageByCanvas: findStageByCanvas,
         addStageByCanvas: addStageByCanvas,

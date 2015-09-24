@@ -1,3 +1,56 @@
+function createHairPattern(options, zone, hair_line, outer_hair_line, a) {
+    //Can take in numbers like '123123' or '212,1231,53' and make hair
+
+    var type = options.type || 'droopy';
+    var pattern = options.pattern || '1111121111'; //TODO: Is this off by 1 number?
+    var head_width = a.comparePoints(hair_line,'width');
+    var hair_left = a.comparePoints(hair_line,'x','lowest');
+
+    var head_height = zone.bottom + zone.top;
+
+    var hair_pieces = pattern.split(",");
+    var left_hair, mid_hair, right_hair;
+    if (hair_pieces.length == 1) {
+        left_hair = [];
+        mid_hair = '' + parseInt(hair_pieces[0]);
+        right_hair = [];
+    } else if (hair_pieces.length == 3) {
+        left_hair = '' + parseInt(hair_pieces[0]);
+        mid_hair = '' + parseInt(hair_pieces[1]);
+        right_hair = '' + parseInt(hair_pieces[2]);
+    }
+
+    var head_slice_width = head_width / (mid_hair.length);
+    var head_slice_height = head_height / 8;
+
+    //TODO: Handle left and right
+    var new_hair_line = [];
+    _.each(mid_hair, function (length_number, i) {
+        var x = hair_left + (i * head_slice_width);
+
+        var height = parseInt(length_number) * head_slice_height;
+        var hair_line_height = a.comparePoints(hair_line,'crosses x', x);
+        var y = hair_line_height + height;
+
+        new_hair_line.push({x: x, y: y});
+//            new_hair_line.push({
+//                x: zone.x+zone.left+(i * head_slice_width),
+//                y: zone.y+zone.top+height
+//            });
+
+    });
+
+//        var spacing = comparePoints(hair_line, 'width') / hair_line.length;
+//
+//        var hair_spaced = hydratePointsAlongLine(new_hair_line, spacing, true);
+//        _.each(new_hair_line, function(nhl, i){
+//            nhl.y += hair_spaced[i].y;
+//        });
+
+
+    return hair_line.concat(new_hair_line.reverse());
+}
+
 //hair
 new Avatar('add_render_function', {style: 'lines', feature: 'hair', renderer: function (face_zones, avatar) {
     var f = face_zones;
@@ -12,24 +65,11 @@ new Avatar('add_render_function', {style: 'lines', feature: 'hair', renderer: fu
     var outer_hair_x = 10;
     var outer_hair_y = 20;
 
-    var inner_hair_peak = 0;
-    if (face_options.hair_style == "Bowl with Peak") {
-        inner_hair_peak = 5;
-    } else if (face_options.hair_style == "Bowl with Big Peak") {
-        inner_hair_peak = 10;
-    } else if (face_options.hair_style == "Bald" || face_options.hairiness == "Bald") {
-        if (face_options.age < 23) {
-            face_options.hair_style = 'Bowl with Peak';
-            inner_hair_peak = 5;
-        } else {
-            return [];
-        }
-    }
+
 
     if (face_options.age < 20) {
         inner_hair_y *= 1.5;
         outer_hair_y *= (face_options.age / 20);
-        inner_hair_peak += face_options.age * 2;
     }
 
     var head_line = a.transformLineToGlobalCoordinates(lines, 'face');
@@ -46,7 +86,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'hair', renderer: fu
 //            shapes = shapes.concat(hair);
 
 
-        var inner_hair_line = a.extrudeHorizontalArc(hair_line, f.thick_unit * inner_hair_x, f.thick_unit * inner_hair_y, f.thick_unit * inner_hair_peak);
+        var inner_hair_line = a.extrudeHorizontalArc(hair_line, f.thick_unit * inner_hair_x, f.thick_unit * inner_hair_y);
 //            var inner_hair_dots = a.createPath(inner_hair_line, {dot_array:true, thickness: f.thick_unit * 2, line_color: face_options.hair_color});
 //            shapes = shapes.concat(inner_hair_dots);
 
@@ -60,25 +100,38 @@ new Avatar('add_render_function', {style: 'lines', feature: 'hair', renderer: fu
         color = maths.hexColorToRGBA(color, 1);
         fill_color = maths.hexColorToRGBA(fill_color, 1);
 
-        var full_hair_line = inner_hair_line.concat(outer_hair_line.reverse());
-        full_hair_line = a.transformShapeLine({type: 'smooth'}, face_options, full_hair_line);
+//        var full_hair_line = inner_hair_line.concat(outer_hair_line.reverse());
+//        full_hair_line = a.transformShapeLine({type: 'smooth'}, face_options, full_hair_line);
 
-        var outer_hair = a.createPath(full_hair_line, {close_line: true, thickness: f.thick_unit * 2, color: color, fill_color: fill_color});
-        lines.push({name: 'full hair', line: full_hair_line, shape: outer_hair});
-        shapes = shapes.concat(outer_hair);
+//        var outer_hair = a.createPath(full_hair_line, {close_line: true, thickness: f.thick_unit * 2, color: color, fill_color: fill_color});
+//        lines.push({name: 'full hair', line: full_hair_line, shape: outer_hair});
+//        shapes = shapes.concat(outer_hair);
 
-        var stubble_fill_canvas = a.findShape(avatar.textures, 'stubble lines', null, 'canvas');
-
-
-        var hair_pattern = '41111436111114';
-        var added_hair_line = a.createHairPattern({type: 'spiky', pattern:hair_pattern}, zone, hair_line);
+        var hair_builder = {style: face_options.hair_style, pattern:'1111121111', pattern_name:face_options.hair_pattern};
+        if (face_options.hair_style=="Droopy") {
+            if (face_options.hair_pattern == "Mid Bump") {
+                hair_builder.pattern = '1111121111';
+            } else if (face_options.hair_pattern == "Eye Droop") {
+                hair_builder.pattern = '41111436711114';
+            } else if (face_options.hair_pattern == "Side Part") {
+                hair_builder.pattern = '0,12321231,0';
+            } else if (face_options.hair_pattern == "Bowl") {
+                hair_builder.pattern = '0,1111111111,0';
+            } else if (face_options.hair_pattern == "Bowl with Peak") {
+                hair_builder.pattern = '0,1111131111,0';
+            } else if (face_options.hair_pattern == "Bowl with Big Peak") {
+                hair_builder.pattern = '0,1111232111,0';
+            }
+        }
+        var added_hair_line = createHairPattern(hair_builder, zone, hair_line, outer_hair_line, a);
         var added_outer_hair = a.createPath(added_hair_line, {
-            close_line: true, thickness: f.thick_unit * 2, line_color: fill_color,
+            close_line: true, thickness: f.thick_unit * 2, line_color: color,
             fill_color: fill_color
         });
-        lines.push({name: 'full hair', line: added_hair_line, shape: added_outer_hair});
+        lines.push({name: 'full hair second layer', line: added_hair_line, shape: added_outer_hair});
         shapes = shapes.concat(added_outer_hair);
 
+        var stubble_fill_canvas = a.findShape(avatar.textures, 'stubble lines', null, 'canvas');
         var added_outer_hair_fill = a.createPath(added_hair_line, {
             close_line: true, line_color: 'blank', fill_canvas: stubble_fill_canvas
         });
@@ -86,11 +139,6 @@ new Avatar('add_render_function', {style: 'lines', feature: 'hair', renderer: fu
         shapes = shapes.concat(added_outer_hair_fill);
 
 
-        var outer_hair_texture = a.createPath(full_hair_line, {
-            close_line: true, line_color: 'blank', fill_canvas: stubble_fill_canvas
-        });
-        outer_hair_texture.alpha = 0.2;
-        shapes = shapes.concat(outer_hair_texture);
 
 
     }

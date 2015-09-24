@@ -26,7 +26,7 @@ function mix_options(mo, fo) {
 }
 
 var avatars=[];
-var seed_m, seed_f;
+var seed_m, seed_f, av_m, av_f;
 $(document).ready(function () {
     var $canvas_m = $('motherCanvas');
     var $canvas_f = $('fatherCanvas');
@@ -47,8 +47,8 @@ $(document).ready(function () {
             .appendTo(fr);
     });
 
-    var av_m = new Avatar('pointer');
-    var av_f = new Avatar('pointer');
+    av_m = new Avatar('pointer');
+    av_f = new Avatar('pointer');
     function buildMother() {
         seed_m = parseInt(Math.random() * 300000);
         var race_m = $('#motherRace').val() || 'Human';
