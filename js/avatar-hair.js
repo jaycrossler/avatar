@@ -86,7 +86,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'hair', renderer: fu
 //            shapes = shapes.concat(hair);
 
 
-        var inner_hair_line = a.extrudeHorizontalArc(hair_line, f.thick_unit * inner_hair_x, f.thick_unit * inner_hair_y);
+//        var inner_hair_line = a.extrudeHorizontalArc(hair_line, f.thick_unit * inner_hair_x, f.thick_unit * inner_hair_y);
 //            var inner_hair_dots = a.createPath(inner_hair_line, {dot_array:true, thickness: f.thick_unit * 2, line_color: face_options.hair_color});
 //            shapes = shapes.concat(inner_hair_dots);
 
@@ -122,22 +122,26 @@ new Avatar('add_render_function', {style: 'lines', feature: 'hair', renderer: fu
             } else if (face_options.hair_pattern == "Bowl with Big Peak") {
                 hair_builder.pattern = '0,1111232111,0';
             }
+
+        } else if (face_options.hair_style=="Bald" || face_options.hair_style=="None" || face_options.age < 2) {
+            hair_builder = {};
         }
-        var added_hair_line = createHairPattern(hair_builder, zone, hair_line, outer_hair_line, a);
-        var added_outer_hair = a.createPath(added_hair_line, {
-            close_line: true, thickness: f.thick_unit * 2, line_color: color,
-            fill_color: fill_color
-        });
-        lines.push({name: 'full hair second layer', line: added_hair_line, shape: added_outer_hair});
-        shapes = shapes.concat(added_outer_hair);
+        if (hair_builder.style) {
+            var added_hair_line = createHairPattern(hair_builder, zone, hair_line, outer_hair_line, a);
+            var added_outer_hair = a.createPath(added_hair_line, {
+                close_line: true, thickness: f.thick_unit * 2, line_color: color,
+                fill_color: fill_color
+            });
+            lines.push({name: 'full hair second layer', line: added_hair_line, shape: added_outer_hair});
+            shapes = shapes.concat(added_outer_hair);
 
-        var stubble_fill_canvas = a.findShape(avatar.textures, 'stubble lines', null, 'canvas');
-        var added_outer_hair_fill = a.createPath(added_hair_line, {
-            close_line: true, line_color: 'blank', fill_canvas: stubble_fill_canvas
-        });
-        added_outer_hair_fill.alpha = 0.2;
-        shapes = shapes.concat(added_outer_hair_fill);
-
+            var stubble_fill_canvas = a.findShape(avatar.textures, 'stubble lines', null, 'canvas');
+            var added_outer_hair_fill = a.createPath(added_hair_line, {
+                close_line: true, line_color: 'blank', fill_canvas: stubble_fill_canvas
+            });
+            added_outer_hair_fill.alpha = 0.2;
+            shapes = shapes.concat(added_outer_hair_fill);
+        }
 
 
 
