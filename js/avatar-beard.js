@@ -112,7 +112,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'beard', renderer: f
 
         var inner_stubble_line_top_point = a.comparePoints(inner_stubble_line, "y", "highest");
         if (inner_stubble_line_top_point > nose_bottom_line_bottom_point) {
-            var lower_by = inner_stubble_line_top_point - nose_bottom_line_bottom_point -(f.thick_unit * 10);
+            var lower_by = inner_stubble_line_top_point - nose_bottom_line_bottom_point - (f.thick_unit * 10);
             inner_stubble_line = a.transformShapeLine({type: 'shift', y_offset: -lower_by}, face_options, inner_stubble_line);
         }
 
@@ -124,7 +124,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'beard', renderer: f
             close_line: true, line_color: 'blank',
             fill_color: '#444'
         });
-        full_stubble.alpha = stubble_alpha/4;
+        full_stubble.alpha = stubble_alpha / 4;
         lines.push({name: 'full stubble', line: full_stubble_line, shape: full_stubble, alpha: beard_alpha});
         shapes = shapes.concat(full_stubble);
 

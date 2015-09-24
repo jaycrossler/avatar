@@ -612,7 +612,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'eyes', renderer: fu
     skin_lighter = maths.hexColorToRGBA(skin_lighter, .02);
 
     var fill_colors = [skin_darker, skin_lighter, 'rgba(0,0,0,0)'];
-    var fill_steps = [0,.85, 1];
+    var fill_steps = [0, .85, 1];
 
     var left_eyesocket = a.createPath(right_eyesocket_oval, {
         close_line: true, thickness: f.thick_unit,
@@ -633,7 +633,8 @@ new Avatar('add_render_function', {style: 'lines', feature: 'eyes', renderer: fu
         fill_steps: fill_steps, radius: (f.thick_unit * socket_size)
     });
     right_eyesocket.x = f.eyes.right_x;
-    right_eyesocket.y = f.eyes.y + (socket_y_offset * f.thick_unit);;
+    right_eyesocket.y = f.eyes.y + (socket_y_offset * f.thick_unit);
+    ;
     right_eyesocket.scaleY = .6;
     shapes.push(right_eyesocket);
 

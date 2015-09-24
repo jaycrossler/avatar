@@ -3,8 +3,8 @@ function createHairPattern(options, zone, hair_line, outer_hair_line, a) {
 
     var type = options.type || 'droopy';
     var pattern = options.pattern || '1111121111'; //TODO: Is this off by 1 number?
-    var head_width = a.comparePoints(hair_line,'width');
-    var hair_left = a.comparePoints(hair_line,'x','lowest');
+    var head_width = a.comparePoints(hair_line, 'width');
+    var hair_left = a.comparePoints(hair_line, 'x', 'lowest');
 
     var head_height = zone.bottom + zone.top;
 
@@ -29,7 +29,7 @@ function createHairPattern(options, zone, hair_line, outer_hair_line, a) {
         var x = hair_left + (i * head_slice_width);
 
         var height = parseInt(length_number) * head_slice_height;
-        var hair_line_height = a.comparePoints(hair_line,'crosses x', x);
+        var hair_line_height = a.comparePoints(hair_line, 'crosses x', x);
         var y = hair_line_height + height;
 
         new_hair_line.push({x: x, y: y});
@@ -64,7 +64,6 @@ new Avatar('add_render_function', {style: 'lines', feature: 'hair', renderer: fu
     var inner_hair_y = 40;
     var outer_hair_x = 10;
     var outer_hair_y = 20;
-
 
 
     if (face_options.age < 20) {
@@ -107,8 +106,8 @@ new Avatar('add_render_function', {style: 'lines', feature: 'hair', renderer: fu
 //        lines.push({name: 'full hair', line: full_hair_line, shape: outer_hair});
 //        shapes = shapes.concat(outer_hair);
 
-        var hair_builder = {style: face_options.hair_style, pattern:'1111121111', pattern_name:face_options.hair_pattern};
-        if (face_options.hair_style=="Droopy") {
+        var hair_builder = {style: face_options.hair_style, pattern: '1111121111', pattern_name: face_options.hair_pattern};
+        if (face_options.hair_style == "Droopy") {
             if (face_options.hair_pattern == "Mid Bump") {
                 hair_builder.pattern = '1111121111';
             } else if (face_options.hair_pattern == "Eye Droop") {
@@ -123,7 +122,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'hair', renderer: fu
                 hair_builder.pattern = '0,1111232111,0';
             }
 
-        } else if (face_options.hair_style=="Bald" || face_options.hair_style=="None" || face_options.age < 2) {
+        } else if (face_options.hair_style == "Bald" || face_options.hair_style == "None" || face_options.age < 2) {
             hair_builder = {};
         }
         if (hair_builder.style) {
@@ -142,7 +141,6 @@ new Avatar('add_render_function', {style: 'lines', feature: 'hair', renderer: fu
             added_outer_hair_fill.alpha = 0.2;
             shapes = shapes.concat(added_outer_hair_fill);
         }
-
 
 
     }

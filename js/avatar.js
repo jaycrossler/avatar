@@ -96,7 +96,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     AvatarClass.prototype.renderers = [];
     AvatarClass.prototype.data = _data;
 
-    AvatarClass.prototype.initializeOptions = function(face_options_basic, human_data_options) {
+    AvatarClass.prototype.initializeOptions = function (face_options_basic, human_data_options) {
         _face_options = face_options_basic;
         _data['Human'] = human_data_options;
     };
@@ -708,7 +708,6 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     }
 
 
-
     //-----------------------------
     //Drawing Helpers
 
@@ -842,10 +841,10 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
                 }
                 var id = 0;
                 for (c = e_length - 1; c > e_length_mid; c--) {
-                    var point = existing_list[c];
-                    new_list[id].x += point.x;
+                    var point_c = existing_list[c];
+                    new_list[id].x += point_c.x;
                     new_list[id].x /= 2;
-                    new_list[id].y += point.y;
+                    new_list[id].y += point_c.y;
                     new_list[id].y /= 2;
                     id++;
                 }
@@ -953,18 +952,18 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
                     if ((typeof options.raise_below == "number") && y > options.raise_below) {
                         y *= options.raise_below_amount || .9;
                     }
-                    var point = {x: x * (options.radius_x || options.radius), y: y * (options.radius_y || options.radius)};
+                    var point_b = {x: x * (options.radius_x || options.radius), y: y * (options.radius_y || options.radius)};
                     if ((typeof options.facet_below == "number") && (y > options.facet_below)) {
                         var next_y = Math.sin((c + 1) / steps * 2 * Math.PI);
 
                         if ((typeof options.dont_facet_below == "number") && y > options.dont_facet_below && next_y > options.dont_facet_below) {
                             // Don't make the lower points a line
                         } else {
-                            point.line = true;
+                            point_b.line = true;
                         }
                     }
 
-                    existing_list.push(point);
+                    existing_list.push(point_b);
                 }
             } else if (_.str.startsWith(type, 'almond-horizontal')) {
                 for (c = starting_step; c < ending_step; c++) {
@@ -1020,9 +1019,9 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             result = closest_point;
 
         } else if (attribute == 'crosses x') {
-            for (var c = 0; c < existing_list.length-1; c++) {
-                var current_point = existing_list[c];
-                var next_point = existing_list[c+1];
+            for (var d = 0; d < existing_list.length - 1; d++) {
+                var current_point = existing_list[d];
+                var next_point = existing_list[d + 1];
 
                 if ((current_point.x <= cardinality && next_point.x >= cardinality) ||
                     (current_point.x >= cardinality && next_point.x <= cardinality)) {
@@ -1235,9 +1234,9 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             if (style.alpha) line.alpha = style.alpha;
             if (style.rotation) line.rotation = style.rotation;
 
-            for (var i = 1; i < points.length; i++) {
-                p1 = points[(points.length + i - 1) % (points.length)];
-                p2 = points[i];
+            for (var j = 1; j < points.length; j++) {
+                p1 = points[(points.length + j - 1) % (points.length)];
+                p2 = points[j];
                 mid = midPointBetween(p1, p2);
                 if (p1.line) {
                     line.graphics.lineTo(p1.x, p1.y);
@@ -1563,10 +1562,10 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 //                        if (directionOfCurrentPoint.bottom) { //TODO: This wont work for everything
                             point_clone2.x = box.tl.x;
                             point_clone2.y = box.br.y;
-                            var p3 = _.clone(point_clone2);
-                            p3.x = box.br.x;
+                            var p4 = _.clone(point_clone2);
+                            p4.x = box.br.x;
                             constrained_line.push(point_clone2);
-                            constrained_line.push(p3);
+                            constrained_line.push(p4);
                         }
 //                    last_crossed = cross_point.crossed;
                     }

@@ -51,6 +51,7 @@
         eye_color: null,
         eye_shape: null,
         eye_spacing: null,
+        eye_size: null,
         eye_rotation: null,
         eyelid_shape: null,
         eye_cloudiness: null,

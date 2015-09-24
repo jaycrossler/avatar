@@ -5,7 +5,7 @@
 
     //-----------------------------
     //Textures
-    a.generateTextures = function(avatar) {
+    a.generateTextures = function (avatar) {
         //TODO: Have Some of these run for the entire class?
 
         avatar.textures = _.without(avatar.textures, function (tex) {

@@ -25,7 +25,7 @@ function mix_options(mo, fo) {
     return new_options;
 }
 
-var avatars=[];
+var avatars = [];
 var seed_m, seed_f, av_m, av_f;
 $(document).ready(function () {
     var $canvas_m = $('motherCanvas');
@@ -36,7 +36,7 @@ $(document).ready(function () {
     var mr_name = $('#motherName');
     var fr_name = $('#fatherName');
 
-    _.each(Avatar.getRaces(), function(race_name, i) {
+    _.each(Avatar.getRaces(), function (race_name, i) {
         $('<option>')
             .attr({value: race_name})
             .text(race_name)
@@ -55,7 +55,7 @@ $(document).ready(function () {
         var mother_name = name_from("Female");
 
         av_m.face_options = null;
-        av_m.drawOrRedraw({rand_seed: seed_m, race: race_m, age: 38, gender:'Female', name: mother_name}, {canvas_name: $canvas_m});
+        av_m.drawOrRedraw({rand_seed: seed_m, race: race_m, age: 38, gender: 'Female', name: mother_name}, {canvas_name: $canvas_m});
 
         av_m.unregisterEvent('all');
         av_m.registerEvent('face', buildMother);
@@ -64,13 +64,14 @@ $(document).ready(function () {
 
         buildChildren();
     }
+
     function buildFather() {
         seed_f = parseInt(Math.random() * 300000);
         var race_f = $('#fatherRace').val() || 'Human';
         var father_name = name_from("Male");
 
         av_f.face_options = null;
-        av_f.drawOrRedraw({rand_seed: seed_f, race: race_f, age: 38, gender:'Male', name: father_name}, {canvas_name: $canvas_f});
+        av_f.drawOrRedraw({rand_seed: seed_f, race: race_f, age: 38, gender: 'Male', name: father_name}, {canvas_name: $canvas_f});
 
         av_f.unregisterEvent('all');
         av_f.registerEvent('face', buildFather);
@@ -79,18 +80,19 @@ $(document).ready(function () {
 
         buildChildren();
     }
+
     function buildChildren() {
         var mother_vars = av_m.face_options;
         var father_vars = av_f.face_options;
         var $children_canvas = $("#childrenCanvas");
 
-        for (var i=0; i<avatars.length; i++){
+        for (var i = 0; i < avatars.length; i++) {
             avatars[i].erase();
         }
 
         var kids_num = Helpers.randInt(5);
         var kid_age = 0;
-        for(var c=0; c<kids_num; c++) {
+        for (var c = 0; c < kids_num; c++) {
             var avatar_options = mix_options(mother_vars, father_vars);
 
             kid_age += Helpers.randInt(5);

@@ -12,8 +12,8 @@ new Avatar('add_render_function', {style: 'lines', feature: 'horns', renderer: f
     var y = f.eyes.y - (f.thick_unit * 120);
     var rotation_amount = -10;
 
-    var horn_fill_colors = ['#fff', '#eee','#ddd'];
-    var horn_fill_steps = [.1,.5,1];
+    var horn_fill_colors = ['#fff', '#eee', '#ddd'];
+    var horn_fill_steps = [.1, .5, 1];
 
     var horn_size = 6;
     if (face_options.horn_size == 'Small') {
@@ -29,8 +29,8 @@ new Avatar('add_render_function', {style: 'lines', feature: 'horns', renderer: f
         {type: 'oval', radius_x: horn_radius * width_horn, radius_y: horn_radius * width_horn * horn_squint}
     ], face_options);
     var left_horn_base = a.createPath(left_horn_base_line, {
-            close_line: true, line_color: face_options.skin_colors.darkflesh
-        });
+        close_line: true, line_color: face_options.skin_colors.darkflesh
+    });
     left_horn_base.x = x;
     left_horn_base.y = y;
     left_horn_base.rotation = rotation_amount;
@@ -41,8 +41,8 @@ new Avatar('add_render_function', {style: 'lines', feature: 'horns', renderer: f
     x = f.eyes.right_x + (f.thick_unit * 5);
     var right_horn_base_line = a.transformShapeLine({type: 'reverse', direction: 'horizontal', axis: 0}, face_options, left_horn_base_line);
     var right_horn_base = a.createPath(right_horn_base_line, {
-            close_line: true, line_color: face_options.skin_colors.darkflesh
-        });
+        close_line: true, line_color: face_options.skin_colors.darkflesh
+    });
     right_horn_base.x = x;
     right_horn_base.y = y;
     right_horn_base.rotation = -rotation_amount;
@@ -70,27 +70,26 @@ new Avatar('add_render_function', {style: 'lines', feature: 'horns', renderer: f
 
     var horn_line = [];
     horn_line.push({x: left_horn_leftmost.x - horn_point_x_offset, y: left_horn_leftmost.y - horn_point_y_offset});
-    horn_line.push({x: left_horn_leftmost.x - (horn_point_x_offset * (.9-horn_thickness)), y: left_horn_rightmost.y - (horn_point_y_offset * (.7-horn_thickness))});
+    horn_line.push({x: left_horn_leftmost.x - (horn_point_x_offset * (.9 - horn_thickness)), y: left_horn_rightmost.y - (horn_point_y_offset * (.7 - horn_thickness))});
     horn_line.push(left_horn_rightmost);
     horn_line.push(left_horn_bottommost);
-    horn_line.push({x: left_horn_leftmost.x - (horn_point_x_offset *.9), y: left_horn_leftmost.y - (horn_point_y_offset * .3)});
+    horn_line.push({x: left_horn_leftmost.x - (horn_point_x_offset * .9), y: left_horn_leftmost.y - (horn_point_y_offset * .3)});
     horn_line.push({x: left_horn_leftmost.x - horn_point_x_offset, y: left_horn_leftmost.y - horn_point_y_offset});
 
     var horn_draw_options = {
-            close_line: true, thickness: 1.2 * thickness,
-            fill_steps: horn_fill_steps, fill_colors: horn_fill_colors,
-            x_offset: a.comparePoints(horn_line,"x","highest"),
-            y_offset: a.comparePoints(horn_line,"y","highest"),
-            radius: a.comparePoints(horn_line, 'height'),
-            line_color: horn_fill_colors[0]
-        };
+        close_line: true, thickness: 1.2 * thickness,
+        fill_steps: horn_fill_steps, fill_colors: horn_fill_colors,
+        x_offset: a.comparePoints(horn_line, "x", "highest"),
+        y_offset: a.comparePoints(horn_line, "y", "highest"),
+        radius: a.comparePoints(horn_line, 'height'),
+        line_color: horn_fill_colors[0]
+    };
 
     var left_horn_line = a.createPath(horn_line, horn_draw_options);
     left_horn_line.x = left_horn_base.x;
     left_horn_line.y = left_horn_base.y;
     lines.push({name: 'nose bottom line', line: horn_line, shape: left_horn_line});
     shapes.push(left_horn_line);
-
 
 
     x = f.eyes.right_x + (f.thick_unit * 5);
@@ -102,7 +101,6 @@ new Avatar('add_render_function', {style: 'lines', feature: 'horns', renderer: f
     shapes.push(right_horn);
 
 
-
     return shapes;
 }});
 
@@ -111,11 +109,11 @@ var demonTemplate = new Avatar('copy_data_template', 'Human');
 demonTemplate.eye_size_options = ['Big', 'Massive', 'Large'];
 demonTemplate.eye_color_options = ['Red', 'Pink', 'Purple'];
 demonTemplate.eye_cloudiness_options = ['Pink'];
-demonTemplate.pupil_color_options = ['Maroon','Red'];
-demonTemplate.horn_thickness_options = ['Thick','Medium','Thin'];
-demonTemplate.horn_size_options = ['Small','Medium','Large'];
+demonTemplate.pupil_color_options = ['Maroon', 'Red'];
+demonTemplate.horn_thickness_options = ['Thick', 'Medium', 'Thin'];
+demonTemplate.horn_size_options = ['Small', 'Medium', 'Large'];
 
-demonTemplate.thickness_options = [3,4,5,6];
+demonTemplate.thickness_options = [3, 4, 5, 6];
 
 demonTemplate.hair_style_options = ['Bald'];
 demonTemplate.beard_style_options = ['None'];
