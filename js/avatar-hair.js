@@ -62,11 +62,30 @@ new Avatar('add_render_function', {style: 'lines', feature: 'hair', renderer: fu
 
         var full_hair_line = inner_hair_line.concat(outer_hair_line.reverse());
         full_hair_line = a.transformShapeLine({type: 'smooth'}, face_options, full_hair_line);
+
         var outer_hair = a.createPath(full_hair_line, {close_line: true, thickness: f.thick_unit * 2, color: color, fill_color: fill_color});
-        lines.push({name: 'full hair', line: full_hair_line, shape: outer_hair, x: zone.x, y: zone.y, scale_x: 1, scale_y: 1});
+        lines.push({name: 'full hair', line: full_hair_line, shape: outer_hair});
         shapes = shapes.concat(outer_hair);
 
         var stubble_fill_canvas = a.findShape(avatar.textures, 'stubble lines', null, 'canvas');
+
+
+        var hair_pattern = '41111436111114';
+        var added_hair_line = a.createHairPattern({type: 'spiky', pattern:hair_pattern}, zone, hair_line);
+        var added_outer_hair = a.createPath(added_hair_line, {
+            close_line: true, thickness: f.thick_unit * 2, line_color: fill_color,
+            fill_color: fill_color
+        });
+        lines.push({name: 'full hair', line: added_hair_line, shape: added_outer_hair});
+        shapes = shapes.concat(added_outer_hair);
+
+        var added_outer_hair_fill = a.createPath(added_hair_line, {
+            close_line: true, line_color: 'blank', fill_canvas: stubble_fill_canvas
+        });
+        added_outer_hair_fill.alpha = 0.2;
+        shapes = shapes.concat(added_outer_hair_fill);
+
+
         var outer_hair_texture = a.createPath(full_hair_line, {
             close_line: true, line_color: 'blank', fill_canvas: stubble_fill_canvas
         });

@@ -1311,6 +1311,28 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             }
             result = closest_point;
 
+        } else if (attribute == 'crosses x') {
+            for (var c = 0; c < existing_list.length-1; c++) {
+                var current_point = existing_list[c];
+                var next_point = existing_list[c+1];
+
+                if ((current_point.x <= cardinality && next_point.x >= cardinality) ||
+                    (current_point.x >= cardinality && next_point.x <= cardinality)) {
+                    //This line segment crosses the desired y
+                    if (current_point.x == next_point.x) {
+                        result = current_point.y;
+                    } else if (current_point.y == next_point.y) {
+                        result = current_point.y;
+                    } else {
+                        var intersect = checkLineIntersection(current_point, next_point,
+                            {x: cardinality, y: current_point.y}, {x: cardinality, y: next_point.y});
+                        result = intersect.y;
+                    }
+                    break;
+                }
+            }
+            if (result == null) debugger;
+
         } else {
             var lowest = Number.MAX_VALUE;
             var highest = Number.MIN_VALUE;
@@ -1947,6 +1969,58 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         return result;
     }
 
+    function createHairPattern(options, zone, hair_line) {
+        //Can take in numbers like '123123' or '212,1231,53' and make hair
+
+        var type = options.type || 'droopy';
+        var pattern = options.pattern || '0,12321231,0';
+        var head_width = comparePoints(hair_line,'width');
+        var hair_left = comparePoints(hair_line,'x','lowest');
+
+        var head_height = zone.bottom + zone.top;
+
+        var hair_pieces = pattern.split(",");
+        var left_hair, mid_hair, right_hair;
+        if (hair_pieces.length == 1) {
+            left_hair = [];
+            mid_hair = '' + parseInt(hair_pieces[0]);
+            right_hair = [];
+        } else if (hair_pieces.length == 3) {
+            left_hair = '' + parseInt(hair_pieces[0]);
+            mid_hair = '' + parseInt(hair_pieces[1]);
+            right_hair = '' + parseInt(hair_pieces[2]);
+        }
+
+        var head_slice_width = head_width / (mid_hair.length);
+        var head_slice_height = head_height / 12;
+
+        //TODO: Handle left and right
+        var new_hair_line = [];
+        _.each(mid_hair, function (length_number, i) {
+            var x = hair_left + (i * head_slice_width);
+
+            var height = parseInt(length_number) * head_slice_height;
+            var hair_line_height = comparePoints(hair_line,'crosses x', x);
+            var y = hair_line_height + height;
+
+            new_hair_line.push({x: x, y: y});
+//            new_hair_line.push({
+//                x: zone.x+zone.left+(i * head_slice_width),
+//                y: zone.y+zone.top+height
+//            });
+
+        });
+
+//        var spacing = comparePoints(hair_line, 'width') / hair_line.length;
+//
+//        var hair_spaced = hydratePointsAlongLine(new_hair_line, spacing, true);
+//        _.each(new_hair_line, function(nhl, i){
+//            nhl.y += hair_spaced[i].y;
+//        });
+
+
+        return hair_line.concat(new_hair_line.reverse());
+    }
 
     //---------------------
     //Stage management
@@ -2054,6 +2128,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         constrainPolyLineToBox: constrainPolyLineToBox,
         angleBetween: angleBetween,
         hydratePointsAlongLine: hydratePointsAlongLine,
+        createHairPattern: createHairPattern,
         setupStage: setupStage,
         findStageByCanvas: findStageByCanvas,
         addStageByCanvas: addStageByCanvas,
