@@ -19,6 +19,14 @@ function mix_options(mo, fo) {
     for (var key in mo) {
         new_options[key] = (Math.random() < .5) ? mo[key] : fo[key];
     }
+    var mother_skin = av_m.face_options.skin_colors;
+    var father_skin = av_f.face_options.skin_colors;
+    for (key in mother_skin) {
+        if (key != "name") {
+            new_options.skin_colors[key] = net.brehaut.Color(mother_skin[key]).blend(net.brehaut.Color(father_skin[key]), Math.random()).toString();
+        }
+    }
+    new_options.skin_shade = 'Preset';
     new_options.name = name_from(new_options.gender, fo.name);
     new_options.rand_seed = parseInt(Math.random() * 300000);
 

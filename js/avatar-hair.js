@@ -2,7 +2,8 @@ function createHairPattern(options, zone, hair_line, outer_hair_line, a) {
     //Can take in numbers like '123123' or '212,1231,53' and make hair
 
     var type = options.type || 'droopy';
-    var pattern = options.pattern || '1111121111'; //TODO: Is this off by 1 number?
+    var pattern = options.pattern || '1111121111';
+    var point_pattern = options.point_pattern || '';
     var head_width = a.comparePoints(hair_line, 'width');
     var hair_left = a.comparePoints(hair_line, 'x', 'lowest');
 
@@ -20,7 +21,10 @@ function createHairPattern(options, zone, hair_line, outer_hair_line, a) {
         right_hair = '' + parseInt(hair_pieces[2]);
     }
 
-    var head_slice_width = head_width / (mid_hair.length);
+    if (mid_hair.length < 2) {
+        mid_hair = "1" + mid_hair + "1";
+    }
+    var head_slice_width = head_width / (mid_hair.length - 1);
     var head_slice_height = head_height / 8;
 
     //TODO: Handle left and right
@@ -60,14 +64,11 @@ new Avatar('add_render_function', {style: 'lines', feature: 'hair', renderer: fu
     var shapes = [];
 
     var hair_line_level_adjust = -f.thick_unit * 2;
-    var inner_hair_x = 10;
-    var inner_hair_y = 40;
     var outer_hair_x = 10;
     var outer_hair_y = 20;
 
 
     if (face_options.age < 20) {
-        inner_hair_y *= 1.5;
         outer_hair_y *= (face_options.age / 20);
     }
 
@@ -106,25 +107,43 @@ new Avatar('add_render_function', {style: 'lines', feature: 'hair', renderer: fu
 //        lines.push({name: 'full hair', line: full_hair_line, shape: outer_hair});
 //        shapes = shapes.concat(outer_hair);
 
-        var hair_builder = {style: face_options.hair_style, pattern: '1111121111', pattern_name: face_options.hair_pattern};
-        if (face_options.hair_style == "Droopy") {
-            if (face_options.hair_pattern == "Mid Bump") {
-                hair_builder.pattern = '1111121111';
-            } else if (face_options.hair_pattern == "Eye Droop") {
-                hair_builder.pattern = '41111436711114';
-            } else if (face_options.hair_pattern == "Side Part") {
-                hair_builder.pattern = '0,12321231,0';
-            } else if (face_options.hair_pattern == "Bowl") {
-                hair_builder.pattern = '0,1111111111,0';
-            } else if (face_options.hair_pattern == "Bowl with Peak") {
-                hair_builder.pattern = '0,1111131111,0';
-            } else if (face_options.hair_pattern == "Bowl with Big Peak") {
-                hair_builder.pattern = '0,1111232111,0';
-            }
+        var hair_builder = {style: face_options.hair_style, pattern: '111121111', point_pattern: '', pattern_name: face_options.hair_pattern};
+        if (face_options.hair_pattern == "Mid Bump") {
+            hair_builder.pattern = '111121111';
+        } else if (face_options.hair_pattern == "Eye Droop") {
+            hair_builder.pattern = '411114356224';
+        } else if (face_options.hair_pattern == "Side Part") {
+            hair_builder.pattern = '0,123212321,0';
+        } else if (face_options.hair_pattern == "Bowl") {
+            hair_builder.pattern = '0,2222222,0';
+        } else if (face_options.hair_pattern == "Receding") {
+            hair_builder.pattern = '0,1111111,0';
+        } else if (face_options.hair_pattern == "Bowl with Peak") {
+            hair_builder.pattern = '0,111131111,0';
+        } else if (face_options.hair_pattern == "Bowl with Big Peak") {
+            hair_builder.pattern = '0,111242111,0';
+            hair_builder.point_pattern = ' ,    P    , ';
+        } else if (face_options.hair_pattern == "Side Part2") {
+            hair_builder.pattern = '0,4323234,0';
+        } else if (face_options.hair_pattern == "Twin Peaks") {
+            hair_builder.pattern = '0,11242124211,0';
+        }
 
+        if (face_options.hair_style == "Spiky") {
+            //Replace each blank with a "P"
+            var point_pattern = _.str.repeat(" ", hair_builder.pattern.length);
+            _.each(hair_builder.point_pattern, function (style, i) {
+                if (style != " ") point_pattern[i] = style;
+            });
+            _.each(hair_builder.pattern, function (style, i) {
+                if (style == ",") point_pattern[i] = ',';
+                if (style == " ") point_pattern[i] = 'P';
+            })
         } else if (face_options.hair_style == "Bald" || face_options.hair_style == "None" || face_options.age < 2) {
             hair_builder = {};
         }
+
+
         if (hair_builder.style) {
             var added_hair_line = createHairPattern(hair_builder, zone, hair_line, outer_hair_line, a);
             var added_outer_hair = a.createPath(added_hair_line, {

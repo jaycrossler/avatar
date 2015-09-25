@@ -4,18 +4,17 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //TODO: Have a skull-width and jaw-width, and then combine this with thickness to determine face type
     //TODO: Use age, thickness, and musculature to determine which muscles/lines to draw
 
+    //TODO: Problem with this face: new Avatar({"rand_seed":263080,"face_shape":"Diamond"}), and new Avatar({rand_seed: 146994, age:38});
+
     //TODO: Add oval decoration
     //TODO: Add descendant page with Procyon
     //TODO: Add a character builder
     //TODO: Add a python service to build this image headless
-    //TODO: Grunt.js builder
     //TODO: Decorations are weird on faces.html
 
     //TODO: Have a shape builder function to standardize and make reusable
     //TODO: Generate points for each important face zone, generate all these first before rendering
 
-    //TODO: Hair Peak have multiple shapes, apply more than one peak
-    //TODO: More Hair and Beard Options
     //TODO: Scars and Jewelery
     //TODO: Sag wrinkles when older
     //TODO: Sprite images

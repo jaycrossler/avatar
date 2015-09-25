@@ -142,7 +142,7 @@
 
         hair_color_roots_options: "Yellow,Brown,Black,White,Gray,Dark Brown,Dark Yellow,Red".split(","),
         hair_style_options: "Bald,Droopy".split(","),
-        hair_pattern_options: "Mid Bump,Side Part,Eye Droop,Bowl,Bowl with Peak,Bowl with Big Peak,".split(","),
+        hair_pattern_options: "Mid Bump,Side Part,Eye Droop,Receding,Bowl,Bowl with Peak,Bowl with Big Peak,Side Part2,Twin Peaks".split(","),
         hairiness_options: "Bald,Thin Hair,Thick Hair,Hairy,Fuzzy,Bearded,Covered in Hair,Fury".split(","), //TODO
 
         beard_color_options: "Hair,Black,Gray".split(","),
