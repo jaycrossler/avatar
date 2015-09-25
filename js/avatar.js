@@ -31,8 +31,8 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
     //-----------------------------
     //Private Global variables
-    var VERSION = 'X.X.X',
-        summary = 'Drawing procedurally rendered people on HTML5 canvas.',
+    var version = 'X.X.X',
+        summary = 'X',
         author = 'Jay Crossler - http://github.com/jaycrossler',
         file_name = 'avatar.js';
 
@@ -51,7 +51,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //-----------------------------
     //Initialization
     function AvatarClass(option1, option2, option3) {
-        this.version = file_name + ' (version ' + VERSION + ') - ' + summary + ' by ' + author;
+        this.version = file_name + ' (version ' + version + ') - ' + summary + ' by ' + author;
         if (option1 == 'get_linked_template') {
             option2 = option2 || getFirstRaceFromData();
             return this.data[option2] || {error: 'race does not exist'};
@@ -84,7 +84,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             }
             return races;
 
-        } else if (option1 == '') {
+        } else if (option1 == '' || option1 == 'initialize') {
             return {details: 'avatar class initialized'};
 
         } else {

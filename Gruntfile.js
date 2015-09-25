@@ -14,7 +14,7 @@ module.exports = function (grunt) {
             },
             dist: {
                 src: ['js-libs/easeljs-NEXT.min.js', 'js-libs/color.js', 'js-libs/colors.min.js', 'js/maths.js', 'js/helpers.js', 'js/avatar-<%= pkg.version %>.js', 'js/avatar-options.js', 'js/avatar-textures.js',
-                    'js/avatar-lines.js', 'js/avatar-hair.js', 'js/avatar-beard.js', 'js/races/ogre.js', 'js/races/navi.js'],
+                    'js/avatar-lines.js', 'js/avatar-hair.js', 'js/avatar-beard.js', 'js/races/ogre.js', 'js/races/navi.js', 'js/races/demon.js'],
                 dest: 'build/<%= pkg.name %>-<%= pkg.version %>.js'
             }
         },
@@ -31,14 +31,22 @@ module.exports = function (grunt) {
             avatar: {
                 src: 'build/avatar.min.js',
                 options: {
-                    specs: 'tests/TestAvatar.js',
+                    specs: 'tests/*.spec.js',
                     helpers: 'tests/helpers/*.js',
                     vendor: [
                         "js-libs/jquery-1.11.3.min.js",
                         "js-libs/bootstrap.min.js",
                         "js-libs/underscore-min.js",
                         "js-libs/underscore.string.min.js"
-                    ]
+                    ],
+                    phantomJSOptions: { //TODO: These aren't getting processed
+                        page: {
+                            viewportSize: {
+                                width: 680,
+                                height: 800
+                            }
+                        }
+                    }
                 }
             }
         },
@@ -48,8 +56,12 @@ module.exports = function (grunt) {
                 dest: 'js/avatar-<%= pkg.version %>.js',
                 replacements: [
                     {
-                        from: "VERSION = 'X.X.X'",
-                        to: "VERSION = '<%= pkg.version %>'"
+                        from: "version = 'X.X.X',",
+                        to: "version = '<%= pkg.version %>',"
+                    },
+                    {
+                        from: "summary = 'X',",
+                        to: "summary = '<%= pkg.summary %>',"
                     }
                 ]
             }

@@ -3,7 +3,7 @@ var ogreTemplate = new Avatar('copy_data_template', 'Human');
 ogreTemplate.ear_shape_options.push('Pointed');
 
 ogreTemplate.eye_color_options = ['Red', 'Pink', 'Purple', 'Yellow'];
-ogreTemplate.eye_cloudiness = ['Pink', 'Blue', 'Misty'];
+ogreTemplate.eye_cloudiness_options = ['Pink', 'Blue', 'Misty'];
 
 ogreTemplate.skin_colors_options = [
     {name: 'Fair', highlights: 'rgb(40,202,30)', skin: 'rgb(50,185,50)'},
