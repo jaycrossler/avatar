@@ -1,4 +1,4 @@
-/*! avatar - v0.0.7 - 2015-09-24 *//*!
+/*! avatar - v0.0.7 - 2015-09-25 *//*!
 * @license EaselJS
 * Visit http://createjs.com/ for documentation, updates and examples.
 *
@@ -1621,11 +1621,12 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //TODO: Have a skull-width and jaw-width, and then combine this with thickness to determine face type
     //TODO: Use age, thickness, and musculature to determine which muscles/lines to draw
 
+    //TODO: Problem with this face: new Avatar({"rand_seed":263080,"face_shape":"Diamond"}), and new Avatar({rand_seed: 146994, age:38});
+
     //TODO: Add oval decoration
     //TODO: Add descendant page with Procyon
     //TODO: Add a character builder
     //TODO: Add a python service to build this image headless
-    //TODO: Grunt.js builder
     //TODO: Decorations are weird on faces.html
 
     //TODO: Have a shape builder function to standardize and make reusable
@@ -5899,9 +5900,9 @@ function createHairPattern(options, zone, hair_line, outer_hair_line, a) {
     }
 
     if (mid_hair.length < 2) {
-        mid_hair = "1"+mid_hair+"1";
+        mid_hair = "1" + mid_hair + "1";
     }
-    var head_slice_width = head_width / (mid_hair.length-1);
+    var head_slice_width = head_width / (mid_hair.length - 1);
     var head_slice_height = head_height / 8;
 
     //TODO: Handle left and right
@@ -5998,7 +5999,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'hair', renderer: fu
         } else if (face_options.hair_pattern == "Bowl with Peak") {
             hair_builder.pattern = '0,111131111,0';
         } else if (face_options.hair_pattern == "Bowl with Big Peak") {
-            hair_builder.pattern =       '0,111242111,0';
+            hair_builder.pattern = '0,111242111,0';
             hair_builder.point_pattern = ' ,    P    , ';
         } else if (face_options.hair_pattern == "Side Part2") {
             hair_builder.pattern = '0,4323234,0';

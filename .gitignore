@@ -13,3 +13,5 @@ CACHE/*
 
 node_modules
 node_modules/*
+
+js/avatar-*.js
