@@ -2,6 +2,12 @@
 // <%= pkg.name %> <%= pkg.version %>
 'use strict';
 
+var libraryFiles = ['js-libs/color.js', 'js-libs/colors.min.js', 'js/maths.js', 'js/helpers.js'];
+var avatarFiles = [ 'js/avatar-<%= pkg.version %>.js', 'js/avatar-options.js', 'js/avatar-textures.js', 'js/avatar-lines.js', 'js/avatar-hair.js', 'js/avatar-beard.js'];
+var raceFiles = [ 'js/races/ogre.js', 'js/races/navi.js', 'js/races/demon.js'];
+
+var allFiles = libraryFiles.concat(avatarFiles, raceFiles);
+
 module.exports = function (grunt) {
 
     // Project configuration.
@@ -10,17 +16,22 @@ module.exports = function (grunt) {
         concat: {
             options: {
                 separator: ';\n',
-                banner: '/*! <%= pkg.name %> - v<%= pkg.version %> - <%= grunt.template.today("yyyy-mm-dd") %> */'
+                banner: '/*! <%= pkg.name %> ( and supporting libraries) - v<%= pkg.version %> - <%= grunt.template.today("yyyy-mm-dd") %> */'
             },
-            dist: {
-                src: ['js-libs/easeljs-NEXT.min.js', 'js-libs/color.js', 'js-libs/colors.min.js', 'js/maths.js', 'js/helpers.js', 'js/avatar-<%= pkg.version %>.js', 'js/avatar-options.js', 'js/avatar-textures.js',
-                    'js/avatar-lines.js', 'js/avatar-hair.js', 'js/avatar-beard.js', 'js/races/ogre.js', 'js/races/navi.js', 'js/races/demon.js'],
+            build: {
+                src: allFiles,
                 dest: 'build/<%= pkg.name %>-<%= pkg.version %>.js'
+            },
+            quick: {
+                src: allFiles,
+                dest: 'build/avatar.min.js'
             }
+
         },
         uglify: {
             options: {
-                banner: '/*! <%= pkg.name %>.js - <%= pkg.name %> <%= grunt.template.today("yyyy-mm-dd") %> */\n'
+                banner: '/*! <%= pkg.name %>.js - <%= pkg.name %> <%= grunt.template.today("yyyy-mm-dd") %> */\n',
+                sourceMap: true
             },
             build: {
                 src: 'build/<%= pkg.name %>-<%= pkg.version %>.js',
@@ -37,7 +48,8 @@ module.exports = function (grunt) {
                         "js-libs/jquery-1.11.3.min.js",
                         "js-libs/bootstrap.min.js",
                         "js-libs/underscore-min.js",
-                        "js-libs/underscore.string.min.js"
+                        "js-libs/underscore.string.min.js",
+                        "js-libs/easeljs-NEXT.min.js"
                     ],
                     phantomJSOptions: { //TODO: These aren't getting processed
                         page: {
@@ -48,6 +60,27 @@ module.exports = function (grunt) {
                         }
                     }
                 }
+            }
+        },
+        notify: {
+            build: {
+                options: {
+                    title: "Avatar Compiled",
+                    message: "Files saved and minified and merged"
+                }
+            },
+            quick: {
+                options: {
+                    title: "Avatar Quick Compiled",
+                    message: "Files merged"
+                }
+            }
+
+        },
+        watch: {
+            avatar: {
+                files: ['**/*.js'],
+                tasks: ['concat:quick']
             }
         },
         replace: {
@@ -73,8 +106,13 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-contrib-jasmine');
     grunt.loadNpmTasks('grunt-text-replace');
+    grunt.loadNpmTasks('grunt-contrib-watch');
+    grunt.loadNpmTasks('grunt-notify');
 
     // Default task(s).
-    grunt.registerTask('default', ['replace', 'concat', 'uglify', 'jasmine']);
+    grunt.registerTask('default', ['replace:version', 'concat:build', 'uglify:build', 'jasmine', 'notify:build']);
+    grunt.registerTask('quick', ['concat:quick', 'notify:quick']);
+
+    grunt.task.run('notify_hooks');
 
 };
