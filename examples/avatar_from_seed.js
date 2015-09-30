@@ -11,8 +11,8 @@ function getMousePos(canvas, evt) {
 
 $(document).ready(function () {
     var $canvas = $("<canvas>")
-        .attr({width: 320, height:400, id:'avatar'})
-        .css({width: 320, height:400})
+        .attr({width: 320, height: 400, id: 'avatar'})
+        .css({width: 320, height: 400})
         .appendTo($('#avatar_holder'));
 
     var canvas = $canvas[0];
@@ -21,6 +21,7 @@ $(document).ready(function () {
         var pos = getMousePos(canvas, e);
         $('#avatar_name').text("x=" + pos.x + " : y=" + pos.y);
     }
+
     canvas.addEventListener('mousemove', draw, false);
 
 
@@ -38,7 +39,7 @@ $(document).ready(function () {
             av.face_options = null;
             av.erase();
         }
-        av = new Avatar({rand_seed: seed}, {height:300, canvas_name: $canvas});
+        av = new Avatar({rand_seed: seed}, {height: 300, canvas_name: $canvas});
         av.unregisterEvent('all');
         av.registerEvent('face', function (avatar) {
             seed = parseInt(Math.random() * 300000);
@@ -56,13 +57,13 @@ $(document).ready(function () {
 
     }
 
-    $seed_number.on('keypress',generateAvatar);
+    $seed_number.on('keypress', generateAvatar);
 
     //Pull a pointer to the current avatar  template for that race
     var AvatarRace = new Avatar('get_linked_template', 'Human');
 
     AvatarRace.rendering_order = [
-        {decoration:"box-behind"},
+        {decoration: "box-behind"},
         {feature: "shoulders", style: "lines"},
         {feature: "neck", style: "lines"},
         {feature: "face", style: "lines"},

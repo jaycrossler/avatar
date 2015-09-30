@@ -83,6 +83,14 @@ module.exports = function (grunt) {
                 tasks: ['concat:quick']
             }
         },
+        connect: {
+            server: {
+                options: {
+                    port: 9001,
+                    keepalive: true
+                }
+            }
+        },
         replace: {
             version: {
                 src: ['js/avatar.js'],
@@ -108,10 +116,12 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-text-replace');
     grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks('grunt-notify');
+    grunt.loadNpmTasks('grunt-contrib-connect');
 
     // Default task(s).
     grunt.registerTask('default', ['replace:version', 'concat:build', 'uglify:build', 'jasmine', 'notify:build']);
     grunt.registerTask('quick', ['concat:quick', 'notify:quick']);
+    grunt.registerTask('server', ['concat:quick', 'notify:quick', 'connect']);
 
     grunt.task.run('notify_hooks');
 

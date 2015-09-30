@@ -1,4 +1,4 @@
-/*! avatar ( and supporting libraries) - v0.0.7 - 2015-09-27 */// Copyright (c) 2008-2013, Andrew Brehaut, Tim Baumann, Matt Wilson,
+/*! avatar ( and supporting libraries) - v0.0.7 - 2015-09-30 */// Copyright (c) 2008-2013, Andrew Brehaut, Tim Baumann, Matt Wilson,
 //                          Simon Heimler, Michel Vielmetter
 //
 // All rights reserved.

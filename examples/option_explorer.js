@@ -121,7 +121,7 @@ function build_option_explorer(highlight_option_name, set1, set2) {
         data_items.push(key);
     }
     data_items = data_items.sort();
-    for (var i=0; i<data_items.length; i++) {
+    for (var i = 0; i < data_items.length; i++) {
         var key = data_items[i];
         var text = key;
 
