@@ -51,6 +51,15 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //Initialization
     function AvatarClass(option1, option2, option3) {
         this.version = file_name + ' (version ' + version + ') - ' + summary + ' by ' + author;
+        this.timing_log = [];
+        this.face_options = null;
+        this.initialization_seed = null;
+        this.times_avatar_drawn = 0;
+        this.stage_options = null;
+        this.event_list = [];
+        this.registered_points = [];
+        this.textures = [];
+
         if (option1 == 'get_linked_template') {
             option2 = option2 || getFirstRaceFromData();
             return this.data[option2] || {error: 'race does not exist'};
@@ -100,6 +109,8 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     };
 
     AvatarClass.prototype.drawOrRedraw = function (face_options, stage_options, canvas_name) {
+        var timing_start = window.performance.now();
+
         if (this.face_options === null) {
             this.initialization_seed = null;
         }
@@ -174,10 +185,31 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
             this.stage.update();
         }
+
+        var timing_end = window.performance.now();
+        var time_elapsed = (timing_end - timing_start);
+        this.timing_log.push({name: "draw-elapsed", elapsed: time_elapsed, times_redrawn: ++this.times_avatar_drawn});
     };
 
     //-----------------------------
     //Supporting functions
+    AvatarClass.prototype.log = function (showToConsole) {
+        var log = "Avatar: [seed:" + this.face_options.rand_seed + " #" + this.times_avatar_drawn + "]";
+        _.each(this.timing_log, function (time_item) {
+            log += "\n - " + time_item.name + ": " + Helpers.round(time_item.elapsed, 4) + "ms";
+        });
+
+        if (showToConsole) console.log(log);
+        return log;
+    };
+    AvatarClass.prototype.lastTimeDrawn = function () {
+        var time_drawn = 0;
+        var last = _.last(this.timing_log);
+        if (last) time_drawn = last.elapsed;
+
+        return time_drawn;
+    };
+
     AvatarClass.prototype.getSeed = function (showAsString) {
         var result = this.initialization_options || {};
         return showAsString ? JSON.stringify(result) : result;

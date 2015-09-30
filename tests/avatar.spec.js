@@ -104,4 +104,18 @@ describe("Avatar", function () {
         expect(fz_tl.y).toBeLessThan(fz_br.y);
 
     });
+    it("renders in less than 250ms", function () {
+        $('<canvas>').attr({height: 400, width: 400, id: 'test_canvas'}).css({width: 400, height: 400}).appendTo('body');
+
+        var av = new Avatar({}, {canvas_name: 'test_canvas'});
+        var time_taken = av.lastTimeDrawn();
+        expect(time_taken).toBeLessThan(300);
+    });
+    it("has less than 250 shapes", function () {
+        $('<canvas>').attr({height: 400, width: 400, id: 'test_canvas'}).css({width: 400, height: 400}).appendTo('body');
+
+        var av = new Avatar({}, {canvas_name: 'test_canvas'});
+        expect(av.faceShapeCollection.children.length).toBeLessThan(250);
+    });
+
 });
