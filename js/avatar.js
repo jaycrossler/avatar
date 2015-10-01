@@ -295,7 +295,8 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
         //TODO: Hair color should be more affected by age and stress?
         var age_hair_percent = Math.min(Math.max(0, avatar.face_options.age - 35) / 60, 1);
-        var hairColor = net.brehaut.Color(avatar.face_options.hair_color_roots);
+        var hairColor = colorFromName(avatar.face_options.hair_color_roots, true);
+
         if (!avatar.face_options.hair_color) {
             var gray = net.brehaut.Color('#eeeeee');
             avatar.face_options.hair_color = hairColor.blend(gray, age_hair_percent).desaturateByRatio(age_hair_percent).toString();
@@ -413,6 +414,53 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
     //================
     //Private functions
+    var color_lookup_object = {
+        'Midnight Black':'#090806',
+        'Off Black':'#2c222b',
+        'Darkest Brown':'#3b302a',
+        'Medium Dark Brown':'4e433f',
+        'Chestnut Brown':'#504444',
+        'Light Chestnut Brown':'#6a4e42',
+        'Dark Golden Brown':'#554838',
+        'Light Golden Brown':'#a78368',
+        'Dark Honey Blond':'#b89778',
+        'Bleached Blond':'#dcd0ba',
+        'Light Ash Blond':'#debc99',
+        'Light Ash Brown':'#977961',
+        'Lightest Blond':'#e6cea8',
+        'Pale Golden Blond':'#e5c8a8',
+        'Strawberry Blond':'#a56b46',
+        'Light Auburn':'#91553d',
+        'Dark Auburn':'#533d32',
+        'Darkest Gray':'#71635a',
+        'Medium Gray':'#b7a69e',
+        'Light Gray':'#d6c4c2',
+        'White Blond':'#fff5e1',
+        'Platinum Blond':'#cbbfb1',
+        'Russet Red':'#8d4a42',
+        'Terra Cotta':'#b6523a',
+        'Toasted Wheat':'#d8c078',
+        'Melted Butter':'#e3cc88',
+        'Wheat Milk':'#f2da91',
+        'Cake Two':'#f2e1ae',
+        'Shoe Brown':'#664f3c',
+        'Cookie':'#8c684a',
+        'Tree Bark':'#332a22',
+        'Poor Jean':'#f2e7c7'
+    };
+
+    function colorFromName(colorName, returnAsBrehaultObject, ifNotFound) {
+        var color = color_lookup_object[colorName];
+
+        if (!color) {
+            color = ifNotFound || '#000000';
+        }
+        if (returnAsBrehaultObject) {
+            color = net.brehaut.Color(color);
+        }
+
+        return color;
+    }
     function getFirstRaceFromData() {
         for (key in _data) {
             //wonky way to get first key
@@ -1051,9 +1099,14 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             result = closest_point;
 
         } else if (attribute == 'crosses x') {
-            for (var d = 0; d < existing_list.length - 1; d++) {
+            for (var d = 0; d < existing_list.length; d++) {
                 var current_point = existing_list[d];
-                var next_point = existing_list[d + 1];
+                var next_point;
+                if (d < existing_list.length-1) {
+                    next_point = existing_list[d + 1];
+                } else {
+                    next_point = existing_list[d];
+                }
 
                 if ((current_point.x <= cardinality && next_point.x >= cardinality) ||
                     (current_point.x >= cardinality && next_point.x <= cardinality)) {
@@ -1070,7 +1123,9 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
                     break;
                 }
             }
-            if (result == null) debugger;
+            if (result == null) {
+                result = existing_list[existing_list.length-1].y;
+            }
 
         } else {
             var lowest = Number.MAX_VALUE;

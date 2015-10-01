@@ -140,7 +140,7 @@
         chin_divot_options: "Double,Small,Large,Smooth".split(","),
         chin_shape_options: "Pronounced,Smooth".split(","),
 
-        hair_color_roots_options: "Yellow,Brown,Black,White,Gray,Dark Brown,Dark Yellow,Red".split(","),
+        hair_color_roots_options: "Midnight Black,Off Black,Darkest Brown,Medium Dark Brown,Chestnut Brown,Light Chestnut Brown,Dark Golden Brown,Light Golden Brown,Dark Honey Blond,Bleached Blond,Light Ash Blond,Light Ash Brown,Lightest Blond,Pale Golden Blond,Strawberry Blond,Light Auburn,Dark Auburn,Darkest Gray,Medium Gray,Light Gray,White Blond,Platinum Blond,Toasted Wheat,Melted Butter,Wheat Milk,Cake Two,Poor Jean,Shoe Brown,Cookie,Tree Bark,Russet Red,Terra Cotta".split(","), //Yellow,Brown,Black,White,Gray,Dark Brown,Dark Yellow,Red
         hair_style_options: "Bald,Droopy".split(","),
         hair_pattern_options: "Mid Bump,Side Part,Eye Droop,Receding,Bowl,Bowl with Peak,Bowl with Big Peak,Side Part2,Twin Peaks".split(","),
         hairiness_options: "Bald,Thin Hair,Thick Hair,Hairy,Fuzzy,Bearded,Covered in Hair,Fury".split(","), //TODO
