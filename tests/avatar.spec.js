@@ -13,7 +13,7 @@ describe("Avatar", function () {
         var ver = av.version;
 
         expect(ver).toContain("avatar.js (version ");
-        expect(ver).toContain("Drawing");
+        expect(ver).toContain("Procedurally");
     });
     it("returns a seed as valid JSON", function () {
         var av = new Avatar();

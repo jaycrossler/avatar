@@ -1,11 +1,11 @@
 {
   "name": "avatar",
-  "summary": "Drawing procedurally rendered people on HTML5 canvas.",
+  "summary": "Procedurally rendered people on HTML5 canvas.",
   "description": "Create a procedurally-generated avatar face via JavaScript. Show how avatars grow over time, see what their offspring would look like, change details of clothing or decorations or hairstyles.  Tons of variables that are extensible as content packs.",
   "repository": {
     "private": true
   },
-  "version": "0.0.7",
+  "version": "0.0.8",
   "license": "(MIT OR Apache-2.0)",
   "devDependencies": {
     "grunt": "^0.4.5",
