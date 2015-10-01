@@ -107,26 +107,6 @@ $(document).ready(function () {
         });
     }
 
-//    //Pull a pointer to the current avatar template for that race
-//    var AvatarRace = new Avatar('get_linked_template', 'Human');
-//
-//    AvatarRace.rendering_order = [
-//        {feature: "shoulders", style: "lines"},
-//        {feature: "neck", style: "lines"},
-//        {feature: "face", style: "lines"},
-//        {feature: "eye_position", style: "lines"},
-//        {feature: "nose", style: "lines"}, //Uses: right eye innermost
-//        {feature: "chin", style: "lines"}, //Uses: chin mid line, face
-//        {feature: "mouth", style: "lines"}, //NOTE: Shown twice to predraw positions
-//        {feature: "wrinkles", style: "lines"}, //Uses: face, left eye, right eye, lips, full nose, chin top line
-//        {feature: "beard", style: "lines"}, //Uses: face, left eye
-//        {feature: "mouth", style: "lines"},
-//        {feature: "mustache", style: "lines"},
-//        {feature: "eyes", style: "lines"},
-//        {feature: "hair", style: "lines"}, //Uses: face, left eye
-//        {feature: "ears", style: "lines"}
-//    ];
-
     setupRaces();
     generateAvatar();
 

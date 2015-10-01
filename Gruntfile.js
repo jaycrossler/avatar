@@ -108,12 +108,12 @@ module.exports = function (grunt) {
         copy: {
             dropbox: {
                 files: [
-                    {expand: true, src: ['build/**'], dest: dropbox_root + 'build'},
-                    {expand: true, src: ['css/**'], dest: dropbox_root + 'css'},
-                    {expand: true, src: ['examples/**'], dest: dropbox_root + 'examples'},
-                    {expand: true, src: ['images/**'], dest: dropbox_root + 'images'},
-                    {expand: true, src: ['js/**'], dest: dropbox_root + 'js'},
-                    {expand: true, src: ['js-libs/**'], dest: dropbox_root + 'js-libs'},
+                    {expand: true, src: ['build/**'], dest: dropbox_root},
+                    {expand: true, src: ['css/**'], dest: dropbox_root},
+                    {expand: true, src: ['examples/**'], dest: dropbox_root},
+                    {expand: true, src: ['images/**'], dest: dropbox_root},
+                    {expand: true, src: ['js/**'], dest: dropbox_root},
+                    {expand: true, src: ['js-libs/**'], dest: dropbox_root},
                     {expand: false, src: ['index.html'], dest: dropbox_root}
                 ]
             }
