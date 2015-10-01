@@ -4,12 +4,9 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //TODO: Have a skull-width and jaw-width, and then combine this with thickness to determine face type
     //TODO: Use age, thickness, and musculature to determine which muscles/lines to draw
 
-    //TODO: Problem with these faces: new Avatar({"rand_seed":263080,"face_shape":"Diamond"}), and new Avatar({rand_seed: 146994, age:38});
-
     //TODO: Add oval decoration
     //TODO: Add descendant page with Procyon
     //TODO: Add a character builder
-    //TODO: Add a python service to build this image headless
     //TODO: Decorations are weird on faces.html
 
     //TODO: Have a shape builder function to standardize and make reusable
@@ -93,7 +90,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             return races;
 
         } else if (option1 == '') {
-            return {details: 'avatar class initialized'};
+//            return {details: 'avatar class initialized'};
 
         } else {
             this.drawOrRedraw(option1, option2, option3);
@@ -1886,6 +1883,6 @@ Avatar.getRaces = function () {
     return new Avatar('get_races');
 };
 Avatar.initializeOptions = function (face_options_basic, human_data_options) {
-    var av_pointer = new Avatar();
+    var av_pointer = new Avatar('');
     av_pointer.initializeOptions(face_options_basic, human_data_options);
 };

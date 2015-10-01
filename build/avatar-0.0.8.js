@@ -1732,7 +1732,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             return races;
 
         } else if (option1 == '') {
-            return {details: 'avatar class initialized'};
+//            return {details: 'avatar class initialized'};
 
         } else {
             this.drawOrRedraw(option1, option2, option3);
@@ -3525,7 +3525,7 @@ Avatar.getRaces = function () {
     return new Avatar('get_races');
 };
 Avatar.initializeOptions = function (face_options_basic, human_data_options) {
-    var av_pointer = new Avatar();
+    var av_pointer = new Avatar('');
     av_pointer.initializeOptions(face_options_basic, human_data_options);
 };;
 (function (AvatarClass) {
