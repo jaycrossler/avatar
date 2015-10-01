@@ -7,7 +7,7 @@ var avatarFiles = [ 'js/avatar-<%= pkg.version %>.js', 'js/avatar-options.js', '
 var raceFiles = [ 'js/races/ogre.js', 'js/races/navi.js', 'js/races/demon.js'];
 var dropbox_root = '/Users/jcrossler/Dropbox/Public/sites/avatar/';
 
-var screenshot_count = 8;
+var screenshot_count = 12;
 var allFiles = libraryFiles.concat(avatarFiles, raceFiles);
 
 function screenshots_list() {
@@ -16,7 +16,7 @@ function screenshots_list() {
         output['avatar_' + i] = {
             options: {
                 url: 'http://localhost:9001/examples/avatar_from_seed.html?seed=' + i + '&hide=true',
-                output: 'images/screenshots/avatar-' + i + '-<%= pkg.version %>'
+                output: 'images/screenshots/<%= pkg.version %>/avatar-seed-' + i
             }
         };
     }
@@ -156,7 +156,7 @@ module.exports = function (grunt) {
                         to: function(){
                             var list = "";
                             for (var i = 1; i <= screenshot_count; i++) {
-                                var name = 'avatar-' + i + '-<%= pkg.version %>.png';
+                                var name = '<%= pkg.version %>/avatar-seed-' + i + '.png';
                                 list += '<img style="width:200px;height:200px" src="'+name+'">\n';
                             }
                             return '<div id="screenshot-list">\n'+list+'</div>';
