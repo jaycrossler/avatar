@@ -3,7 +3,7 @@
 'use strict';
 
 var libraryFiles = ['js-libs/color.js', 'js-libs/colors.min.js', 'js/maths.js', 'js/helpers.js'];
-var avatarFiles = [ 'js/avatar-<%= pkg.version %>.js', 'js/avatar-options.js', 'js/avatar-textures.js', 'js/avatar-lines.js', 'js/avatar-hair.js', 'js/avatar-beard.js'];
+var avatarFiles = [ 'js/avatar.js', 'js/avatar-options.js', 'js/avatar-textures.js', 'js/avatar-lines.js', 'js/avatar-hair.js', 'js/avatar-beard.js'];
 var raceFiles = [ 'js/races/ogre.js', 'js/races/navi.js', 'js/races/demon.js'];
 var dropbox_root = '/Users/jcrossler/Dropbox/Public/sites/avatar/';
 
@@ -45,7 +45,7 @@ module.exports = function (grunt) {
         },
         uglify: {
             options: {
-                banner: '/*! <%= pkg.name %>.js - <%= pkg.name %> <%= grunt.template.today("yyyy-mm-dd") %> */\n',
+                banner: '/*! <%= pkg.name %>.js - <%= pkg.name %>, Minified on <%= grunt.template.today("yyyy-mm-dd") %> */\n',
                 sourceMap: true
             },
             build: {
@@ -121,14 +121,14 @@ module.exports = function (grunt) {
         replace: {
             version: {
                 src: ['js/avatar.js'],
-                dest: 'js/avatar-<%= pkg.version %>.js',
+                overwrite: true,
                 replacements: [
                     {
-                        from: "version = 'X.X.X',",
+                        from: new RegExp("version = '(.*?)',"),
                         to: "version = '<%= pkg.version %>',"
                     },
                     {
-                        from: "summary = 'X',",
+                        from: new RegExp("summary = '(.*?)',"),
                         to: "summary = '<%= pkg.summary %>',"
                     }
                 ]
