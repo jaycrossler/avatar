@@ -17,18 +17,22 @@ $(document).ready(function () {
 
     //Build a new avatar and set it up
     av1 = new Avatar({rand_seed: seed, age: 1}, {canvas_name: 'demoCanvas'});
-    av1.registerEvent('face', function (avatar) {
-        seed = Helpers.randInt(300000);
+    function registerClick() {
+        av1.unregisterEvent('all');
+        av1.registerEvent('face', function (avatar) {
+            seed = Helpers.randInt(300000);
 
-        var text = avatar.face_options.name || "Avatar";
-        var age_of = avatar.face_options.age || 20;
-        text += " : new Avatar({rand_seed: " + seed + "});";
-        $('#avatar_name').text(text);
+            var text = avatar.face_options.name || "Avatar";
+            var age_of = avatar.face_options.age || 20;
+            text += " : new Avatar({rand_seed: " + seed + "});";
+            $('#avatar_name').text(text);
 
-        av1.face_options = null;
-        av1.drawOrRedraw({rand_seed: seed, age: age_of});
+            av1.face_options = null;
+            av1.drawOrRedraw({rand_seed: seed, age: age_of});
 
-    }, 'click');
+        }, 'click');
+    }
+    registerClick();
 
     function draw_next_age() {
         var age_of = av1.face_options.age || 20;
@@ -36,6 +40,7 @@ $(document).ready(function () {
 
         age_of++;
         av1 = new Avatar({rand_seed: seed, age: age_of}, {canvas_name: 'demoCanvas', clear_before_draw:true});
+        registerClick();
 
         setTimeout(draw_next_age, 300);
     }

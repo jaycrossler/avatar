@@ -1,4 +1,4 @@
-/*! avatar ( and supporting libraries) - v0.0.7 - 2015-09-30 */// Copyright (c) 2008-2013, Andrew Brehaut, Tim Baumann, Matt Wilson,
+/*! avatar ( and supporting libraries) - v0.0.7 - 2015-10-01 */// Copyright (c) 2008-2013, Andrew Brehaut, Tim Baumann, Matt Wilson,
 //                          Simon Heimler, Michel Vielmetter
 //
 // All rights reserved.
@@ -1289,7 +1289,7 @@ Helpers.nameOfUSState = function (code, withComma) {
 };
 Helpers.getQueryVariable = function (variable) {
     var query = window.location.search.substring(1);
-    var output = query;
+    var output = false;
     var vars = query.split("&");
     for (var i = 0; i < vars.length; i++) {
         var pair = vars[i].split("=");
@@ -1816,7 +1816,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
             this.randomSetSeed(rand_seed); //Reset the random seed after textures are generated
 
-            if (stage_options.clear_before_draw) this.stage.removeAllChildren();
+            if (stage_options && stage_options.clear_before_draw) this.stage.removeAllChildren();
 
             var face = this.buildFace();
             this.drawOnStage(face, this.stage);

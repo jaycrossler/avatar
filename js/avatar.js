@@ -177,7 +177,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
             this.randomSetSeed(rand_seed); //Reset the random seed after textures are generated
 
-            if (stage_options.clear_before_draw) this.stage.removeAllChildren();
+            if (stage_options && stage_options.clear_before_draw) this.stage.removeAllChildren();
 
             var face = this.buildFace();
             this.drawOnStage(face, this.stage);

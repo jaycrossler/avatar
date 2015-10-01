@@ -1,5 +1,6 @@
 var seed;
 var av;
+var height;
 
 function getMousePos(canvas, evt) {
     var rect = canvas.getBoundingClientRect();
@@ -10,22 +11,32 @@ function getMousePos(canvas, evt) {
 }
 
 $(document).ready(function () {
+    height = Helpers.getQueryVariable("height") || 400;
+    var width = parseInt(height * .8);
+
     var $canvas = $("<canvas>")
-        .attr({width: 320, height: 400, id: 'avatar'})
-        .css({width: 320, height: 400})
+        .attr({width: width, height: height, id: 'avatar'})
+        .css({width: width, height: height})
         .appendTo($('#avatar_holder'));
 
     var canvas = $canvas[0];
+    var $avatar_name = $('#avatar_name');
+    var $seed_number = $("#seed_number");
 
     function draw(e) {
         var pos = getMousePos(canvas, e);
-        $('#avatar_name').text("x=" + pos.x + " : y=" + pos.y);
+        $avatar_name.text("x=" + pos.x + " : y=" + pos.y);
     }
 
-    canvas.addEventListener('mousemove', draw, false);
-
-
-    var $seed_number = $("#seed_number");
+    var hide_title = Helpers.getQueryVariable("hide") || false;
+    if (hide_title) {
+        $avatar_name.hide();
+        $seed_number.hide();
+        $("#seed_number_label").hide();
+        $("body").css({margin: '0px'});
+    } else {
+        canvas.addEventListener('mousemove', draw, false);
+    }
     $seed_number.val(Helpers.getQueryVariable("seed"));
 
     function generateAvatar() {
@@ -39,7 +50,7 @@ $(document).ready(function () {
             av.face_options = null;
             av.erase();
         }
-        av = new Avatar({rand_seed: seed}, {height: 300, canvas_name: $canvas});
+        av = new Avatar({rand_seed: seed}, {canvas_name: $canvas, x: 0});
         av.unregisterEvent('all');
         av.registerEvent('face', function (avatar) {
             seed = parseInt(Math.random() * 300000);
@@ -50,11 +61,8 @@ $(document).ready(function () {
 
             var text = avatar.face_options.name || "Avatar";
             text += " : new Avatar({rand_seed: " + avatar.initialization_seed + "});";
-            $('#avatar_name').text(text);
-
+            $avatar_name.text(text);
         });
-
-
     }
 
     $seed_number.on('keypress', generateAvatar);
@@ -63,7 +71,7 @@ $(document).ready(function () {
     var AvatarRace = new Avatar('get_linked_template', 'Human');
 
     AvatarRace.rendering_order = [
-        {decoration: "box-behind"},
+//        {decoration: "box-behind"},
         {feature: "shoulders", style: "lines"},
         {feature: "neck", style: "lines"},
         {feature: "face", style: "lines"},

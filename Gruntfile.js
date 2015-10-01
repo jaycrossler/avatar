@@ -7,13 +7,26 @@ var avatarFiles = [ 'js/avatar-<%= pkg.version %>.js', 'js/avatar-options.js', '
 var raceFiles = [ 'js/races/ogre.js', 'js/races/navi.js', 'js/races/demon.js'];
 var dropbox_root = '/Users/jcrossler/Dropbox/Public/sites/avatar/';
 
-
+var screenshot_count = 8;
 var allFiles = libraryFiles.concat(avatarFiles, raceFiles);
+
+function screenshots_list() {
+    var output = {};
+    for (var i = 1; i <= screenshot_count; i++) {
+        output['avatar_' + i] = {
+            options: {
+                url: 'http://localhost:9001/examples/avatar_from_seed.html?seed=' + i + '&hide=true',
+                output: 'images/screenshots/avatar-' + i + '-<%= pkg.version %>'
+            }
+        };
+    }
+    return output;
+}
 
 module.exports = function (grunt) {
 
     // Project configuration.
-    grunt.initConfig({
+    var config = {
         pkg: grunt.file.readJSON('package.json'),
         concat: {
             options: {
@@ -88,20 +101,19 @@ module.exports = function (grunt) {
         connect: {
             server: {
                 options: {
-                    port: 9001,
-                    keepalive: true
+                    port: 9001
                 }
             }
         },
         copy: {
             dropbox: {
                 files: [
-                    {expand: true, src: ['build/**'], dest: dropbox_root+ 'build'},
-                    {expand: true, src: ['css/**'], dest: dropbox_root+ 'css'},
-                    {expand: true, src: ['examples/**'], dest: dropbox_root+ 'examples'},
-                    {expand: true, src: ['images/**'], dest: dropbox_root+ 'images'},
-                    {expand: true, src: ['js/**'], dest: dropbox_root+ 'js'},
-                    {expand: true, src: ['js-libs/**'], dest: dropbox_root+ 'js-libs'},
+                    {expand: true, src: ['build/**'], dest: dropbox_root + 'build'},
+                    {expand: true, src: ['css/**'], dest: dropbox_root + 'css'},
+                    {expand: true, src: ['examples/**'], dest: dropbox_root + 'examples'},
+                    {expand: true, src: ['images/**'], dest: dropbox_root + 'images'},
+                    {expand: true, src: ['js/**'], dest: dropbox_root + 'js'},
+                    {expand: true, src: ['js-libs/**'], dest: dropbox_root + 'js-libs'},
                     {expand: false, src: ['index.html'], dest: dropbox_root}
                 ]
             }
@@ -134,9 +146,30 @@ module.exports = function (grunt) {
                         to: '<p id="description" class="lead"><%= pkg.description %></p>'
                     }
                 ]
+            },
+            screenshots: {  //TODO: Get this working with all images in directory, not always current version
+                src: ['images/screenshots/index.tpl.html'],
+                dest: ['images/screenshots/index.html'],
+                replacements: [
+                    {
+                        from: '<div id="screenshot-list"></div>',
+                        to: function(){
+                            var list = "";
+                            for (var i = 1; i <= screenshot_count; i++) {
+                                var name = 'avatar-' + i + '-<%= pkg.version %>.png';
+                                list += '<img style="width:200px;height:200px" src="'+name+'">\n';
+                            }
+                            return '<div id="screenshot-list">\n'+list+'</div>';
+                        }
+                    }
+                ]
             }
         }
-    });
+    };
+    grunt.initConfig(config);
+    config.screenshots = screenshots_list();
+
+    grunt.loadTasks('tasks');
 
     // Load the plugin that provides the tasks.
     grunt.loadNpmTasks('grunt-contrib-uglify');
@@ -153,6 +186,7 @@ module.exports = function (grunt) {
     grunt.registerTask('quick', ['concat:quick', 'notify:quick']);
     grunt.registerTask('server', ['concat:quick', 'notify:quick', 'connect']);
     grunt.registerTask('dropbox', ['copy:dropbox']);
+    grunt.registerTask('shots', ['connect', 'screenshots','replace:screenshots']);
 
     grunt.task.run('notify_hooks');
 
