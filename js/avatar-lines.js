@@ -634,7 +634,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'eyes', renderer: fu
     });
     right_eyesocket.x = f.eyes.right_x;
     right_eyesocket.y = f.eyes.y + (socket_y_offset * f.thick_unit);
-    ;
+
     right_eyesocket.scaleY = .6;
     shapes.push(right_eyesocket);
 
@@ -789,12 +789,14 @@ new Avatar('add_render_function', {style: 'lines', feature: 'eyes', renderer: fu
     lines.push({name: 'left eyebrow top set', line: left_eyebrow_line_top, shape: left_eyebrow_top, scale_x: width_eye, scale_y: height_eye, x: x, y: y, rotation: rotation_amount + eyebrow_rotation, alpha: eyebrow_transparency});
     shapes = shapes.concat(left_eyebrow_top);
 
-    inner_point_x = a.comparePoints(left_eyebrow_line_top, 'x', 'lowest');
+    inner_point_x = a.comparePoints(left_eyebrow_line_top, 'x', 'highest');
     inner_point_y = a.comparePoints(left_eyebrow_line_top, 'y', 'middle');
     inner_point_x = x + (inner_point_x * width_eyebrow / 2 / eye_radius);
     inner_point_y = y + (inner_point_y * height_eyebrow / 2 / eye_radius);
     a.namePoint(avatar, 'left eyebrow innermost', {x: inner_point_x, y: inner_point_y});
 
+    var eyebrow_y = inner_point_y;
+    var eyebrow_x = inner_point_x;
 
     x = zone.left_x + (f.thick_unit * 4);
     y = zone.y - (f.thick_unit * 8);
@@ -833,6 +835,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'eyes', renderer: fu
     lines.push({name: 'left eye round', line: left_eye_line, shape: left_eye_round, scale_x: width_eye, scale_y: height_eye, x: x, y: y});
     shapes.push(left_eye_round);
 
+    a.namePoint(avatar, 'left eye center', {x: x, y: y});
 
     zone = f.eyes.pupil;
     x = zone.left_x + (f.thick_unit * iris_side_movement);
@@ -906,6 +909,10 @@ new Avatar('add_render_function', {style: 'lines', feature: 'eyes', renderer: fu
     inner_point_y = y + (inner_point_y * height_eyebrow / 2 / eye_radius);
     a.namePoint(avatar, 'right eyebrow innermost', {x: inner_point_x, y: inner_point_y});
 
+    eyebrow_x += inner_point_x;
+    a.namePoint(avatar, 'eyebrow midpoint', {x: (eyebrow_x/2), y: eyebrow_y});;
+
+
     x = zone.right_x - (f.thick_unit * 4);
     y = zone.y - (f.thick_unit * 8);
     var right_eyebrow_line_inside = a.transformShapeLine({type: 'reverse', direction: 'horizontal', axis: 0}, face_options, left_eyebrow_line_inside);
@@ -942,6 +949,8 @@ new Avatar('add_render_function', {style: 'lines', feature: 'eyes', renderer: fu
     right_eye_round.rotation = -rotation_amount;
     lines.push({name: 'right eye round', line: right_eye_line, shape: right_eye_round, scale_x: width_eye, scale_y: height_eye, x: x, y: y, rotation: -rotation_amount});
     shapes.push(right_eye_round);
+
+    a.namePoint(avatar, 'right eye center', {x: x, y: y});
 
 
     zone = f.eyes.pupil;

@@ -1,11 +1,12 @@
 var content_pack_data = {
-    image: 'woman-eyes-collection-vector-illustration-8573624.jpg',
+    image: '../js/content_packs/female_eyes_1/woman-eyes-collection-vector-illustration-8573624.jpg',
     frames: [
-        {name: 'hazel eyes with medium lashes', x: 39, y: 58, width: 580, height: 179, data: {},
+        {name: 'hazel eyes with medium lashes', x: 39, y: 58, width: 617, height: 194, filter:{},
             coordinates: [
                 {point: 'left eye center', x: 169, y: 180},
                 {point: 'right eye center', x: 507, y: 180},
-                {point: 'left eyebrow inner', x: 292, y: 116}
+                {point: 'eyebrow midpoint', x:359, y: 119},
+                {point: 'left eyebrow innermost', x: 292, y: 116}
             ]
         }
     ],
@@ -15,11 +16,9 @@ var content_pack_data = {
 };
 
 new Avatar('register_content_pack', 'female_eyes_1', {
-    style: 'vector', replace_renderers: ['eyes'], only_use_this: false,
-    filter: {gender: 'Female'},
-    renderer: function (face_zones, avatar) {
-        //TODO: Should this override or integrate with custom renderer?
-    },
+    style: 'lines', replace_features: ['eyes'], use_frequency: 0.5, filter: {gender: 'Female'},
+//    custom_renderer: function (face_zones, avatar, pack, frame) {},
+
     data: content_pack_data
 });
 
