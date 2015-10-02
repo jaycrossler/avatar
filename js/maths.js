@@ -94,3 +94,32 @@ maths.hexColorToRGBA = function (color, transparency) {
     transparency = transparency || 1;
     return "rgba(" + rgb.R + "," + rgb.G + "," + rgb.B + "," + transparency + ")";
 };
+maths.buildTransformFromTriangleToTriangle = function (sourceTriangle, destTriangle) {
+    //Evolved from http://stackoverflow.com/questions/1114257/transform-a-triangle-to-another-triangle
+    var x11 = sourceTriangle[0].x;
+    var x12 = sourceTriangle[0].y;
+    var x21 = sourceTriangle[1].x;
+    var x22 = sourceTriangle[1].y;
+    var x31 = sourceTriangle[2].x;
+    var x32 = sourceTriangle[2].y;
+    var y11 = destTriangle[0].x;
+    var y12 = destTriangle[0].y;
+    var y21 = destTriangle[1].x;
+    var y22 = destTriangle[1].y;
+    var y31 = destTriangle[2].x;
+    var y32 = destTriangle[2].y;
+
+    var a1 = ((y11 - y21) * (x12 - x32) - (y11 - y31) * (x12 - x22)) /
+        ((x11 - x21) * (x12 - x32) - (x11 - x31) * (x12 - x22));
+    var a2 = ((y11 - y21) * (x11 - x31) - (y11 - y31) * (x11 - x21)) /
+        ((x12 - x22) * (x11 - x31) - (x12 - x32) * (x11 - x21));
+    var a3 = y11 - a1 * x11 - a2 * x12;
+    var a4 = ((y12 - y22) * (x12 - x32) - (y12 - y32) * (x12 - x22)) /
+        ((x11 - x21) * (x12 - x32) - (x11 - x31) * (x12 - x22));
+    var a5 = ((y12 - y22) * (x11 - x31) - (y12 - y32) * (x11 - x21)) /
+        ((x12 - x22) * (x11 - x31) - (x12 - x32) * (x11 - x21));
+    var a6 = y12 - a4 * x11 - a5 * x12;
+
+    //Return a matrix in a format that can be used by canvas.context.transform(m[0],m[1],m[2],m[3],m[4],m[5])
+    return [a1, a4, a2, a5, a3, a6];
+};

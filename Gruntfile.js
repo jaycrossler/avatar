@@ -3,12 +3,13 @@
 'use strict';
 
 var libraryFiles = ['js-libs/color.js', 'js-libs/colors.min.js', 'js/maths.js', 'js/helpers.js'];
-var avatarFiles = [ 'js/avatar.js', 'js/avatar-options.js', 'js/avatar-textures.js', 'js/avatar-lines.js', 'js/avatar-hair.js', 'js/avatar-beard.js'];
+var avatarFiles = [ 'js/avatar.js', 'js/avatar-options.js', 'js/avatar-textures.js', 'js/avatar-lines.js', 'js/avatar-hair.js', 'js/avatar-beard.js', 'js/avatar-content-packs.js'];
+var contentFiles = ['js/content_packs/female_eyes_1/manifest.js'];
 var raceFiles = [ 'js/races/ogre.js', 'js/races/navi.js', 'js/races/demon.js'];
 var dropbox_root = '/Users/jcrossler/Dropbox/Public/sites/avatar/';
 
 var screenshot_count = 12;
-var allFiles = libraryFiles.concat(avatarFiles, raceFiles);
+var allFiles = libraryFiles.concat(avatarFiles, contentFiles, raceFiles);
 
 function screenshots_list(version) {
     var output = {};
@@ -16,7 +17,7 @@ function screenshots_list(version) {
         output['avatar_' + i] = {
             options: {
                 url: 'http://localhost:9001/examples/avatar_from_seed.html?seed=' + i + '&hide=true',
-                output: 'images/screenshots/'+version+'/avatar-seed-' + i
+                output: 'images/screenshots/' + version + '/avatar-seed-' + i
             }
         };
     }
@@ -54,7 +55,7 @@ module.exports = function (grunt) {
             }
         },
         jasmine: {
-            avatar: {
+            build: {
                 src: 'build/avatar.min.js',
                 options: {
                     specs: 'tests/*.spec.js',
@@ -157,18 +158,18 @@ module.exports = function (grunt) {
                 replacements: [
                     {
                         from: '<div id="screenshot-list"></div>',
-                        to: function(){
+                        to: function () {
                             var versions = ['0.0.8', '0.0.7'];
                             var list = "";
                             for (var v = 0; v < versions.length; v++) {
                                 var version = versions[v];
-                                list += '<p><b>Screenshots of Avatars from Version '+version+':</b></p>\n';
+                                list += '<p><b>Screenshots of Avatars from Version ' + version + ':</b></p>\n';
                                 for (var i = 1; i <= screenshot_count; i++) {
                                     var name = version + '/avatar-seed-' + i + '.png';
                                     list += '<img style="width:200px;height:200px" src="' + name + '">\n';
                                 }
                             }
-                            return '<div id="screenshot-list">\n'+list+'</div>';
+                            return '<div id="screenshot-list">\n' + list + '</div>';
                         }
                     }
                 ]
@@ -191,11 +192,11 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-contrib-copy');
 
     // Default task(s).
-    grunt.registerTask('default', ['replace:index', 'replace:version', 'concat:build', 'uglify:build', 'jasmine', 'notify:build', 'connect', 'screenshots','replace:screenshots']);
-    grunt.registerTask('quick', ['concat:quick', 'notify:quick']);
+    grunt.registerTask('default', ['replace:index', 'replace:version', 'concat:build', 'uglify:build', 'jasmine', 'notify:build', 'connect', 'screenshots', 'replace:screenshots']);
+    grunt.registerTask('quick', ['concat:quick', 'notify:quick', 'jasmine']);
     grunt.registerTask('server', ['concat:quick', 'notify:quick', 'connect']);
     grunt.registerTask('dropbox', ['copy:dropbox']);
-    grunt.registerTask('shots', ['connect', 'screenshots','replace:screenshots']);
+    grunt.registerTask('shots', ['connect', 'screenshots', 'replace:screenshots']);
 
     grunt.task.run('notify_hooks');
 

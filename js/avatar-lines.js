@@ -1184,7 +1184,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'wrinkles', renderer
         var x, y, width;
         var alpha = .2;
 
-        if (face_options.gender == 'female') {
+        if (face_options.gender == 'Female') {
             alpha /= 3;
         }
 
@@ -1415,7 +1415,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'wrinkles', renderer
         var curve_thick1 = alpha_widths[0] * f.thick_unit;
         var curve_thick3 = alpha_widths[2] * f.thick_unit;
 
-        if (face_options.gender == 'female') {
+        if (face_options.gender == 'Female') {
             curve_thick1 /= 4;
             curve_thick3 /= 4;
         }

@@ -57,6 +57,10 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         this.registered_points = [];
         this.textures = [];
 
+        return this.initialize(option1, option2, option3);
+    }
+    AvatarClass.prototype.initialize = function(option1, option2, option3) {
+
         if (option1 == 'get_linked_template') {
             option2 = option2 || getFirstRaceFromData();
             return this.data[option2] || {error: 'race does not exist'};
@@ -80,7 +84,18 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             return this._private_functions;
 
         } else if (option1 == 'set_data_template') {
+            if (!_.isString(option2)) {
+                throw "Name of data template missing"
+            }
+            if (!_.isObject(option3)) {
+                throw "Detail object of data template pack missing"
+            }
             this.data[option2] = option3;
+
+        } else if (option1 == 'register_content_pack') {
+            if (this._private_functions.registerContentPack) {
+                this._private_functions.registerContentPack(this, option2, option3);
+            }
 
         } else if (option1 == 'get_races') {
             var races = [];
@@ -90,15 +105,16 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             return races;
 
         } else if (option1 == '') {
-//            return {details: 'avatar class initialized'};
+            //NOTE: avatar class initialized
 
         } else {
             this.drawOrRedraw(option1, option2, option3);
         }
-    }
+    };
 
     AvatarClass.prototype.renderers = [];
     AvatarClass.prototype.data = _data;
+    AvatarClass.prototype.content_packs = {};
 
     AvatarClass.prototype.initializeOptions = function (face_options_basic, human_data_options) {
         _face_options = face_options_basic;
@@ -412,38 +428,38 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //================
     //Private functions
     var color_lookup_object = {
-        'Midnight Black':'#090806',
-        'Off Black':'#2c222b',
-        'Darkest Brown':'#3b302a',
-        'Medium Dark Brown':'4e433f',
-        'Chestnut Brown':'#504444',
-        'Light Chestnut Brown':'#6a4e42',
-        'Dark Golden Brown':'#554838',
-        'Light Golden Brown':'#a78368',
-        'Dark Honey Blond':'#b89778',
-        'Bleached Blond':'#dcd0ba',
-        'Light Ash Blond':'#debc99',
-        'Light Ash Brown':'#977961',
-        'Lightest Blond':'#e6cea8',
-        'Pale Golden Blond':'#e5c8a8',
-        'Strawberry Blond':'#a56b46',
-        'Light Auburn':'#91553d',
-        'Dark Auburn':'#533d32',
-        'Darkest Gray':'#71635a',
-        'Medium Gray':'#b7a69e',
-        'Light Gray':'#d6c4c2',
-        'White Blond':'#fff5e1',
-        'Platinum Blond':'#cbbfb1',
-        'Russet Red':'#8d4a42',
-        'Terra Cotta':'#b6523a',
-        'Toasted Wheat':'#d8c078',
-        'Melted Butter':'#e3cc88',
-        'Wheat Milk':'#f2da91',
-        'Cake Two':'#f2e1ae',
-        'Shoe Brown':'#664f3c',
-        'Cookie':'#8c684a',
-        'Tree Bark':'#332a22',
-        'Poor Jean':'#f2e7c7'
+        'Midnight Black': '#090806',
+        'Off Black': '#2c222b',
+        'Darkest Brown': '#3b302a',
+        'Medium Dark Brown': '4e433f',
+        'Chestnut Brown': '#504444',
+        'Light Chestnut Brown': '#6a4e42',
+        'Dark Golden Brown': '#554838',
+        'Light Golden Brown': '#a78368',
+        'Dark Honey Blond': '#b89778',
+        'Bleached Blond': '#dcd0ba',
+        'Light Ash Blond': '#debc99',
+        'Light Ash Brown': '#977961',
+        'Lightest Blond': '#e6cea8',
+        'Pale Golden Blond': '#e5c8a8',
+        'Strawberry Blond': '#a56b46',
+        'Light Auburn': '#91553d',
+        'Dark Auburn': '#533d32',
+        'Darkest Gray': '#71635a',
+        'Medium Gray': '#b7a69e',
+        'Light Gray': '#d6c4c2',
+        'White Blond': '#fff5e1',
+        'Platinum Blond': '#cbbfb1',
+        'Russet Red': '#8d4a42',
+        'Terra Cotta': '#b6523a',
+        'Toasted Wheat': '#d8c078',
+        'Melted Butter': '#e3cc88',
+        'Wheat Milk': '#f2da91',
+        'Cake Two': '#f2e1ae',
+        'Shoe Brown': '#664f3c',
+        'Cookie': '#8c684a',
+        'Tree Bark': '#332a22',
+        'Poor Jean': '#f2e7c7'
     };
 
     function colorFromName(colorName, returnAsBrehaultObject, ifNotFound) {
@@ -458,6 +474,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
         return color;
     }
+
     function getFirstRaceFromData() {
         for (key in _data) {
             //wonky way to get first key
@@ -1099,7 +1116,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             for (var d = 0; d < existing_list.length; d++) {
                 var current_point = existing_list[d];
                 var next_point;
-                if (d < existing_list.length-1) {
+                if (d < existing_list.length - 1) {
                     next_point = existing_list[d + 1];
                 } else {
                     next_point = existing_list[d];
@@ -1121,7 +1138,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
                 }
             }
             if (result == null) {
-                result = existing_list[existing_list.length-1].y;
+                result = existing_list[existing_list.length - 1].y;
             }
 
         } else {

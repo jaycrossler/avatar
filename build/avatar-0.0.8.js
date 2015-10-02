@@ -1,4 +1,4 @@
-/*! avatar ( and supporting libraries) - v0.0.8 - 2015-10-01 */// Copyright (c) 2008-2013, Andrew Brehaut, Tim Baumann, Matt Wilson,
+/*! avatar ( and supporting libraries) - v0.0.8 - 2015-10-02 */// Copyright (c) 2008-2013, Andrew Brehaut, Tim Baumann, Matt Wilson,
 //                          Simon Heimler, Michel Vielmetter
 //
 // All rights reserved.
@@ -952,6 +952,35 @@ maths.hexColorToRGBA = function (color, transparency) {
     }
     transparency = transparency || 1;
     return "rgba(" + rgb.R + "," + rgb.G + "," + rgb.B + "," + transparency + ")";
+};
+maths.buildTransformFromTriangleToTriangle = function (sourceTriangle, destTriangle) {
+    //Evolved from http://stackoverflow.com/questions/1114257/transform-a-triangle-to-another-triangle
+    var x11 = sourceTriangle[0].x;
+    var x12 = sourceTriangle[0].y;
+    var x21 = sourceTriangle[1].x;
+    var x22 = sourceTriangle[1].y;
+    var x31 = sourceTriangle[2].x;
+    var x32 = sourceTriangle[2].y;
+    var y11 = destTriangle[0].x;
+    var y12 = destTriangle[0].y;
+    var y21 = destTriangle[1].x;
+    var y22 = destTriangle[1].y;
+    var y31 = destTriangle[2].x;
+    var y32 = destTriangle[2].y;
+
+    var a1 = ((y11 - y21) * (x12 - x32) - (y11 - y31) * (x12 - x22)) /
+        ((x11 - x21) * (x12 - x32) - (x11 - x31) * (x12 - x22));
+    var a2 = ((y11 - y21) * (x11 - x31) - (y11 - y31) * (x11 - x21)) /
+        ((x12 - x22) * (x11 - x31) - (x12 - x32) * (x11 - x21));
+    var a3 = y11 - a1 * x11 - a2 * x12;
+    var a4 = ((y12 - y22) * (x12 - x32) - (y12 - y32) * (x12 - x22)) /
+        ((x11 - x21) * (x12 - x32) - (x11 - x31) * (x12 - x22));
+    var a5 = ((y12 - y22) * (x11 - x31) - (y12 - y32) * (x11 - x21)) /
+        ((x12 - x22) * (x11 - x31) - (x12 - x32) * (x11 - x21));
+    var a6 = y12 - a4 * x11 - a5 * x12;
+
+    //Return a matrix in a format that can be used by canvas.context.transform(m[0],m[1],m[2],m[3],m[4],m[5])
+    return [a1, a4, a2, a5, a3, a6];
 };;
 //--------------------------------------------
 // Library of commonly used generic functions.
@@ -1643,12 +1672,9 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //TODO: Have a skull-width and jaw-width, and then combine this with thickness to determine face type
     //TODO: Use age, thickness, and musculature to determine which muscles/lines to draw
 
-    //TODO: Problem with these faces: new Avatar({"rand_seed":263080,"face_shape":"Diamond"}), and new Avatar({rand_seed: 146994, age:38});
-
     //TODO: Add oval decoration
     //TODO: Add descendant page with Procyon
     //TODO: Add a character builder
-    //TODO: Add a python service to build this image headless
     //TODO: Decorations are weird on faces.html
 
     //TODO: Have a shape builder function to standardize and make reusable
@@ -1699,6 +1725,10 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         this.registered_points = [];
         this.textures = [];
 
+        return this.initialize(option1, option2, option3);
+    }
+    AvatarClass.prototype.initialize = function(option1, option2, option3) {
+
         if (option1 == 'get_linked_template') {
             option2 = option2 || getFirstRaceFromData();
             return this.data[option2] || {error: 'race does not exist'};
@@ -1722,7 +1752,18 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             return this._private_functions;
 
         } else if (option1 == 'set_data_template') {
+            if (!_.isString(option2)) {
+                throw "Name of data template missing"
+            }
+            if (!_.isObject(option3)) {
+                throw "Detail object of data template pack missing"
+            }
             this.data[option2] = option3;
+
+        } else if (option1 == 'register_content_pack') {
+            if (this._private_functions.registerContentPack) {
+                this._private_functions.registerContentPack(this, option2, option3);
+            }
 
         } else if (option1 == 'get_races') {
             var races = [];
@@ -1732,15 +1773,16 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             return races;
 
         } else if (option1 == '') {
-//            return {details: 'avatar class initialized'};
+            //NOTE: avatar class initialized
 
         } else {
             this.drawOrRedraw(option1, option2, option3);
         }
-    }
+    };
 
     AvatarClass.prototype.renderers = [];
     AvatarClass.prototype.data = _data;
+    AvatarClass.prototype.content_packs = {};
 
     AvatarClass.prototype.initializeOptions = function (face_options_basic, human_data_options) {
         _face_options = face_options_basic;
@@ -2054,38 +2096,38 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //================
     //Private functions
     var color_lookup_object = {
-        'Midnight Black':'#090806',
-        'Off Black':'#2c222b',
-        'Darkest Brown':'#3b302a',
-        'Medium Dark Brown':'4e433f',
-        'Chestnut Brown':'#504444',
-        'Light Chestnut Brown':'#6a4e42',
-        'Dark Golden Brown':'#554838',
-        'Light Golden Brown':'#a78368',
-        'Dark Honey Blond':'#b89778',
-        'Bleached Blond':'#dcd0ba',
-        'Light Ash Blond':'#debc99',
-        'Light Ash Brown':'#977961',
-        'Lightest Blond':'#e6cea8',
-        'Pale Golden Blond':'#e5c8a8',
-        'Strawberry Blond':'#a56b46',
-        'Light Auburn':'#91553d',
-        'Dark Auburn':'#533d32',
-        'Darkest Gray':'#71635a',
-        'Medium Gray':'#b7a69e',
-        'Light Gray':'#d6c4c2',
-        'White Blond':'#fff5e1',
-        'Platinum Blond':'#cbbfb1',
-        'Russet Red':'#8d4a42',
-        'Terra Cotta':'#b6523a',
-        'Toasted Wheat':'#d8c078',
-        'Melted Butter':'#e3cc88',
-        'Wheat Milk':'#f2da91',
-        'Cake Two':'#f2e1ae',
-        'Shoe Brown':'#664f3c',
-        'Cookie':'#8c684a',
-        'Tree Bark':'#332a22',
-        'Poor Jean':'#f2e7c7'
+        'Midnight Black': '#090806',
+        'Off Black': '#2c222b',
+        'Darkest Brown': '#3b302a',
+        'Medium Dark Brown': '4e433f',
+        'Chestnut Brown': '#504444',
+        'Light Chestnut Brown': '#6a4e42',
+        'Dark Golden Brown': '#554838',
+        'Light Golden Brown': '#a78368',
+        'Dark Honey Blond': '#b89778',
+        'Bleached Blond': '#dcd0ba',
+        'Light Ash Blond': '#debc99',
+        'Light Ash Brown': '#977961',
+        'Lightest Blond': '#e6cea8',
+        'Pale Golden Blond': '#e5c8a8',
+        'Strawberry Blond': '#a56b46',
+        'Light Auburn': '#91553d',
+        'Dark Auburn': '#533d32',
+        'Darkest Gray': '#71635a',
+        'Medium Gray': '#b7a69e',
+        'Light Gray': '#d6c4c2',
+        'White Blond': '#fff5e1',
+        'Platinum Blond': '#cbbfb1',
+        'Russet Red': '#8d4a42',
+        'Terra Cotta': '#b6523a',
+        'Toasted Wheat': '#d8c078',
+        'Melted Butter': '#e3cc88',
+        'Wheat Milk': '#f2da91',
+        'Cake Two': '#f2e1ae',
+        'Shoe Brown': '#664f3c',
+        'Cookie': '#8c684a',
+        'Tree Bark': '#332a22',
+        'Poor Jean': '#f2e7c7'
     };
 
     function colorFromName(colorName, returnAsBrehaultObject, ifNotFound) {
@@ -2100,6 +2142,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
         return color;
     }
+
     function getFirstRaceFromData() {
         for (key in _data) {
             //wonky way to get first key
@@ -2741,7 +2784,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             for (var d = 0; d < existing_list.length; d++) {
                 var current_point = existing_list[d];
                 var next_point;
-                if (d < existing_list.length-1) {
+                if (d < existing_list.length - 1) {
                     next_point = existing_list[d + 1];
                 } else {
                     next_point = existing_list[d];
@@ -2763,7 +2806,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
                 }
             }
             if (result == null) {
-                result = existing_list[existing_list.length-1].y;
+                result = existing_list[existing_list.length - 1].y;
             }
 
         } else {
@@ -5041,7 +5084,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'wrinkles', renderer
         var x, y, width;
         var alpha = .2;
 
-        if (face_options.gender == 'female') {
+        if (face_options.gender == 'Female') {
             alpha /= 3;
         }
 
@@ -5272,7 +5315,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'wrinkles', renderer
         var curve_thick1 = alpha_widths[0] * f.thick_unit;
         var curve_thick3 = alpha_widths[2] * f.thick_unit;
 
-        if (face_options.gender == 'female') {
+        if (face_options.gender == 'Female') {
             curve_thick1 /= 4;
             curve_thick3 /= 4;
         }
@@ -6567,6 +6610,50 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mustache', renderer
 
     return shapes;
 }});
+;
+(function (Avatar, net, maths) {
+    //TODO: Have textures be removed based on face_options modified
+
+    var a = new Avatar('get_private_functions');
+
+    //-----------------------------
+    //Adding Content Pack
+    a.registerContentPack = function (avatar, name, pack_data) {
+        if (!_.isString(name)) {
+            throw "Name of content pack missing"
+        }
+        if (!_.isObject(pack_data)) {
+            throw "Detail object of content pack missing"
+        }
+        avatar.content_packs[name] = _.extend({}, avatar.content_packs[name], pack_data);
+    };
+
+})(Avatar, net, maths);;
+var content_pack_data = {
+    image: 'woman-eyes-collection-vector-illustration-8573624.jpg',
+    frames: [
+        {name: 'hazel eyes with medium lashes', x: 39, y: 58, width: 580, height: 179, data: {},
+            coordinates: [
+                {point: 'left eye center', x: 169, y: 180},
+                {point: 'right eye center', x: 507, y: 180},
+                {point: 'left eyebrow inner', x: 292, y: 116}
+            ]
+        }
+    ],
+    animations: {},
+    removeBackgroundColor: 'white',
+    removeBackgroundNoise: 20
+};
+
+new Avatar('register_content_pack', 'female_eyes_1', {
+    style: 'vector', replace_renderers: ['eyes'], only_use_this: false,
+    filter: {gender: 'Female'},
+    renderer: function (face_zones, avatar) {
+        //TODO: Should this override or integrate with custom renderer?
+    },
+    data: content_pack_data
+});
+
 ;
 var ogreTemplate = new Avatar('copy_data_template', 'Human');
 
