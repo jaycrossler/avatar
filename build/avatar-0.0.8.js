@@ -1907,15 +1907,6 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         var race = this.face_options.race || getFirstRaceFromData();
         return _data[race] || _data[getFirstRaceFromData()];
     };
-    AvatarClass.prototype.removeFromStage = function () {
-        if (this.stage) {
-            if (this.faceShapeCollection) {
-                this.faceShapeCollection.removeAllChildren();
-                this.faceShapeCollection.visible = false;
-                this.stage.update();
-            }
-        }
-    };
     AvatarClass.prototype.drawOnStage = function (face, stage) {
         stage.addChild(face);
         stage.update();
@@ -1988,6 +1979,29 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         }
     }
 
+    function find_renderer(avatar, layer) {
+        var render_layer = _.find(avatar.renderers, function (rend) {
+            return (rend.style == layer.style) && (rend.feature == layer.feature);
+        });
+        //Look if there is another renderer that matches from content packs
+        var render_pack;
+        if (avatar._private_functions.content_packs_renderer) {
+            var content_pack_render_layer = avatar._private_functions.content_packs_renderer(avatar, layer);
+            if (content_pack_render_layer) {
+                //Find the frequency it should be applied. If not set, use 100%
+                var freq = content_pack_render_layer.use_frequency;
+                if (_.isUndefined(freq)) freq = 1;
+                if (avatar._private_functions.random(avatar.face_options)<freq) {
+                    render_pack = content_pack_render_layer;
+                    if (render_layer.renderer) {
+                        render_pack.prerenderer = render_layer.renderer;
+                    }
+                }
+            }
+        }
+        return render_pack || render_layer;
+    }
+
     AvatarClass.prototype.buildFace = function () {
         var container = new createjs.Container();
         this.lines = [];
@@ -2004,10 +2018,13 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
                 addSceneChildren(container, buildDecoration(avatar, layer));
 
             } else if (layer.feature) {
-                var render_layer = _.find(avatar.renderers, function (rend) {
-                    return (rend.style == layer.style) && (rend.feature == layer.feature);
-                });
+                var render_layer = find_renderer(avatar, layer);
+
                 if (render_layer && render_layer.renderer) {
+                    if (render_layer.prerenderer) { //Pre-render something but don't draw it
+                        var feature_shapes_pre = render_layer.prerenderer(face_zones, avatar, layer);
+//                        addSceneChildren(container, feature_shapes_pre);
+                    }
                     var feature_shapes = render_layer.renderer(face_zones, avatar, layer);
                     addSceneChildren(container, feature_shapes);
                 } else {
@@ -4534,7 +4551,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'eyes', renderer: fu
     });
     right_eyesocket.x = f.eyes.right_x;
     right_eyesocket.y = f.eyes.y + (socket_y_offset * f.thick_unit);
-    ;
+
     right_eyesocket.scaleY = .6;
     shapes.push(right_eyesocket);
 
@@ -4689,12 +4706,14 @@ new Avatar('add_render_function', {style: 'lines', feature: 'eyes', renderer: fu
     lines.push({name: 'left eyebrow top set', line: left_eyebrow_line_top, shape: left_eyebrow_top, scale_x: width_eye, scale_y: height_eye, x: x, y: y, rotation: rotation_amount + eyebrow_rotation, alpha: eyebrow_transparency});
     shapes = shapes.concat(left_eyebrow_top);
 
-    inner_point_x = a.comparePoints(left_eyebrow_line_top, 'x', 'lowest');
+    inner_point_x = a.comparePoints(left_eyebrow_line_top, 'x', 'highest');
     inner_point_y = a.comparePoints(left_eyebrow_line_top, 'y', 'middle');
     inner_point_x = x + (inner_point_x * width_eyebrow / 2 / eye_radius);
     inner_point_y = y + (inner_point_y * height_eyebrow / 2 / eye_radius);
     a.namePoint(avatar, 'left eyebrow innermost', {x: inner_point_x, y: inner_point_y});
 
+    var eyebrow_y = inner_point_y;
+    var eyebrow_x = inner_point_x;
 
     x = zone.left_x + (f.thick_unit * 4);
     y = zone.y - (f.thick_unit * 8);
@@ -4733,6 +4752,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'eyes', renderer: fu
     lines.push({name: 'left eye round', line: left_eye_line, shape: left_eye_round, scale_x: width_eye, scale_y: height_eye, x: x, y: y});
     shapes.push(left_eye_round);
 
+    a.namePoint(avatar, 'left eye center', {x: x, y: y});
 
     zone = f.eyes.pupil;
     x = zone.left_x + (f.thick_unit * iris_side_movement);
@@ -4806,6 +4826,10 @@ new Avatar('add_render_function', {style: 'lines', feature: 'eyes', renderer: fu
     inner_point_y = y + (inner_point_y * height_eyebrow / 2 / eye_radius);
     a.namePoint(avatar, 'right eyebrow innermost', {x: inner_point_x, y: inner_point_y});
 
+    eyebrow_x += inner_point_x;
+    a.namePoint(avatar, 'eyebrow midpoint', {x: (eyebrow_x/2), y: eyebrow_y});;
+
+
     x = zone.right_x - (f.thick_unit * 4);
     y = zone.y - (f.thick_unit * 8);
     var right_eyebrow_line_inside = a.transformShapeLine({type: 'reverse', direction: 'horizontal', axis: 0}, face_options, left_eyebrow_line_inside);
@@ -4842,6 +4866,8 @@ new Avatar('add_render_function', {style: 'lines', feature: 'eyes', renderer: fu
     right_eye_round.rotation = -rotation_amount;
     lines.push({name: 'right eye round', line: right_eye_line, shape: right_eye_round, scale_x: width_eye, scale_y: height_eye, x: x, y: y, rotation: -rotation_amount});
     shapes.push(right_eye_round);
+
+    a.namePoint(avatar, 'right eye center', {x: x, y: y});
 
 
     zone = f.eyes.pupil;
@@ -6628,29 +6654,170 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mustache', renderer
         avatar.content_packs[name] = _.extend({}, avatar.content_packs[name], pack_data);
     };
 
+    a.content_packs_renderer = function (avatar, layer) {
+        var matching_pack = _.find(avatar.content_packs, function (pack) {
+            var feature_list = pack.replace_features;
+            if (_.isString(feature_list)) feature_list = [feature_list];
+            var isFeatureMatch = _.indexOf(feature_list, layer.feature) > -1;
+
+            var isFilterMatch = true;
+            for (var key in pack.filter || {}) {
+                var filter = pack.filter[key];
+                //Only exclude if key is set, but is different than filter
+                if (avatar.face_options[key] && avatar.face_options[key] != filter) {
+                    isFilterMatch = false;
+                }
+            }
+
+            return (pack.style == layer.style) && isFeatureMatch && isFilterMatch;
+        });
+
+        var render_layer;
+        if (matching_pack && matching_pack.data) {
+            var matching_frame = _.find(matching_pack.data.frames, function (frame) {
+                var isFilterMatch = true;
+                for (var key in frame.filter || {}) {
+                    var filter = frame.filter[key];
+                    //Only exclude if key is set, but is different than filter
+                    if (avatar.face_options[key] && avatar.face_options[key] != filter) {
+                        isFilterMatch = false;
+                    }
+                }
+
+                return isFilterMatch;
+            });
+
+            //There's at least one frame of the pack that matches filters.
+            if (matching_frame) {
+                render_layer = matching_pack;
+
+                render_layer.renderer = function (face_zones, avatar, layer) {
+                    if (matching_pack.custom_renderer) {
+                        return matching_pack.custom_renderer(face_zones, avatar, layer, matching_pack, matching_frame);
+                    } else {
+                        return default_image_renderer(face_zones, avatar, layer, matching_pack, matching_frame);
+                    }
+                }
+            }
+        }
+        return render_layer;
+    };
+
+    function default_image_renderer(face_zones, avatar, layer, pack, frame) {
+//        var f = face_zones;
+        var a = avatar._private_functions;
+//        var face_options = avatar.face_options;
+//        var lines = avatar.lines;
+        var shapes = [];
+
+        var frame_coordinates = frame.coordinates || [];
+        var coordinate_transform_list = [];
+
+        //Find the coordinates from the frame and match them to points on avatar
+        _.each(frame_coordinates, function (from_source) {
+            var from = {point: from_source.point, x:from_source.x-frame.x, y:from_source.y-frame.y};
+            var to = a.findPoint(avatar, from.point) || {};
+
+            if (to) {
+                coordinate_transform_list.push({from: from, to: to});
+
+//                var to_point = new createjs.Shape();
+//                to_point.graphics.beginFill('#f00').drawCircle(to.x, to.y, 4);
+//                shapes.push(to_point);
+//                console.log('To', to.x, to.y);
+            }
+        });
+
+        //Map coordinates to targets
+        if (coordinate_transform_list.length > 2) {
+            //Build triangles of first three mapped points
+            var source = [coordinate_transform_list[0].from, coordinate_transform_list[1].from, coordinate_transform_list[2].from];
+            var dest = [coordinate_transform_list[0].to, coordinate_transform_list[1].to, coordinate_transform_list[2].to];
+
+            //Build the final transform matrix from three points in each reference frame
+            var m = maths.buildTransformFromTriangleToTriangle(source, dest);
+
+            //TODO: Preload images
+            var img = new Image();
+            img.onload = function () {
+
+                //Extract the sub-image from the file into a temp canvas
+                var canvas = document.createElement('canvas');
+                canvas.width = frame.width+frame.x;
+                canvas.height = frame.height+frame.y;
+                var context = canvas.getContext('2d');
+                context.drawImage(img, frame.x, frame.y, frame.width, frame.height, 0, 0, frame.width, frame.height);
+
+                //Remove background colors
+                if (!avatar.no_local_editing) {
+                    try {
+
+                        var imageData = context.getImageData(0, 0, frame.width, frame.height);
+                        var data = imageData.data;
+
+                        // iterate over all pixels
+                        var bg_lvl = 255 - pack.data.removeBackgroundNoise;
+                        for (var i = 0, n = data.length; i < n; i += 4) {
+                            var red = data[i];
+                            var green = data[i + 1];
+                            var blue = data[i + 2];
+
+                            if (red > bg_lvl && blue > bg_lvl && green > bg_lvl) {
+                                imageData.data[i + 3] = 0;
+                            }
+                        }
+                        context.putImageData(imageData, 0, 0);
+                    } catch (ex) {
+                        avatar.no_local_editing = true;
+                        console.error("Can't edit images, likely because images need to be served from a web url on the same server");
+                    }
+                }
+                var canvas1 = document.createElement('canvas');
+                canvas1.width = img.width;
+                canvas1.height = img.height;
+                var context1 = canvas1.getContext('2d');
+
+                //Apply matrix transform to canvas and add as shape
+                context1.setTransform(m[0], m[1], m[2], m[3], m[4], m[5]);
+                context1.drawImage(canvas,0,0);
+
+
+                //Draw these asynchronously rather than passing them back into the stage list
+                var bitmap = new createjs.Bitmap(canvas1);
+                bitmap.compositeOperation = 'multiply';
+                avatar.drawOnStage(bitmap, avatar.stage);
+                avatar.faceShapeCollection.addChild(bitmap);
+
+            };
+            img.src = pack.data.image;
+        }
+
+
+        return shapes;
+    }
+
 })(Avatar, net, maths);;
 var content_pack_data = {
-    image: 'woman-eyes-collection-vector-illustration-8573624.jpg',
+    image: '../js/content_packs/female_eyes_1/woman-eyes-collection-vector-illustration-8573624.jpg',
     frames: [
-        {name: 'hazel eyes with medium lashes', x: 39, y: 58, width: 580, height: 179, data: {},
+        {name: 'hazel eyes with medium lashes', x: 39, y: 58, width: 617, height: 194, filter:{},
             coordinates: [
                 {point: 'left eye center', x: 169, y: 180},
                 {point: 'right eye center', x: 507, y: 180},
-                {point: 'left eyebrow inner', x: 292, y: 116}
+                {point: 'eyebrow midpoint', x: 328, y: 109},
+                {point: 'left eyebrow innermost', x: 292, y: 116}
             ]
         }
     ],
     animations: {},
     removeBackgroundColor: 'white',
-    removeBackgroundNoise: 20
+    removeBackgroundNoise: 4
 };
 
 new Avatar('register_content_pack', 'female_eyes_1', {
-    style: 'vector', replace_renderers: ['eyes'], only_use_this: false,
-    filter: {gender: 'Female'},
-    renderer: function (face_zones, avatar) {
-        //TODO: Should this override or integrate with custom renderer?
-    },
+    style: 'lines', replace_features: ['eyes'], use_frequency: 0.5, filter: {gender: 'Female'},
+//    custom_renderer: function (face_zones, avatar, pack, frame) {},
+
     data: content_pack_data
 });
 

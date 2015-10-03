@@ -6,7 +6,7 @@ describe("Avatar-Content-Packs", function () {
     it("has the female eyes pack loaded", function () {
         var av = new Avatar();
         var eyes1 = av.content_packs['female_eyes_1'];
-        expect(eyes1.style).toBe('vector');
+        expect(eyes1.style).toBe('lines');
     });
     it("can load additional content pack data", function () {
         var av = new Avatar();

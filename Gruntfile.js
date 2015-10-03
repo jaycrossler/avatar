@@ -104,6 +104,12 @@ module.exports = function (grunt) {
                 options: {
                     port: 9001
                 }
+            },
+            live: {
+                options: {
+                    keepalive: true,
+                    port: 9001
+                }
             }
         },
         copy: {
@@ -194,7 +200,7 @@ module.exports = function (grunt) {
     // Default task(s).
     grunt.registerTask('default', ['replace:index', 'replace:version', 'concat:build', 'uglify:build', 'jasmine', 'notify:build', 'connect', 'screenshots', 'replace:screenshots']);
     grunt.registerTask('quick', ['concat:quick', 'notify:quick', 'jasmine']);
-    grunt.registerTask('server', ['concat:quick', 'notify:quick', 'connect']);
+    grunt.registerTask('server', ['concat:quick', 'notify:quick', 'connect:live']);
     grunt.registerTask('dropbox', ['copy:dropbox']);
     grunt.registerTask('shots', ['connect', 'screenshots', 'replace:screenshots']);
 

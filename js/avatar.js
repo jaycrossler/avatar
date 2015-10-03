@@ -355,7 +355,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
                 if (render_layer && render_layer.renderer) {
                     if (render_layer.prerenderer) { //Pre-render something but don't draw it
                         var feature_shapes_pre = render_layer.prerenderer(face_zones, avatar, layer);
-                        addSceneChildren(container, feature_shapes_pre);
+//                        addSceneChildren(container, feature_shapes_pre);
                     }
                     var feature_shapes = render_layer.renderer(face_zones, avatar, layer);
                     addSceneChildren(container, feature_shapes);

@@ -5,14 +5,14 @@ var content_pack_data = {
             coordinates: [
                 {point: 'left eye center', x: 169, y: 180},
                 {point: 'right eye center', x: 507, y: 180},
-                {point: 'eyebrow midpoint', x:359, y: 119},
+                {point: 'eyebrow midpoint', x: 328, y: 109},
                 {point: 'left eyebrow innermost', x: 292, y: 116}
             ]
         }
     ],
     animations: {},
     removeBackgroundColor: 'white',
-    removeBackgroundNoise: 20
+    removeBackgroundNoise: 4
 };
 
 new Avatar('register_content_pack', 'female_eyes_1', {
