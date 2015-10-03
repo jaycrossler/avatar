@@ -78,7 +78,7 @@ $(document).ready(function () {
         {feature: "eye_position", style: "lines"},
         {feature: "nose", style: "lines"}, //Uses: right eye innermost
         {feature: "chin", style: "lines"}, //Uses: chin mid line, face
-        {feature: "mouth", style: "lines"}, //NOTE: Shown twice to predraw positions
+        {feature: "mouth", style: "lines", hide:true}, //NOTE: Shown twice to predraw positions
         {feature: "wrinkles", style: "lines"}, //Uses: face, left eye, right eye, lips, full nose, chin top line
         {feature: "beard", style: "lines"}, //Uses: face, left eye
         {feature: "mouth", style: "lines"},

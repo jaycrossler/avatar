@@ -1989,6 +1989,17 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mouth', renderer: f
     lines.push({name: 'lips', line: mouth_top_line, shape: l, x: f.mouth.x, y: f.mouth.y, scale_x: width, scale_y: height});
     shapes.push(l);
 
+
+    var mouth_line = a.transformLineToGlobalCoordinates(lines, 'lips');
+    var mouth_left_point = a.comparePoints(mouth_line, 'x', 'lowest', true);
+    var mouth_right_point = a.comparePoints(mouth_line, 'x', 'highest', true);
+    var mouth_mid_x = a.comparePoints(mouth_line, 'x', 'middle');
+    var mouth_mid_y = mouth_left_point.y + (height/2);
+
+    a.namePoint(avatar, 'left mouth wedge', mouth_left_point);
+    a.namePoint(avatar, 'right mouth wedge', mouth_right_point);
+    a.namePoint(avatar, 'mouth bottom middle', {x: mouth_mid_x, y:mouth_mid_y});
+
     var tongue_line = a.transformShapeLine({type: 'midline of loop'}, face_options, mouth_top_line);
     var l2 = a.createPathFromLocalCoordinates(tongue_line, {close_line: false, thickness: 1, color: face_options.skin_colors.deepshadow}, width, height);
     l2.x = f.mouth.x;

@@ -1,4 +1,4 @@
-/*! avatar ( and supporting libraries) - v0.0.8 - 2015-10-02 */// Copyright (c) 2008-2013, Andrew Brehaut, Tim Baumann, Matt Wilson,
+/*! avatar ( and supporting libraries) - v0.0.8 - 2015-10-03 */// Copyright (c) 2008-2013, Andrew Brehaut, Tim Baumann, Matt Wilson,
 //                          Simon Heimler, Michel Vielmetter
 //
 // All rights reserved.
@@ -1680,9 +1680,12 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //TODO: Have a shape builder function to standardize and make reusable
     //TODO: Generate points for each important face zone, generate all these first before rendering
 
+    //TODO: Zones should work by polygons
+    //TODO: Zones specify color zones that can be shifted or have image effects applied
+    //TODO: Zones to have oval like eye be white
+
     //TODO: Scars and Jewelery
     //TODO: Sag wrinkles when older
-    //TODO: Sprite images
     //TODO: Emotions
     //TODO: Moving eyes
     //TODO: Outfits and standing avatar
@@ -2026,7 +2029,9 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 //                        addSceneChildren(container, feature_shapes_pre);
                     }
                     var feature_shapes = render_layer.renderer(face_zones, avatar, layer);
-                    addSceneChildren(container, feature_shapes);
+                    if (!layer.hide) {
+                        addSceneChildren(container, feature_shapes);
+                    }
                 } else {
                     console.error("avatar.js - Renderer named " + layer.feature + " not found, skipping.");
                 }
@@ -3692,7 +3697,7 @@ Avatar.initializeOptions = function (face_options_basic, human_data_options) {
             {feature: "eye_position", style: "lines"},
             {feature: "nose", style: "lines"}, //Uses: right eye intermost
             {feature: "chin", style: "lines"}, //Uses: chin mid line, face
-            {feature: "mouth", style: "lines"}, //NOTE: Shown twice to predraw positions
+            {feature: "mouth", style: "lines", hide:true}, //NOTE: Shown twice to predraw positions
             {feature: "wrinkles", style: "lines"}, //Uses: face, left eye, right eye, lips, full nose, chin top line
             {feature: "beard", style: "lines"}, //Uses: face, left eye
             {feature: "mouth", style: "lines"},
@@ -4467,8 +4472,6 @@ new Avatar('add_render_function', {style: 'lines', feature: 'eyes', renderer: fu
         eye_fill_colors = ["#fff", "#99e", "#ddf", "#444"];
     }
 
-    //TODO: Have eyebrow patterns shift
-
     //Scales
     var width_eye = (f.eyes.right - f.eyes.left);
     var height_eye = (f.eyes.bottom - f.eyes.top) * eye_squint;
@@ -4477,9 +4480,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'eyes', renderer: fu
     var width_iris = (f.eyes.iris.right - f.eyes.iris.left);
     var height_iris = (f.eyes.iris.bottom - f.eyes.iris.top);
 
-
     eyebrow_thick_start *= f.thick_unit;
-
 
     var eyeliner_color = face_options.skin_colors.darkflesh;
     var eyeliner_alpha = eyeline_transparency;
@@ -5910,6 +5911,17 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mouth', renderer: f
     lines.push({name: 'lips', line: mouth_top_line, shape: l, x: f.mouth.x, y: f.mouth.y, scale_x: width, scale_y: height});
     shapes.push(l);
 
+
+    var mouth_line = a.transformLineToGlobalCoordinates(lines, 'lips');
+    var mouth_left_point = a.comparePoints(mouth_line, 'x', 'lowest', true);
+    var mouth_right_point = a.comparePoints(mouth_line, 'x', 'highest', true);
+    var mouth_mid_x = a.comparePoints(mouth_line, 'x', 'middle');
+    var mouth_mid_y = mouth_left_point.y + (height/2);
+
+    a.namePoint(avatar, 'left mouth wedge', mouth_left_point);
+    a.namePoint(avatar, 'right mouth wedge', mouth_right_point);
+    a.namePoint(avatar, 'mouth bottom middle', {x: mouth_mid_x, y:mouth_mid_y});
+
     var tongue_line = a.transformShapeLine({type: 'midline of loop'}, face_options, mouth_top_line);
     var l2 = a.createPathFromLocalCoordinates(tongue_line, {close_line: false, thickness: 1, color: face_options.skin_colors.deepshadow}, width, height);
     l2.x = f.mouth.x;
@@ -6674,7 +6686,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mustache', renderer
 
         var render_layer;
         if (matching_pack && matching_pack.data) {
-            var matching_frame = _.find(matching_pack.data.frames, function (frame) {
+            var matching_frames = _.filter(matching_pack.data.frames, function (frame) {
                 var isFilterMatch = true;
                 for (var key in frame.filter || {}) {
                     var filter = frame.filter[key];
@@ -6688,7 +6700,8 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mustache', renderer
             });
 
             //There's at least one frame of the pack that matches filters.
-            if (matching_frame) {
+            if (matching_frames) {
+                var matching_frame = a.randOption(matching_frames, avatar.face_options);
                 render_layer = matching_pack;
 
                 render_layer.renderer = function (face_zones, avatar, layer) {
@@ -6706,7 +6719,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mustache', renderer
     function default_image_renderer(face_zones, avatar, layer, pack, frame) {
 //        var f = face_zones;
         var a = avatar._private_functions;
-//        var face_options = avatar.face_options;
+        var face_options = avatar.face_options;
 //        var lines = avatar.lines;
         var shapes = [];
 
@@ -6715,16 +6728,18 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mustache', renderer
 
         //Find the coordinates from the frame and match them to points on avatar
         _.each(frame_coordinates, function (from_source) {
-            var from = {point: from_source.point, x:from_source.x-frame.x, y:from_source.y-frame.y};
+            var from = {point: from_source.point, x: from_source.x - frame.x, y: from_source.y - frame.y};
             var to = a.findPoint(avatar, from.point) || {};
 
             if (to) {
                 coordinate_transform_list.push({from: from, to: to});
 
-//                var to_point = new createjs.Shape();
-//                to_point.graphics.beginFill('#f00').drawCircle(to.x, to.y, 4);
-//                shapes.push(to_point);
-//                console.log('To', to.x, to.y);
+                if (pack.show_reference_points) {
+                    var to_point = new createjs.Shape();
+                    to_point.graphics.beginFill('#f00').drawCircle(to.x, to.y, 4);
+                    shapes.push(to_point);
+                    console.log('To', to.x, to.y);
+                }
             }
         });
 
@@ -6743,8 +6758,8 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mustache', renderer
 
                 //Extract the sub-image from the file into a temp canvas
                 var canvas = document.createElement('canvas');
-                canvas.width = frame.width+frame.x;
-                canvas.height = frame.height+frame.y;
+                canvas.width = frame.width + frame.x;
+                canvas.height = frame.height + frame.y;
                 var context = canvas.getContext('2d');
                 context.drawImage(img, frame.x, frame.y, frame.width, frame.height, 0, 0, frame.width, frame.height);
 
@@ -6755,21 +6770,72 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mustache', renderer
                         var imageData = context.getImageData(0, 0, frame.width, frame.height);
                         var data = imageData.data;
 
-                        // iterate over all pixels
-                        var bg_lvl = 255 - pack.data.removeBackgroundNoise;
-                        for (var i = 0, n = data.length; i < n; i += 4) {
-                            var red = data[i];
-                            var green = data[i + 1];
-                            var blue = data[i + 2];
+                        if (pack.data.removeBackgroundNoise || pack.data.removeBackgroundColor) {
+                            // iterate over all pixels
+                            var bg_color = pack.data.removeBackgroundColor || 'white';
+                            var bg_color_obj = net.brehaut.Color(bg_color);
+                            var bg_r = parseInt(bg_color_obj.red * 255);
+                            var bg_g = parseInt(bg_color_obj.green * 255);
+                            var bg_b = parseInt(bg_color_obj.blue * 255);
+                            var bg_x = pack.data.removeBackgroundNoise || 20;
 
-                            if (red > bg_lvl && blue > bg_lvl && green > bg_lvl) {
-                                imageData.data[i + 3] = 0;
+                            //Set any colors within the specified range to transparent
+                            for (var i = 0, n = data.length; i < n; i += 4) {
+                                var red = data[i];
+                                var green = data[i + 1];
+                                var blue = data[i + 2];
+
+                                if ((red > bg_r-bg_x) && (red < bg_r+bg_x) &&
+                                    (blue > bg_b-bg_x) && (blue < bg_b+bg_x) &&
+                                    (green > bg_g-bg_x) && (green < bg_g+bg_x)) {
+                                    imageData.data[i + 3] = 0;
+                                }
                             }
                         }
+                        //TODO: Make this more efficient, maybe group all zones into one stack for one pass?
+                        _.each(frame.zones || [], function (zone) {
+                            var x_start = zone.x - frame.x;
+                            var y_start = zone.y - frame.y;
+                            var width = zone.width;
+                            var height = zone.height;
+                            if (x_start < 0) {
+                                width -= (0 - x_start);
+                                x_start = 0;
+                            }
+                            if (y_start < 0) {
+                                height -= (0 - y_start);
+                                y_start = 0;
+                            }
+                            var x_end = x_start + width;
+                            var y_end = y_start + height;
+
+                            //Find the color that should be applied
+                            var to_color = face_options[zone.color];
+                            var to_color_object = net.brehaut.Color(to_color);
+                            var c_red = parseInt(to_color_object.red * 255);
+                            var c_green = parseInt(to_color_object.green * 255);
+                            var c_blue = parseInt(to_color_object.blue * 255);
+
+                            //Loop through all pixels in the zone
+                            for (var x = x_start; x < x_end; x++) {
+                                for (var y = y_start; y < y_end; y++) {
+                                    var i = 4 * (x + y * frame.width);
+                                    var red = data[i];
+                                    var green = data[i + 1];
+                                    var blue = data[i + 2];
+                                    if (red < 20 && green < 20 && blue < 20) {
+                                        imageData.data[i] = c_red;
+                                        imageData.data[i + 1] = c_green;
+                                        imageData.data[i + 2] = c_blue;
+                                    }
+                                }
+                            }
+                        });
+
                         context.putImageData(imageData, 0, 0);
                     } catch (ex) {
                         avatar.no_local_editing = true;
-                        console.error("Can't edit images, likely because images need to be served from a web url on the same server");
+                        console.error("Can't apply image complex transforms, likely because images need to be served from a web url on the same server");
                     }
                 }
                 var canvas1 = document.createElement('canvas');
@@ -6779,7 +6845,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mustache', renderer
 
                 //Apply matrix transform to canvas and add as shape
                 context1.setTransform(m[0], m[1], m[2], m[3], m[4], m[5]);
-                context1.drawImage(canvas,0,0);
+                context1.drawImage(canvas, 0, 0);
 
 
                 //Draw these asynchronously rather than passing them back into the stage list
@@ -6800,12 +6866,92 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mustache', renderer
 var content_pack_data = {
     image: '../js/content_packs/female_eyes_1/woman-eyes-collection-vector-illustration-8573624.jpg',
     frames: [
-        {name: 'hazel eyes with medium lashes', x: 39, y: 58, width: 617, height: 194, filter:{},
+        {name: '1 hazel eyes with medium lashes', x: 39, y: 58, width: 617, height: 194, filter: {},
             coordinates: [
-                {point: 'left eye center', x: 169, y: 180},
-                {point: 'right eye center', x: 507, y: 180},
-                {point: 'eyebrow midpoint', x: 328, y: 109},
+                {point: 'left eye center', x: 156, y: 180},
+                {point: 'right eye center', x: 540, y: 180},
+                {point: 'eyebrow midpoint', x: 348, y: 90},
                 {point: 'left eyebrow innermost', x: 292, y: 116}
+            ],
+            zones: [
+                {x: 51, y: 64, width: 560, height: 64, color: 'hair_color'}
+            ]
+        },
+        {name: '2 grey eyes with thick eyebrows', x: 72, y: 260, width: 562, height: 176, filter: {},
+            coordinates: [
+                {point: 'left eye center', x: 173, y: 393},
+                {point: 'right eye center', x: 519, y: 393},
+                {point: 'eyebrow midpoint', x: 352, y: 320},
+                {point: 'left eyebrow innermost', x: 241, y: 340}
+            ],
+            zones: [
+                {x: 72, y: 260, width: 562, height: 89, color: 'hair_color'}
+            ]
+        },
+        {name: '3 red eyes with medium eyebrows', x: 49, y: 500, width: 571, height: 156, filter: {},
+            coordinates: [
+                {point: 'left eye center', x: 178, y: 606},
+                {point: 'right eye center', x: 500, y: 606},
+                {point: 'eyebrow midpoint', x: 340, y: 521},
+                {point: 'left eyebrow innermost', x: 274, y: 544}
+            ],
+            zones: [
+                {x: 49, y: 500, width: 571, height: 55, color: 'hair_color'}
+            ]
+        },
+        {name: '4 grey eyes with thin eyebrows', x: 78, y: 706, width: 519, height: 148, filter: {},
+            coordinates: [
+                {point: 'left eye center', x: 180, y: 796},
+                {point: 'right eye center', x: 487, y: 796},
+                {point: 'eyebrow midpoint', x: 327, y: 715},
+                {point: 'left eyebrow innermost', x: 253, y: 748}
+            ],
+            zones: [
+                {x: 78, y: 706, width: 519, height: 46, color: 'hair_color'}
+            ]
+        },
+        {name: '5 light green eyes with thin eyebrows', x: 723, y: 79, width: 526, height: 132, filter: {},
+            coordinates: [
+                {point: 'left eye center', x: 830, y: 179},
+                {point: 'right eye center', x: 1152, y: 179},
+                {point: 'eyebrow midpoint', x: 988, y: 110},
+                {point: 'left eyebrow innermost', x: 926, y: 121}
+            ],
+            zones: [
+                {x: 723, y: 79, width: 526, height: 51, color: 'hair_color'}
+            ]
+        },
+        {name: '6 light blue eyes with thin eyebrows', x: 717, y: 260, width: 533, height: 188, filter: {},
+            coordinates: [
+                {point: 'left eye center', x: 825, y: 390},
+                {point: 'right eye center', x: 1128, y: 388},
+                {point: 'eyebrow midpoint', x: 980, y: 300},
+                {point: 'left eyebrow innermost', x: 914, y: 337}
+            ],
+            zones: [
+                {x: 717, y: 260, width: 533, height: 81, color: 'hair_color'}
+            ]
+        },
+        {name: '7 brown eyes with diamond eyebrows', x: 715, y: 481, width: 542, height: 172, filter: {},
+            coordinates: [
+                {point: 'left eye center', x: 818, y: 599},
+                {point: 'right eye center', x: 1126, y: 597},
+                {point: 'eyebrow midpoint', x: 988, y: 509},
+                {point: 'left eyebrow innermost', x: 895, y: 544}
+            ],
+            zones: [
+                {x: 715, y: 481, width: 542, height: 66, color: 'hair_color'}
+            ]
+        },
+        {name: '8 bright green eyes with thin round eyebrows', x: 708, y: 676, width: 541, height: 166, filter: {},
+            coordinates: [
+                {point: 'left eye center', x: 809, y: 790},
+                {point: 'right eye center', x: 1126, y: 788},
+                {point: 'eyebrow midpoint', x: 965, y: 705},
+                {point: 'left eyebrow innermost', x: 895, y: 544}
+            ],
+            zones: [
+                {x: 708, y: 676, width: 541, height: 74, color: 'hair_color'}
             ]
         }
     ],
@@ -6819,6 +6965,31 @@ new Avatar('register_content_pack', 'female_eyes_1', {
 //    custom_renderer: function (face_zones, avatar, pack, frame) {},
 
     data: content_pack_data
+});
+
+;
+var content_pack_data = {
+    image: '../js/content_packs/mouths_1/25468547-vector-lips-and-mouth-silhouette-and-glossy-open-and-close-up-man-and-woman-face-parts.jpg',
+    frames: [
+        {name: '1 lips closed', x: 57, y: 70, width: 254, height: 126, filter: {},
+            coordinates: [
+                {point: 'left mouth wedge', x: 71, y: 98},
+                {point: 'right mouth wedge', x: 296, y: 98},
+                {point: 'mouth bottom middle', x: 184, y: 152}
+            ],
+            zones: [
+                { x: 57, y: 70, width: 254, height: 126, color: 'lip_color'}
+            ]
+        }
+    ],
+    animations: {},
+    removeBackgroundColor: '#e0d9c8',
+    removeBackgroundNoise: 20
+};
+
+new Avatar('register_content_pack', 'mouths_1', {
+    style: 'lines', replace_features: ['mouth'], use_frequency: 0.5, filter: {},
+    data: content_pack_data, show_reference_points: false
 });
 
 ;

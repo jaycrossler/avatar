@@ -361,7 +361,9 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 //                        addSceneChildren(container, feature_shapes_pre);
                     }
                     var feature_shapes = render_layer.renderer(face_zones, avatar, layer);
-                    addSceneChildren(container, feature_shapes);
+                    if (!layer.hide) {
+                        addSceneChildren(container, feature_shapes);
+                    }
                 } else {
                     console.error("avatar.js - Renderer named " + layer.feature + " not found, skipping.");
                 }

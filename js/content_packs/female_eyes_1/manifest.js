@@ -3,9 +3,9 @@ var content_pack_data = {
     frames: [
         {name: '1 hazel eyes with medium lashes', x: 39, y: 58, width: 617, height: 194, filter: {},
             coordinates: [
-                {point: 'left eye center', x: 169, y: 180},
-                {point: 'right eye center', x: 507, y: 180},
-                {point: 'eyebrow midpoint', x: 310, y: 90},
+                {point: 'left eye center', x: 156, y: 180},
+                {point: 'right eye center', x: 540, y: 180},
+                {point: 'eyebrow midpoint', x: 348, y: 90},
                 {point: 'left eyebrow innermost', x: 292, y: 116}
             ],
             zones: [
