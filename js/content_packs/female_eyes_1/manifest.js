@@ -7,6 +7,11 @@ var content_pack_data = {
                 {point: 'right eye center', x: 507, y: 180},
                 {point: 'eyebrow midpoint', x: 328, y: 109},
                 {point: 'left eyebrow innermost', x: 292, y: 116}
+            ],
+            zones: [
+                //TODO: Zones work by polygons
+                //TODO: Zones specify color zones that can be shifted or have image effects applied
+                {x:51, y:64, width: 560, height: 64, color: 'hair_color'}
             ]
         }
     ],

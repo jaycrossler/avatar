@@ -550,8 +550,6 @@ new Avatar('add_render_function', {style: 'lines', feature: 'eyes', renderer: fu
         eye_fill_colors = ["#fff", "#99e", "#ddf", "#444"];
     }
 
-    //TODO: Have eyebrow patterns shift
-
     //Scales
     var width_eye = (f.eyes.right - f.eyes.left);
     var height_eye = (f.eyes.bottom - f.eyes.top) * eye_squint;
@@ -560,9 +558,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'eyes', renderer: fu
     var width_iris = (f.eyes.iris.right - f.eyes.iris.left);
     var height_iris = (f.eyes.iris.bottom - f.eyes.iris.top);
 
-
     eyebrow_thick_start *= f.thick_unit;
-
 
     var eyeliner_color = face_options.skin_colors.darkflesh;
     var eyeliner_alpha = eyeline_transparency;
