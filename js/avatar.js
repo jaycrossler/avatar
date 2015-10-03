@@ -135,9 +135,6 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
         this.face_options = $.extend({}, this.face_options || _face_options, face_options || {});
         this.stage_options = $.extend({}, this.stage_options || _stage_options, stage_options || {});
-        this.event_list = this.event_list || [];
-        this.registered_points = this.registered_points || [];
-        this.textures = this.textures || [];
 
         //Determine the random seed to use.  Either use the one passed in, the existing one, or a random one.
         face_options = face_options || {};

@@ -4,14 +4,14 @@
     var a = new Avatar('get_private_functions');
 
     //-----------------------------
-    //Textures
+    //Texture creation
     a.generateTextures = function (avatar) {
         //TODO: Have Some of these run for the entire class?
 
         avatar.textures = _.without(avatar.textures, function (tex) {
             return tex.type == 'single use'
         });
-        avatar.textures = [];
+        avatar.textures = []; //TODO: have this dynamically remove ones that have source variables changed
 
         var height_object = a.getHeightOfStage(avatar);
         var resolution = height_object.resolution;
