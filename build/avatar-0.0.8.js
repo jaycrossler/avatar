@@ -1982,13 +1982,13 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         }
     }
 
-    function find_renderer(avatar, layer) {
+    function find_renderer(avatar, layer, ignore_packs) {
         var render_layer = _.find(avatar.renderers, function (rend) {
             return (rend.style == layer.style) && (rend.feature == layer.feature);
         });
         //Look if there is another renderer that matches from content packs
         var render_pack;
-        if (avatar._private_functions.content_packs_renderer) {
+        if (!ignore_packs && avatar._private_functions.content_packs_renderer) {
             var content_pack_render_layer = avatar._private_functions.content_packs_renderer(avatar, layer);
             if (content_pack_render_layer) {
                 //Find the frequency it should be applied. If not set, use 100%
@@ -2021,7 +2021,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
                 addSceneChildren(container, buildDecoration(avatar, layer));
 
             } else if (layer.feature) {
-                var render_layer = find_renderer(avatar, layer);
+                var render_layer = find_renderer(avatar, layer, layer.hide);
 
                 if (render_layer && render_layer.renderer) {
                     if (render_layer.prerenderer) { //Pre-render something but don't draw it
@@ -6650,8 +6650,6 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mustache', renderer
 }});
 ;
 (function (Avatar, net, maths) {
-    //TODO: Have textures be removed based on face_options modified
-
     var a = new Avatar('get_private_functions');
 
     //-----------------------------
@@ -6667,11 +6665,12 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mustache', renderer
     };
 
     a.content_packs_renderer = function (avatar, layer) {
-        var matching_pack = _.find(avatar.content_packs, function (pack) {
+        var matching_packs = _.filter(avatar.content_packs, function (pack) {
             var feature_list = pack.replace_features;
             if (_.isString(feature_list)) feature_list = [feature_list];
             var isFeatureMatch = _.indexOf(feature_list, layer.feature) > -1;
 
+            var hasData = _.isObject(pack.data) && _.isArray(pack.data.frames) && pack.data.image;
             var isFilterMatch = true;
             for (var key in pack.filter || {}) {
                 var filter = pack.filter[key];
@@ -6681,12 +6680,13 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mustache', renderer
                 }
             }
 
-            return (pack.style == layer.style) && isFeatureMatch && isFilterMatch;
+            return (pack.style == layer.style) && hasData && isFeatureMatch && isFilterMatch;
         });
 
-        var render_layer;
-        if (matching_pack && matching_pack.data) {
-            var matching_frames = _.filter(matching_pack.data.frames, function (frame) {
+        var matching_frames = [];
+        _.each(matching_packs, function(pack){
+            //Look through all matching packs to find frames that match filters
+            var matching_frames_in = _.filter(pack.data.frames, function (frame) {
                 var isFilterMatch = true;
                 for (var key in frame.filter || {}) {
                     var filter = frame.filter[key];
@@ -6698,21 +6698,29 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mustache', renderer
 
                 return isFilterMatch;
             });
+            //Add a link to the parent pack to each frame
+            _.each(matching_frames_in, function(frame){
+                frame.pack = pack;
+            });
+            matching_frames = matching_frames.concat(matching_frames_in);
+        });
 
-            //There's at least one frame of the pack that matches filters.
-            if (matching_frames) {
-                var matching_frame = a.randOption(matching_frames, avatar.face_options);
-                render_layer = matching_pack;
+        //There's at least one frame of the pack that matches filters.
+        var render_layer;
+        if (matching_frames.length) {
+            var matching_frame = a.randOption(matching_frames, avatar.face_options);
+            var matching_pack = matching_frame.pack;
+            render_layer = matching_pack;
 
-                render_layer.renderer = function (face_zones, avatar, layer) {
-                    if (matching_pack.custom_renderer) {
-                        return matching_pack.custom_renderer(face_zones, avatar, layer, matching_pack, matching_frame);
-                    } else {
-                        return default_image_renderer(face_zones, avatar, layer, matching_pack, matching_frame);
-                    }
+            render_layer.renderer = function (face_zones, avatar, layer) {
+                if (_.isFunction(matching_pack.custom_renderer)) {
+                    return matching_pack.custom_renderer(face_zones, avatar, layer, matching_pack, matching_frame);
+                } else {
+                    return default_image_renderer(face_zones, avatar, layer, matching_pack, matching_frame);
                 }
             }
         }
+
         return render_layer;
     };
 
@@ -6794,10 +6802,20 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mustache', renderer
                         }
                         //TODO: Make this more efficient, maybe group all zones into one stack for one pass?
                         _.each(frame.zones || [], function (zone) {
-                            var x_start = zone.x - frame.x;
-                            var y_start = zone.y - frame.y;
-                            var width = zone.width;
-                            var height = zone.height;
+                            var x_start,y_start,width,height;
+
+                            if (zone.all) {
+                                x_start = 0;
+                                y_start = 0;
+                                width = frame.width;
+                                height = frame.height;
+                            } else {
+                                x_start = zone.x - frame.x;
+                                y_start = zone.y - frame.y;
+                                width = zone.width;
+                                height = zone.height;
+                            }
+
                             if (x_start < 0) {
                                 width -= (0 - x_start);
                                 x_start = 0;
@@ -6978,7 +6996,27 @@ var content_pack_data = {
                 {point: 'mouth bottom middle', x: 184, y: 152}
             ],
             zones: [
-                { x: 57, y: 70, width: 254, height: 126, color: 'lip_color'}
+                { all:true, color: 'lip_color'}
+            ]
+        },
+        {name: '2 lips closed', x: 391, y: 66, width: 242, height: 131, filter: {},
+            coordinates: [
+                {point: 'left mouth wedge', x: 406, y: 91},
+                {point: 'right mouth wedge', x: 618, y: 91},
+                {point: 'mouth bottom middle', x: 510, y: 153}
+            ],
+            zones: [
+                { all:true, color: 'lip_color'}
+            ]
+        },
+        {name: '3 lips smiling', x: 675, y: 70, width: 267, height: 129, filter: {},
+            coordinates: [
+                {point: 'left mouth wedge', x: 690, y: 108},
+                {point: 'right mouth wedge', x: 924, y: 108},
+                {point: 'mouth bottom middle', x: 805, y: 158}
+            ],
+            zones: [
+                { all:true, color: 'lip_color'}
             ]
         }
     ],

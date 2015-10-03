@@ -314,13 +314,13 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         }
     }
 
-    function find_renderer(avatar, layer) {
+    function find_renderer(avatar, layer, ignore_packs) {
         var render_layer = _.find(avatar.renderers, function (rend) {
             return (rend.style == layer.style) && (rend.feature == layer.feature);
         });
         //Look if there is another renderer that matches from content packs
         var render_pack;
-        if (avatar._private_functions.content_packs_renderer) {
+        if (!ignore_packs && avatar._private_functions.content_packs_renderer) {
             var content_pack_render_layer = avatar._private_functions.content_packs_renderer(avatar, layer);
             if (content_pack_render_layer) {
                 //Find the frequency it should be applied. If not set, use 100%
@@ -353,7 +353,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
                 addSceneChildren(container, buildDecoration(avatar, layer));
 
             } else if (layer.feature) {
-                var render_layer = find_renderer(avatar, layer);
+                var render_layer = find_renderer(avatar, layer, layer.hide);
 
                 if (render_layer && render_layer.renderer) {
                     if (render_layer.prerenderer) { //Pre-render something but don't draw it

@@ -8,7 +8,27 @@ var content_pack_data = {
                 {point: 'mouth bottom middle', x: 184, y: 152}
             ],
             zones: [
-                { x: 57, y: 70, width: 254, height: 126, color: 'lip_color'}
+                { all:true, color: 'lip_color'}
+            ]
+        },
+        {name: '2 lips closed', x: 391, y: 66, width: 242, height: 131, filter: {},
+            coordinates: [
+                {point: 'left mouth wedge', x: 406, y: 91},
+                {point: 'right mouth wedge', x: 618, y: 91},
+                {point: 'mouth bottom middle', x: 510, y: 153}
+            ],
+            zones: [
+                { all:true, color: 'lip_color'}
+            ]
+        },
+        {name: '3 lips smiling', x: 675, y: 70, width: 267, height: 129, filter: {},
+            coordinates: [
+                {point: 'left mouth wedge', x: 690, y: 108},
+                {point: 'right mouth wedge', x: 924, y: 108},
+                {point: 'mouth bottom middle', x: 805, y: 158}
+            ],
+            zones: [
+                { all:true, color: 'lip_color'}
             ]
         }
     ],

@@ -108,7 +108,7 @@ module.exports = function (grunt) {
             live: {
                 options: {
                     keepalive: true,
-                    port: 9001
+                    port: 9002
                 }
             }
         },
@@ -198,7 +198,7 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-contrib-copy');
 
     // Default task(s).
-    grunt.registerTask('default', ['replace:index', 'replace:version', 'concat:build', 'uglify:build', 'jasmine', 'notify:build', 'connect', 'screenshots', 'replace:screenshots']);
+    grunt.registerTask('default', ['replace:index', 'replace:version', 'concat:build', 'uglify:build', 'jasmine', 'notify:build', 'connect:server', 'screenshots', 'replace:screenshots']);
     grunt.registerTask('quick', ['concat:quick', 'notify:quick', 'jasmine']);
     grunt.registerTask('server', ['concat:quick', 'notify:quick', 'connect:live']);
     grunt.registerTask('dropbox', ['copy:dropbox']);
