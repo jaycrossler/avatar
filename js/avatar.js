@@ -12,9 +12,12 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //TODO: Have a shape builder function to standardize and make reusable
     //TODO: Generate points for each important face zone, generate all these first before rendering
 
+    //TODO: Zones should work by polygons
+    //TODO: Zones specify color zones that can be shifted or have image effects applied
+    //TODO: Zones to have oval like eye be white
+
     //TODO: Scars and Jewelery
     //TODO: Sag wrinkles when older
-    //TODO: Sprite images
     //TODO: Emotions
     //TODO: Moving eyes
     //TODO: Outfits and standing avatar
