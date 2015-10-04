@@ -85,7 +85,9 @@ $(document).ready(function () {
         {feature: "mustache", style: "lines"},
         {feature: "eyes", style: "lines"},
         {feature: "hair", style: "lines"}, //Uses: face, left eye
-        {feature: "ears", style: "lines"}
+        {feature: "ears", style: "lines"},
+        {feature: "glasses", style: "lines"},
+
     ];
 
     generateAvatar();

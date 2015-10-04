@@ -162,6 +162,12 @@ function copyToClipboard($element) {
     $temp.remove();
 }
 
+var pack_render_type;
+var point_names = {
+    mouth: ['left mouth wedge', 'right mouth wedge', 'mouth bottom middle', "{ all: true, color: 'lip_color'}"],
+    eyes: ['left eye center', 'right eye center', 'eyebrow midpoint', ''],
+    glasses: ['left eye center', 'right eye center', 'eyebrow midpoint', '']
+};
 
 function buildText(){
     var text = "Click to build a rectangle, then click three points on key places";
@@ -175,17 +181,23 @@ function buildText(){
             " coordinates: [\n";
 
         var text_mid = "";
-        if (saved_points.length>0) {
-            text_mid += "     {point: 'left mouth wedge', x: "+saved_points[0].x+", y: "+saved_points[0].y+"},\n";
+        var names = point_names[pack_render_type];
+
+        if (saved_points.length>0 && names) {
+            text_mid += "     {point: '"+names[0]+"', x: "+saved_points[0].x+", y: "+saved_points[0].y+"},\n";
         }
-        if (saved_points.length>1) {
-            text_mid += "     {point: 'right mouth wedge', x: "+saved_points[1].x+", y: "+saved_points[1].y+"},\n"
+        if (saved_points.length>1 && names) {
+            text_mid += "     {point: '"+names[1]+"', x: "+saved_points[1].x+", y: "+saved_points[1].y+"},\n"
         }
-        if (saved_points.length>2) {
-            text_mid += "     {point: 'mouth bottom middle', x: "+saved_points[2].x+", y: "+saved_points[2].y+"}\n"
+        if (saved_points.length>2 && names) {
+            text_mid += "     {point: '"+names[2]+"', x: "+saved_points[2].x+", y: "+saved_points[2].y+"}\n"
         }
 
-        var text_post = " ], zones: [{ all: true, color: 'lip_color'}]\n" +
+        var zone_info = '';
+        if (names && names.length>3) {
+            zone_info = names[3];
+        }
+        var text_post = " ], zones: [" + zone_info + "]\n" +
             "},";
         text = text_pre + text_mid + text_post;
     }
@@ -228,6 +240,8 @@ $(document).ready(function () {
             var val = $(this).val();
             var pack = av.content_packs[val];
             loadImageToCanvas(canvas, pack);
+
+            pack_render_type = pack.replace_features[0];
         });
 
     var packs = av.content_packs;
@@ -243,6 +257,8 @@ $(document).ready(function () {
     //Set it to the last item
     $pack_name.val(last);
     loadImageToCanvas(canvas, av.content_packs[last]);
+    pack_render_type = av.content_packs[last].replace_features[0];
+
     initDraw(canvas);
 
 

@@ -325,7 +325,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
                 if (_.isUndefined(freq)) freq = 1;
                 if (avatar._private_functions.random(avatar.face_options)<freq) {
                     render_pack = content_pack_render_layer;
-                    if (render_layer.renderer) {
+                    if (render_layer && render_layer.renderer) {
                         render_pack.prerenderer = render_layer.renderer;
                     }
                 }
