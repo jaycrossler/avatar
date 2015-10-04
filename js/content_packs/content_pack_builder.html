@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="../../css/favicon.ico">
+
+    <title>Avatar :: Avatar Content Pack Builder</title>
+    <link href="../../css/avatar.css" rel="stylesheet"/>
+
+    <style>
+        #pack_image_holder {
+            position:relative
+        }
+        .rectangle {
+             border: 1px solid #FF0000;
+             position: absolute;
+         }
+    </style>
+</head>
+<body>
+<h1 id="content_title">Avatar Content Packs</h1>
+<label for="pack_name">Content Pack:</label><select id="pack_name"></select><br/>
+<textarea id="new_frame" cols="80" rows="7" style="font-size: 8px;">New Frames Here</textarea>
+
+<div id="pack_image_holder"></div>
+
+<script src="../../js-libs/jquery-1.11.3.min.js"></script>
+<script src="../../js-libs/bootstrap.min.js"></script>
+<script src="../../js-libs/underscore-min.js"></script>
+<script src="../../js-libs/underscore.string.min.js"></script>
+<script src="../../js-libs/easeljs-NEXT.min.js"></script>
+<script src="../../js-libs/color.js"></script>
+<script src="../../js-libs/colors.min.js"></script>
+<script src="../../js/maths.js"></script> <!-- TODO: Auto add these with grunt -->
+<script src="../../js/helpers.js"></script>
+<script src="../../js/avatar.js"></script>
+<script src="../../js/avatar-options.js"></script>
+<script src="../../js/avatar-textures.js"></script>
+<script src="../../js/avatar-lines.js"></script>
+<script src="../../js/avatar-hair.js"></script>
+<script src="../../js/avatar-beard.js"></script>
+<script src="../../js/avatar-content-packs.js"></script>
+<script src="../../js/content_packs/female_eyes_1/manifest.js"></script>
+<script src="../../js/content_packs/mouths_1/manifest.js"></script>
+<script src="../../js/races/ogre.js"></script>
+<script src="../../js/races/navi.js"></script>
+<script src="../../js/races/demon.js"></script>
+
+<script src="content_pack_builder.js"></script>
+</body>
+</html>

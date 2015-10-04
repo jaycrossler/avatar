@@ -112,6 +112,7 @@
             {feature: "ears", style: "lines"},
             {decoration: "name-plate"}
         ],
+        use_content_packs: ['all'],
 
         //If Preset, then use one of the skin_color_options and change tint, otherwise calculate by tint and lightness
         skin_shade_options: "Light,Dark,Preset".split(","),

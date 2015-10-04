@@ -1803,9 +1803,6 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
         this.face_options = $.extend({}, this.face_options || _face_options, face_options || {});
         this.stage_options = $.extend({}, this.stage_options || _stage_options, stage_options || {});
-        this.event_list = this.event_list || [];
-        this.registered_points = this.registered_points || [];
-        this.textures = this.textures || [];
 
         //Determine the random seed to use.  Either use the one passed in, the existing one, or a random one.
         face_options = face_options || {};
@@ -3707,6 +3704,7 @@ Avatar.initializeOptions = function (face_options_basic, human_data_options) {
             {feature: "ears", style: "lines"},
             {decoration: "name-plate"}
         ],
+        use_content_packs: ['all'],
 
         //If Preset, then use one of the skin_color_options and change tint, otherwise calculate by tint and lightness
         skin_shade_options: "Light,Dark,Preset".split(","),
@@ -3806,14 +3804,14 @@ Avatar.initializeOptions = function (face_options_basic, human_data_options) {
     var a = new Avatar('get_private_functions');
 
     //-----------------------------
-    //Textures
+    //Texture creation
     a.generateTextures = function (avatar) {
         //TODO: Have Some of these run for the entire class?
 
         avatar.textures = _.without(avatar.textures, function (tex) {
             return tex.type == 'single use'
         });
-        avatar.textures = [];
+        avatar.textures = []; //TODO: have this dynamically remove ones that have source variables changed
 
         var height_object = a.getHeightOfStage(avatar);
         var resolution = height_object.resolution;
@@ -6650,7 +6648,29 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mustache', renderer
 }});
 ;
 (function (Avatar, net, maths) {
+    var IMAGES = []; //Global list of any images that were loaded by content packs
+
     var a = new Avatar('get_private_functions');
+
+    //-----------------------------
+    //Image Management
+    function findImage(url) {
+        var existing_image = _.find(IMAGES, function(image){
+            return image.url == url;
+        });
+        return existing_image ? existing_image.parent_object : null;
+    }
+    function findOrLoadImage(url, run_after_loaded) {
+        var cached = findImage(url);
+        if (cached) {
+            return run_after_loaded(cached);
+        } else {
+            var img = new Image();
+            img.onload = run_after_loaded;
+            img.src = url;
+            IMAGES.push({url:url, parent_object:img});
+        }
+    }
 
     //-----------------------------
     //Adding Content Pack
@@ -6664,11 +6684,15 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mustache', renderer
         avatar.content_packs[name] = _.extend({}, avatar.content_packs[name], pack_data);
     };
 
+    //Rendering features
     a.content_packs_renderer = function (avatar, layer) {
         var matching_packs = _.filter(avatar.content_packs, function (pack) {
             var feature_list = pack.replace_features;
             if (_.isString(feature_list)) feature_list = [feature_list];
             var isFeatureMatch = _.indexOf(feature_list, layer.feature) > -1;
+
+            var packOptions = avatar.getRaceData().use_content_packs;
+            var isAllowedPack = (_.indexOf(packOptions,'all')>-1 || _.indexOf(packOptions,pack.name)>-1);
 
             var hasData = _.isObject(pack.data) && _.isArray(pack.data.frames) && pack.data.image;
             var isFilterMatch = true;
@@ -6680,7 +6704,9 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mustache', renderer
                 }
             }
 
-            return (pack.style == layer.style) && hasData && isFeatureMatch && isFilterMatch;
+            var isMatchingStyle = (pack.style == layer.style);
+
+            return isMatchingStyle && isAllowedPack && hasData && isFeatureMatch && isFilterMatch;
         });
 
         var matching_frames = [];
@@ -6725,10 +6751,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mustache', renderer
     };
 
     function default_image_renderer(face_zones, avatar, layer, pack, frame) {
-//        var f = face_zones;
         var a = avatar._private_functions;
-        var face_options = avatar.face_options;
-//        var lines = avatar.lines;
         var shapes = [];
 
         var frame_coordinates = frame.coordinates || [];
@@ -6758,126 +6781,148 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mustache', renderer
             var dest = [coordinate_transform_list[0].to, coordinate_transform_list[1].to, coordinate_transform_list[2].to];
 
             //Build the final transform matrix from three points in each reference frame
-            var m = maths.buildTransformFromTriangleToTriangle(source, dest);
+            var matrix = maths.buildTransformFromTriangleToTriangle(source, dest);
 
             //TODO: Preload images
-            var img = new Image();
-            img.onload = function () {
+            var render_it = function(obj) {
+                return default_render_after_image_loaded(avatar, pack, frame, matrix, obj);
+            };
 
-                //Extract the sub-image from the file into a temp canvas
-                var canvas = document.createElement('canvas');
-                canvas.width = frame.width + frame.x;
-                canvas.height = frame.height + frame.y;
-                var context = canvas.getContext('2d');
-                context.drawImage(img, frame.x, frame.y, frame.width, frame.height, 0, 0, frame.width, frame.height);
+            var shape = findOrLoadImage(pack.data.image, render_it);
+            shapes.push(shape);
 
-                //Remove background colors
-                if (!avatar.no_local_editing) {
-                    try {
+        }
+        return shapes;
+    }
 
-                        var imageData = context.getImageData(0, 0, frame.width, frame.height);
-                        var data = imageData.data;
+    function default_render_after_image_loaded (avatar, pack, frame, matrix, parent_or_img) {
 
-                        if (pack.data.removeBackgroundNoise || pack.data.removeBackgroundColor) {
-                            // iterate over all pixels
-                            var bg_color = pack.data.removeBackgroundColor || 'white';
-                            var bg_color_obj = net.brehaut.Color(bg_color);
-                            var bg_r = parseInt(bg_color_obj.red * 255);
-                            var bg_g = parseInt(bg_color_obj.green * 255);
-                            var bg_b = parseInt(bg_color_obj.blue * 255);
-                            var bg_x = pack.data.removeBackgroundNoise || 20;
+        //Get either the cached image or the loaded image object
+        var was_cached = false;
+        var img;
+        if (parent_or_img.src) {
+            was_cached = true;
+            img = parent_or_img;
+        } else {
+            img = parent_or_img.target;
+        }
+//        console.log(frame.name);
 
-                            //Set any colors within the specified range to transparent
-                            for (var i = 0, n = data.length; i < n; i += 4) {
-                                var red = data[i];
-                                var green = data[i + 1];
-                                var blue = data[i + 2];
+        //Extract the sub-image from the file into a temp canvas
+        var canvas = document.createElement('canvas');
+        canvas.width = frame.width + frame.x;
+        canvas.height = frame.height + frame.y;
+        var context = canvas.getContext('2d');
+        context.drawImage(img, frame.x, frame.y, frame.width, frame.height, 0, 0, frame.width, frame.height);
 
-                                if ((red > bg_r-bg_x) && (red < bg_r+bg_x) &&
-                                    (blue > bg_b-bg_x) && (blue < bg_b+bg_x) &&
-                                    (green > bg_g-bg_x) && (green < bg_g+bg_x)) {
-                                    imageData.data[i + 3] = 0;
-                                }
-                            }
+        //Remove background colors
+        if (!avatar.no_local_editing) {
+            try {
+                //Get the image data and remove background color (with a range)
+                var imageData = context.getImageData(0, 0, frame.width, frame.height);
+                var data = imageData.data;
+
+                if (pack.data.removeBackgroundNoise || pack.data.removeBackgroundColor) {
+                    // iterate over all pixels
+                    var bg_color = pack.data.removeBackgroundColor || 'white';
+                    var bg_color_obj = net.brehaut.Color(bg_color);
+                    var bg_r = parseInt(bg_color_obj.red * 255);
+                    var bg_g = parseInt(bg_color_obj.green * 255);
+                    var bg_b = parseInt(bg_color_obj.blue * 255);
+                    var bg_x = pack.data.removeBackgroundNoise || 20;
+
+                    //Set any colors within the specified range to transparent
+                    for (var i = 0, n = data.length; i < n; i += 4) {
+                        var red = data[i];
+                        var green = data[i + 1];
+                        var blue = data[i + 2];
+
+                        if ((red > bg_r-bg_x) && (red < bg_r+bg_x) &&
+                            (blue > bg_b-bg_x) && (blue < bg_b+bg_x) &&
+                            (green > bg_g-bg_x) && (green < bg_g+bg_x)) {
+                            imageData.data[i + 3] = 0;
                         }
-                        //TODO: Make this more efficient, maybe group all zones into one stack for one pass?
-                        _.each(frame.zones || [], function (zone) {
-                            var x_start,y_start,width,height;
-
-                            if (zone.all) {
-                                x_start = 0;
-                                y_start = 0;
-                                width = frame.width;
-                                height = frame.height;
-                            } else {
-                                x_start = zone.x - frame.x;
-                                y_start = zone.y - frame.y;
-                                width = zone.width;
-                                height = zone.height;
-                            }
-
-                            if (x_start < 0) {
-                                width -= (0 - x_start);
-                                x_start = 0;
-                            }
-                            if (y_start < 0) {
-                                height -= (0 - y_start);
-                                y_start = 0;
-                            }
-                            var x_end = x_start + width;
-                            var y_end = y_start + height;
-
-                            //Find the color that should be applied
-                            var to_color = face_options[zone.color];
-                            var to_color_object = net.brehaut.Color(to_color);
-                            var c_red = parseInt(to_color_object.red * 255);
-                            var c_green = parseInt(to_color_object.green * 255);
-                            var c_blue = parseInt(to_color_object.blue * 255);
-
-                            //Loop through all pixels in the zone
-                            for (var x = x_start; x < x_end; x++) {
-                                for (var y = y_start; y < y_end; y++) {
-                                    var i = 4 * (x + y * frame.width);
-                                    var red = data[i];
-                                    var green = data[i + 1];
-                                    var blue = data[i + 2];
-                                    if (red < 20 && green < 20 && blue < 20) {
-                                        imageData.data[i] = c_red;
-                                        imageData.data[i + 1] = c_green;
-                                        imageData.data[i + 2] = c_blue;
-                                    }
-                                }
-                            }
-                        });
-
-                        context.putImageData(imageData, 0, 0);
-                    } catch (ex) {
-                        avatar.no_local_editing = true;
-                        console.error("Can't apply image complex transforms, likely because images need to be served from a web url on the same server");
                     }
                 }
-                var canvas1 = document.createElement('canvas');
-                canvas1.width = img.width;
-                canvas1.height = img.height;
-                var context1 = canvas1.getContext('2d');
+                //TODO: Make this more efficient, maybe group all zones into one stack for one pass?
+                _.each(frame.zones || [], function (zone) {
+                    var x_start,y_start,width,height;
 
-                //Apply matrix transform to canvas and add as shape
-                context1.setTransform(m[0], m[1], m[2], m[3], m[4], m[5]);
-                context1.drawImage(canvas, 0, 0);
+                    if (zone.all) {
+                        x_start = 0;
+                        y_start = 0;
+                        width = frame.width;
+                        height = frame.height;
+                    } else {
+                        x_start = zone.x - frame.x;
+                        y_start = zone.y - frame.y;
+                        width = zone.width;
+                        height = zone.height;
+                    }
 
+                    if (x_start < 0) {
+                        width -= (0 - x_start);
+                        x_start = 0;
+                    }
+                    if (y_start < 0) {
+                        height -= (0 - y_start);
+                        y_start = 0;
+                    }
+                    var x_end = x_start + width;
+                    var y_end = y_start + height;
 
-                //Draw these asynchronously rather than passing them back into the stage list
-                var bitmap = new createjs.Bitmap(canvas1);
-                bitmap.compositeOperation = 'multiply';
-                avatar.drawOnStage(bitmap, avatar.stage);
-                avatar.faceShapeCollection.addChild(bitmap);
+                    //Find the color that should be applied
+                    var to_color = avatar.face_options[zone.color];
+                    var to_color_object = net.brehaut.Color(to_color);
+                    var c_red = parseInt(to_color_object.red * 255);
+                    var c_green = parseInt(to_color_object.green * 255);
+                    var c_blue = parseInt(to_color_object.blue * 255);
 
-            };
-            img.src = pack.data.image;
+                    //Loop through all pixels in the zone
+                    for (var x = x_start; x < x_end; x++) {
+                        for (var y = y_start; y < y_end; y++) {
+                            var i = 4 * (x + y * frame.width);
+                            var red = data[i];
+                            var green = data[i + 1];
+                            var blue = data[i + 2];
+                            if (red < 40 && green < 40 && blue < 50) {
+                                imageData.data[i] = c_red;
+                                imageData.data[i + 1] = c_green;
+                                imageData.data[i + 2] = c_blue;
+                            }
+                        }
+                    }
+                });
+
+                context.putImageData(imageData, 0, 0);
+            } catch (ex) {
+                if (ex.name == "SecurityError") {
+                    avatar.no_local_editing = true;
+                    console.error("Can't apply image complex transforms because images need to be served from a web url on the same server");
+                } else {
+                    debugger;
+                }
+            }
         }
+        var canvas1 = document.createElement('canvas');
+        canvas1.width = img.width;
+        canvas1.height = img.height;
+        var context1 = canvas1.getContext('2d');
+
+        //Apply matrix transform to canvas and add as shape
+        context1.setTransform(matrix[0], matrix[1], matrix[2], matrix[3], matrix[4], matrix[5]);
+        context1.drawImage(canvas, 0, 0);
 
 
-        return shapes;
+        //Draw these asynchronously rather than passing them back into the stage list
+        var bitmap = new createjs.Bitmap(canvas1);
+        bitmap.compositeOperation = 'multiply';
+        if (!was_cached) {
+            //Wasn't cached, so asynchronously add after loaded
+            avatar.drawOnStage(bitmap, avatar.stage);
+            avatar.faceShapeCollection.addChild(bitmap);
+        }
+        return bitmap;
     }
 
 })(Avatar, net, maths);;
@@ -6996,7 +7041,7 @@ var content_pack_data = {
                 {point: 'mouth bottom middle', x: 184, y: 152}
             ],
             zones: [
-                { all:true, color: 'lip_color'}
+                { all: true, color: 'lip_color'}
             ]
         },
         {name: '2 lips closed', x: 391, y: 66, width: 242, height: 131, filter: {},
@@ -7006,7 +7051,7 @@ var content_pack_data = {
                 {point: 'mouth bottom middle', x: 510, y: 153}
             ],
             zones: [
-                { all:true, color: 'lip_color'}
+                { all: true, color: 'lip_color'}
             ]
         },
         {name: '3 lips smiling', x: 675, y: 70, width: 267, height: 129, filter: {},
@@ -7016,9 +7061,109 @@ var content_pack_data = {
                 {point: 'mouth bottom middle', x: 805, y: 158}
             ],
             zones: [
-                { all:true, color: 'lip_color'}
+                { all: true, color: 'lip_color'}
             ]
-        }
+        },
+        {name: '4 lips smiling', x: 990, y: 84, width: 238, height: 108, filter: {},
+            coordinates: [
+                {point: 'left mouth wedge', x: 1002, y: 105},
+                {point: 'right mouth wedge', x: 1218, y: 105},
+                {point: 'mouth bottom middle', x: 1107, y: 169}
+            ],
+            zones: [
+                { all: true, color: 'lip_color'}
+            ]
+        },
+        {name: '5 lips smiling big top lip', x: 58, y: 306, width: 252, height: 131, filter: {},
+            coordinates: [
+                {point: 'left mouth wedge', x: 74, y: 336},
+                {point: 'right mouth wedge', x: 297, y: 336},
+                {point: 'mouth bottom middle', x: 184, y: 397}
+            ],
+            zones: [
+                { all: true, color: 'lip_color'}
+            ]
+        },
+        {name: '6 lips smiling big top lip', x: 391, y: 327, width: 250, height: 91, filter: {},
+            coordinates: [
+                {point: 'left mouth wedge', x: 407, y: 358},
+                {point: 'right mouth wedge', x: 618, y: 358},
+                {point: 'mouth bottom middle', x: 514, y: 408}
+            ],
+            zones: [
+                { all: true, color: 'lip_color'}
+            ]
+        },
+        {name: '7 lips smiling big top lip', x: 683, y: 322, width: 246, height: 100, filter: {},
+            coordinates: [
+                {point: 'left mouth wedge', x: 697, y: 337},
+                {point: 'right mouth wedge', x: 917, y: 337},
+                {point: 'mouth bottom middle', x: 808, y: 389}
+            ],
+            zones: [
+                { all: true, color: 'lip_color'}
+            ]
+        },
+        {name: '8 lips smiling big top lip', x: 994, y: 312, width: 237, height: 123, filter: {},
+            coordinates: [
+                {point: 'left mouth wedge', x: 1005, y: 334},
+                {point: 'right mouth wedge', x: 1216, y: 334},
+                {point: 'mouth bottom middle', x: 1106, y: 398}
+            ],
+            zones: [
+                { all: true, color: 'lip_color'}
+            ]
+        },
+        {name: '8 lips smiling big top lip', x: 994, y: 312, width: 237, height: 123, filter: {},
+            coordinates: [
+                {point: 'left mouth wedge', x: 1005, y: 334},
+                {point: 'right mouth wedge', x: 1216, y: 334},
+                {point: 'mouth bottom middle', x: 1106, y: 398}
+            ],
+            zones: [
+                { all: true, color: 'lip_color'}
+            ]
+        },
+        {name: '16 lips smiling big both lip with teeth', x: 991, y: 708, width: 240, height: 129, filter: {gender: 'Female'},
+            coordinates: [
+                {point: 'left mouth wedge', x: 1001, y: 745},
+                {point: 'right mouth wedge', x: 1221, y: 745},
+                {point: 'mouth bottom middle', x: 1109, y: 824}
+            ],
+            zones: [
+                { all: true, color: 'lip_color'}
+            ]
+        },
+        {name: '17 lips smiling big both lip with teeth', x: 47, y: 924, width: 278, height: 106, filter: {gender: 'Female'},
+            coordinates: [
+                {point: 'left mouth wedge', x: 60, y: 940},
+                {point: 'right mouth wedge', x: 313, y: 940},
+                {point: 'mouth bottom middle', x: 184, y: 1010}
+            ],
+            zones: [
+                { all: true, color: 'lip_color'}
+            ]
+        },
+        {name: '21 big fluffy lips ', x: 78, y: 1113, width: 228, height: 118, filter: {gender: 'Female'},
+            coordinates: [
+                {point: 'left mouth wedge', x: 85, y: 1172},
+                {point: 'right mouth wedge', x: 288, y: 1172},
+                {point: 'mouth bottom middle', x: 183, y: 1226}
+            ],
+            zones: [
+                { all: true, color: 'lip_color'}
+            ]
+        },
+        {name: '22 big fluffy lips with teeth', x: 415, y: 1133, width: 228, height: 106, filter: {gender: 'Female'},
+            coordinates: [
+                {point: 'left mouth wedge', x: 422, y: 1154},
+                {point: 'right mouth wedge', x: 625, y: 1154},
+                {point: 'mouth bottom middle', x: 523, y: 1231}
+            ],
+            zones: [
+                { all: true, color: 'lip_color'}
+            ]
+        },
     ],
     animations: {},
     removeBackgroundColor: '#e0d9c8',
