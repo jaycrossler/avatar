@@ -1,13 +1,13 @@
 (function (AvatarClass) {
-    var isPhantomJS = ( /PhantomJS/.test(window.navigator.userAgent));
-    var isLoacalFile = (document.location.protocol == 'file:');
 
     var _face_options = {
         style: 'lines',
         race: 'Human',
         rand_seed: 0,
 
+        //----------------------------------------
         //'Living' settings that can change over time
+        //NOTE: Items that aren't null are ones that haven't been implemented yet
         age: 30,
         era: 'Industrial',
         thickness: 0,
@@ -32,10 +32,9 @@
 
         emotionality: 0,
         emotion_shown: 'none', //TODO: Have an array of current emotions?
-        tattoos: [],
-        jewelry: [],
-        scars: [],
+        augmentations: [],
 
+        //----------------------------------------
         //DNA settings that don't change easily
         gender: null,
         height: 0,

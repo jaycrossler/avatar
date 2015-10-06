@@ -1,4 +1,4 @@
-/*! avatar ( and supporting libraries) - v0.0.9 - 2015-10-05 */// Copyright (c) 2008-2013, Andrew Brehaut, Tim Baumann, Matt Wilson,
+/*! avatar ( and supporting libraries) - v0.0.9 - 2015-10-06 */// Copyright (c) 2008-2013, Andrew Brehaut, Tim Baumann, Matt Wilson,
 //                          Simon Heimler, Michel Vielmetter
 //
 // All rights reserved.
@@ -3622,337 +3622,949 @@ Avatar.initializeOptions = function (face_options_basic, human_data_options) {
     var av_pointer = new Avatar('');
     av_pointer.initializeOptions(face_options_basic, human_data_options);
 };;
-(function (AvatarClass) {
-    var isPhantomJS = ( /PhantomJS/.test(window.navigator.userAgent));
-    var isLoacalFile = (document.location.protocol == 'file:');
+//beard
+new Avatar('add_render_function', {style: 'lines', feature: 'beard', renderer: function (face_zones, avatar) {
+    var f = face_zones;
+    var a = avatar._private_functions;
+    var face_options = avatar.face_options;
+    var lines = avatar.lines;
+    var shapes = [];
 
-    var _face_options = {
-        style: 'lines',
-        race: 'Human',
-        rand_seed: 0,
+    var beard_style = _.clone(face_options.beard_style);
+    if (face_options.gender == 'Female' || face_options.age < 18) beard_style = 'None';
 
-        //'Living' settings that can change over time
-        age: 30,
-        era: 'Industrial',
-        thickness: 0,
-        cleanliness: 0,
+    var stubble_style = face_options.stubble_style;
+    if (face_options.gender == 'Female' || face_options.age < 15) stubble_style = 'None';
 
-        hair_style: null,
-        hair_pattern: null,
-        hair_texture: 'Smooth',
-        hair_color: null,
+    if (beard_style == "None" && stubble_style == "None") return shapes;
 
-        beard_color: null,
-        beard_style: null,
-        stubble_style: null,
-        mustache_style: null,
-        mustache_width: null,
-        mustache_height: null,
-        acne_style: null,
-        acne_amount: null,
-        skin_texture: 'Normal',
-        teeth_condition: 'Normal',
-        lip_color: null,
+    var stubble_alpha = 0.3;
+    if (stubble_style == "Light") {
+        stubble_alpha = 0.1;
+    } else if (stubble_style == "Medium") {
+        stubble_alpha = 0.4;
+    } else if (stubble_style == "Heavy") {
+        stubble_alpha = 0.7;
+    }
 
-        emotionality: 0,
-        emotion_shown: 'none', //TODO: Have an array of current emotions?
-        tattoos: [],
-        jewelry: [],
-        scars: [],
+    var inner_hair_x = 0;
+    var inner_hair_y = 3;
+    var outer_hair_x = .5;
+    var outer_hair_y = .5;
+    var beard_alpha = 0.95;
 
-        //DNA settings that don't change easily
-        gender: null,
-        height: 0,
+    if (beard_style == 'None') {
+        //Skip
+    } else if (beard_style == 'Full Chin') {
+        inner_hair_y = 12;
+        outer_hair_x = 1;
+        outer_hair_y = 2;
+        beard_alpha = .9;
+    } else if (beard_style == 'Chin Warmer') {
+        inner_hair_y = 10;
+        outer_hair_x = .5;
+        outer_hair_y = .5;
+        beard_alpha = .8;
+    } else if (beard_style == 'Soup Catcher') {
+        inner_hair_y = 13;
+        outer_hair_x = 1;
+        outer_hair_y = 10;
+        beard_alpha = .9;
+    } else if (beard_style == 'Thin Chin Wrap') {
+        inner_hair_y = 1;
+        outer_hair_x = 0;
+        outer_hair_y = .2;
+        beard_alpha = .4;
+    } else if (beard_style == 'Thin Low Chin Wrap') {
+        inner_hair_x = 1;
+        inner_hair_y = 1;
+        outer_hair_x = 0;
+        outer_hair_y = .2;
+        beard_alpha = .3;
+    }
+    if (face_options.age < 20) {  //TODO: Make this a scaling function
+        inner_hair_x *= .25;
+        inner_hair_y *= .25;
+        outer_hair_x *= .25;
+        outer_hair_y *= .25;
+    } else if (face_options.age < 23) {
+        inner_hair_x *= .5;
+        inner_hair_y *= .5;
+        outer_hair_x *= .5;
+        outer_hair_y *= .5;
+    } else if (face_options.age < 26) {
+        inner_hair_x *= .75;
+        inner_hair_y *= .75;
+        outer_hair_x *= .75;
+        outer_hair_y *= .75;
+    }
 
-        skin_shade_tint: null,
-        skin_shade: null,
-        skin_colors: null,
-        face_shape: null,
-        skull_thickness: 'Normal',
-        chin_divot: null,
-        chin_shape: null,
+    var color = _.clone(face_options.beard_color || face_options.hair_color);
+    if (color == 'Hair') color = face_options.hair_color;
+    var fill_color = color;
+    if (color == 'White' || color == '#000000') color = 'gray';
+    color = maths.hexColorToRGBA(color, 1);
+    fill_color = maths.hexColorToRGBA(fill_color, 1);
 
-        neck_size: null,
 
-        eye_color: null,
-        eye_shape: null,
-        eye_spacing: null,
-        eye_size: null,
-        eye_rotation: null,
-        eyelid_shape: null,
-        eye_cloudiness: null,
-        eyebrow_shape: null,
-        pupil_color: null,
-        eye_sunken: null,
+    var head_line = a.transformLineToGlobalCoordinates(lines, 'face');
+    var eye_line = a.transformLineToGlobalCoordinates(lines, 'left eye');
+    var nose_bottom_line = a.transformLineToGlobalCoordinates(lines, 'nose bottom line');
 
-        head_size: 'Normal',
-        hairiness: null,
-        forehead_height: null,
-        hair_color_roots: null,
+    var hair_line_level_adjust = 1;
+    var beard_line = a.lineSegmentCompared(head_line, eye_line, 'below', hair_line_level_adjust * 10 * f.thick_unit);
 
-        nose_shape: null,
-        nose_size: null,
-        nose_height: null,
+//    var eye_line_bottom_y = a.comparePoints(eye_line, 'y','highest');
+//    var beard_line_left = a.comparePoints(eye_line, 'x','lowest');
+//    var beard_line_right = a.comparePoints(eye_line, 'x','highest');
+//    var beard_line_bottom = a.comparePoints(eye_line, 'y','highest');
+//
+//    //TODO: Get to same component space
+//    beard_line = a.constrainPolyLineToBox(beard_line, {
+//        tl:{x:beard_line_left,y:eye_line_bottom_y},
+//        br:{x:beard_line_right, y:beard_line_bottom}});
 
-        teeth_shape: 'Normal',
-        lip_shape: null,
-        mouth_height: null,
-        mouth_left_upturn: null,
-        mouth_right_upturn: null,
-        mouth_width: null,
-        mouth_upturn: null,
-        mouth_downturn: null,
-        lip_bottom_height: null,
-        lip_top_height: null,
-        lip_bottom_bottom: null,
-        lip_top_top: null,
+    var beard = a.createPath(beard_line, {thickness: f.thick_unit * 5, line_color: face_options.hair_color});
+    lines.push({name: 'beard line', line: beard_line, shape: beard, x: 0, y: 0, scale_x: 1, scale_y: 1});
+    //Note: this just added the beard as a reference line without showing it
 
-        ear_shape: null,
-        ear_thickness: null,
-        ear_lobe_left: null,
-        ear_lobe_right: null,
+    var nose_bottom_line_bottom_point = a.comparePoints(nose_bottom_line, "y", "highest");
 
-        wrinkle_pattern_mouth: null,
-        wrinkle_mouth_width: null,
-        wrinkle_mouth_height: null,
-        wrinkle_resistance: null
+    var stubble_fill_canvas = a.findShape(avatar.textures, 'stubble lines', null, 'canvas');
+    if (beard_style == "None" && stubble_style != "None" && beard_line && beard_line.length && beard_line.length > 2) {
+        var inner_stubble_line = a.extrudeHorizontalArc(beard_line, 0, -f.thick_unit * 100);
 
-    };
+        var inner_stubble_line_top_point = a.comparePoints(inner_stubble_line, "y", "highest");
+        if (inner_stubble_line_top_point > nose_bottom_line_bottom_point) {
+            var lower_by = inner_stubble_line_top_point - nose_bottom_line_bottom_point - (f.thick_unit * 10);
+            inner_stubble_line = a.transformShapeLine({type: 'shift', y_offset: -lower_by}, face_options, inner_stubble_line);
+        }
 
-    var _human_options = {
-        rendering_order: [
-            {decoration: "box-behind"},
-            {feature: "shoulders", style: "lines"},
-            {feature: "neck", style: "lines"},
-            {feature: "face", style: "lines"},
-            {feature: "eye_position", style: "lines"},
-            {feature: "nose", style: "lines"}, //Uses: right eye intermost
-            {feature: "chin", style: "lines"}, //Uses: chin mid line, face
-            {feature: "mouth", style: "lines", hide:true}, //NOTE: Shown twice to predraw positions
-            {feature: "wrinkles", style: "lines"}, //Uses: face, left eye, right eye, lips, full nose, chin top line
-            {feature: "beard", style: "lines"}, //Uses: face, left eye
-            {feature: "mouth", style: "lines"},
-            {feature: "mustache", style: "lines"},
-            {feature: "eyes", style: "lines"},
-            {feature: "hair", style: "lines"}, //Uses: face, left eye
-            {feature: "ears", style: "lines"},
-            {decoration: "name-plate"}
-        ],
-        use_content_packs: ['all'],
-//        use_content_packs: isPhantomJS ? ['none'] : ['all'],
+        var full_stubble_line = beard_line.concat(inner_stubble_line.reverse());
+        full_stubble_line = a.transformShapeLine({type: 'smooth'}, face_options, full_stubble_line);
 
-        //If Preset, then use one of the skin_color_options and change tint, otherwise calculate by tint and lightness
-        skin_shade_options: "Light,Dark,Preset".split(","),
-        skin_shade_tint_options: "Darkest,Darker,Dark,Very Low,Low,Less,Below,Reduce,Raised,Above,More,High,Very High,Bright,Brighter,Brightest".split(","),
-        skin_colors_options: [
-            {name: 'Fair', highlights: 'rgb(254,202,182)', skin: 'rgb(245,185,158)', cheek: 'rgb(246,171,142)', darkflesh: 'rgb(217,118,76)', deepshadow: 'rgb(202,168,110'},
-            {name: 'Brown', highlights: 'rgb(229,144,90)', skin: 'rgb(228,131,86)', cheek: ' rgb(178,85,44)', darkflesh: 'rgb(143,70,29)', deepshadow: 'rgb(152,57,17'},
-            {name: 'Tanned', highlights: 'rgb(245,194,151)', skin: 'rgb(234,154,95)', cheek: 'rgb(208,110,56)', darkflesh: 'rgb(168,66,17)', deepshadow: 'rgb(147,68,27'},
-            {name: 'White', highlights: 'rgb(250,220,196)', skin: 'rgb(245,187,149)', cheek: 'rgb(239,165,128)', darkflesh: 'rgb(203,137,103)', deepshadow: 'rgb(168,102,68'},
-            {name: 'Medium', highlights: 'rgb(247,188,154)', skin: 'rgb(243,160,120)', cheek: 'rgb(213,114,75)', darkflesh: 'rgb(154,79,48)', deepshadow: 'rgb(127,67,41'},
-            {name: 'Yellow', highlights: 'rgb(255,218,179)', skin: 'rgb(250,187,134)', cheek: 'rgb(244,159,104)', darkflesh: 'rgb(189,110,46)', deepshadow: 'rgb(138,67,3'},
-            {name: 'Pink', highlights: 'rgb(253,196,179)', skin: 'rgb(245,158,113)', cheek: 'rgb(236,134,86)', darkflesh: 'rgb(182,88,34)', deepshadow: 'rgb(143,60,18'},
-            {name: 'Bronzed', highlights: 'rgb(236,162,113)', skin: 'rgb(233,132,86)', cheek: 'rgb(219,116,75)', darkflesh: 'rgb(205,110,66)', deepshadow: 'rgb(173,83,46'},
-            {name: 'Light Brown', highlights: 'rgb(242,207,175)', skin: 'rgb(215,159,102)', cheek: 'rgb(208,138,86)', darkflesh: 'rgb(195,134,80)', deepshadow: 'rgb(168,112,63'},
-            {name: 'Peach', highlights: 'rgb(247,168,137)', skin: 'rgb(221,132,98)', cheek: 'rgb(183,90,57)', darkflesh: 'rgb(165,87,51)', deepshadow: 'rgb(105,29,15'},
-            {name: 'Black', highlights: 'rgb(140,120,110)', skin: 'rgb(160,90,66)', cheek: 'rgb(140,80,40)', darkflesh: 'rgb(120,90,29)', deepshadow: 'rgb(30,30,30'},
-            {name: 'Deep Black', highlights: 'rgb(40,40,50)', skin: 'rgb(80,80,80)', cheek: 'rgb(70,70,70)', darkflesh: 'rgb(80,70,29)', deepshadow: 'rgb(30,30,30'}
-        ],
 
-        gender_options: "Male,Female".split(","),
-        thickness_options: [-1.5, -1, -.5, 0, .5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6],  //TODO: Turn these to word options
+        var full_stubble = a.createPath(full_stubble_line, {
+            close_line: true, line_color: 'blank',
+            fill_color: '#444'
+        });
+        full_stubble.alpha = stubble_alpha / 4;
+        lines.push({name: 'full stubble', line: full_stubble_line, shape: full_stubble, alpha: beard_alpha});
+        shapes = shapes.concat(full_stubble);
 
-        face_shape_options: "Oblong,Oval,Round,Rectangular,Square,Triangular,Diamond,Inverted Triangle,Heart".split(","),
-        acne_style_options: "None,Very Light,Light,Medium,Heavy".split(","),
-        acne_amount_options: 'None,Very Light,Light,Few,Some,Spattering,Speckled,Heavy,Very Heavy'.split(","),
-        chin_divot_options: "Double,Small,Large,Smooth".split(","),
-        chin_shape_options: "Pronounced,Smooth".split(","),
+        var full_stubble_texture = a.createPath(full_stubble_line, {
+            close_line: true, line_color: 'blank',
+            fill_canvas: stubble_fill_canvas
+        });
+        full_stubble_texture.alpha = stubble_alpha;
+        shapes = shapes.concat(full_stubble_texture);
+    }
 
-        hair_color_roots_options: "Midnight Black,Off Black,Darkest Brown,Medium Dark Brown,Chestnut Brown,Light Chestnut Brown,Dark Golden Brown,Light Golden Brown,Dark Honey Blond,Bleached Blond,Light Ash Blond,Light Ash Brown,Lightest Blond,Pale Golden Blond,Strawberry Blond,Light Auburn,Dark Auburn,Darkest Gray,Medium Gray,Light Gray,White Blond,Platinum Blond,Toasted Wheat,Melted Butter,Wheat Milk,Cake Two,Poor Jean,Shoe Brown,Cookie,Tree Bark,Russet Red,Terra Cotta".split(","), //Yellow,Brown,Black,White,Gray,Dark Brown,Dark Yellow,Red
-        hair_style_options: "Bald,Droopy".split(","),
-        hair_pattern_options: "Mid Bump,Side Part,Eye Droop,Receding,Bowl,Bowl with Peak,Bowl with Big Peak,Side Part2,Twin Peaks".split(","),
-        hairiness_options: "Bald,Thin Hair,Thick Hair,Hairy,Fuzzy,Bearded,Covered in Hair,Fury".split(","), //TODO
+    if (beard_style != "None" && beard_line && beard_line.length && beard_line.length > 2) {
 
-        beard_color_options: "Hair,Black,Gray".split(","),
-        beard_style_options: "None,Full Chin,Chin Warmer,Soup Catcher,Thin Chin Wrap,Thin Low Chin Wrap".split(","),
-        mustache_style_options: "None,Propeller,Butterfly,Fu Manchu,Lower Dali,Dali,Sparrow,Zappa,Anchor,Copstash,Handlebar,Low Handlebar,Long Curled Handlebar,Curled Handlebar".split(","),
-        mustache_width_options: "Small,Short,Medium,Long,Large".split(","),
-        mustache_height_options: "Small,Short,Medium,Long,Large".split(","),
-        stubble_style_options: "None,Light,Medium,Heavy".split(","),
-        neck_size_options: "Thick,Concave".split(","),
+        var inner_hair_line = a.extrudeHorizontalArc(beard_line, -f.thick_unit * inner_hair_x * 10, -f.thick_unit * inner_hair_y * 10);
+        var outer_hair_line = a.extrudeHorizontalArc(beard_line, -f.thick_unit * outer_hair_x * 10, f.thick_unit * outer_hair_y * 10);
 
-        nose_shape_options: "Flat,Wide,Thin,Turned up/perky,Normal,Hooked down,Bulbous,Giant Nostrils".split(","),
-        nose_size_options: "Tiny,Small,Normal,Large,Big,Giant,Huge".split(","),
-        nose_height_options: "Low,Normal,Raised".split(","),
+        //TODO: Adjust differently by ear
+        var inner_hair_line_top_point = a.comparePoints(inner_hair_line, "y", "highest");
+        if (inner_hair_line_top_point < nose_bottom_line_bottom_point) {
+            var lower_by = inner_hair_line_top_point - nose_bottom_line_bottom_point;
+            inner_hair_line = a.transformShapeLine({type: 'shift', y_offset: -lower_by}, face_options, inner_hair_line);
+        }
 
-        eye_spacing_options: "Pinched,Thin,Normal,Wide".split(","),
-        eye_size_options: "Small,Normal,Big".split(","),
-        eye_shape_options: "Almond".split(","),
-        eye_color_options: "Hazel,Amber,Green,Blue,Gray,Brown,Dark Brown,Black".split(","),
-        eye_lids_options: "None,Smooth,Folded,Thick".split(","), //TODO
-        eye_cloudiness_options: "Normal,Clear,Misty".split(","),
-        eyebrow_shape_options: "Straight,Squiggle,Squiggle Flip,Slim,Lifted,Arch,Thick Arch,Caterpiller,Wide Caterpiller,Unibrow".split(","),
-        eye_rotation_options: "Flat,Small,Medium,Large,Slanted".split(","),
-        pupil_color_options: "Black".split(","),
-        eye_sunken_options: "Cavernous,Deep,Dark,Light,Smooth,None".split(","),
+        var full_beard_line = outer_hair_line.concat(inner_hair_line.reverse());
+        full_beard_line = a.transformShapeLine({type: 'smooth'}, face_options, full_beard_line);
 
-        ear_shape_options: "Round".split(","),
-        ear_thickness_options: "Wide,Normal,Big,Tall,Splayed".split(","),
-        ear_lobe_left_options: "Hanging,Attached".split(","),
-        ear_lobe_right_options: "Hanging,Attached,Same".split(","),
 
-        mouth_height_options: "Low,Normal,Raised,High".split(","),
-        mouth_left_upturn_options: "Down,Low,Normal,Raised,High".split(","),
-        mouth_right_upturn_options: "Down,Low,Normal,Raised,High".split(","),
-        mouth_width_options: "Wide,Big,Normal,Short,Small,Tiny".split(","),
-        mouth_upturn_options: "Large,Short,Small,Tiny".split(","),
-        mouth_downturn_options: "Large,Short,Small,Tiny".split(","),
+        var full_beard = a.createPath(full_beard_line, {
+            close_line: true, thickness: f.thick_unit * .5, line_color: color,
+            fill_color: fill_color
+        });
+        full_beard.alpha = beard_alpha;
+        lines.push({name: 'full beard', line: full_beard_line, shape: full_beard, x: 0, y: 0, scale_x: 1, scale_y: 1, alpha: beard_alpha});
+        shapes = shapes.concat(full_beard);
 
-        lip_color_options: "#f00,#e00,#d00,#c00,#f10,#f01,#b22,#944".split(","),
-        lip_bottom_height_options: "Down,Low,Normal,Raised,High".split(","),
-        lip_top_height_options: "Down,Low,Normal,Raised,High".split(","),
-        lip_bottom_bottom_options: "Down,Low,Normal,Raised,High".split(","),
-        lip_top_top_options: "Down,Low,Normal,Raised,High".split(","),
-        lip_shape_options: "Puckered,Thin,Thick".split(","),
+        var full_beard_texture = a.createPath(full_beard_line, {
+            close_line: true, line_color: 'blank',
+            fill_canvas: stubble_fill_canvas
+        });
+        full_beard_texture.alpha = beard_alpha;
+        shapes = shapes.concat(full_beard_texture);
+    }
+    return shapes;
+}});
 
-        wrinkle_pattern_mouth_options: "None,Gentle,Straight,Top,Middle,Bottom,Heavy".split(","),
-        wrinkle_resistance_options: "Very Low,Low,Less,Below,Reduce,Raised,Above,More,High,Very High".split(","),
-        wrinkle_mouth_width_options: "Far Out,Out,Middle,In,Far In".split(","),
-        wrinkle_mouth_height_options: "Far Up,Up,Middle,Down,Far Down".split(","),
 
-        forehead_height_options: "Under,Low,Less,Normal,Above,Raised,High,Floating".split(","),
+//mustache
+new Avatar('add_render_function', {style: 'lines', feature: 'mustache', renderer: function (face_zones, avatar) {
+    var f = face_zones;
+    var a = avatar._private_functions;
+    var face_options = avatar.face_options;
+    var lines = avatar.lines;
+    var shapes = [];
 
-        decorations: [
-            {name: "box-behind", type: 'rectangle', p1: 'facezone topleft', p2: 'facezone bottomright',
-                fill_color: 'blue', alpha: 0.3, line_color: 'light blue', size: '2', forceInBounds: true},
-            {name: "name-plate", type: 'rectangle', height: 16, docked: 'bottom', forceInBounds: true, font_size: 9,
-                text: '{{name}}', text_color: 'black', line_color: 'brown', fill_color: 'white', alpha: 0.8}
-        ]
-    };
+    var mustache_style = face_options.mustache_style;
+    if (face_options.gender == 'Female' || face_options.age < 18) mustache_style = 'None';
 
-    AvatarClass.initializeOptions(_face_options, _human_options);
+    var mustache_width_mod = face_options.mustache_width;
+    var mustache_height_mod = face_options.mustache_height;
 
-})(Avatar);;
-(function (Avatar, net) {
-    //TODO: Have textures be removed based on face_options modified
+    //TODO: Stretch to cover face
+    mustache_width_mod = a.turnWordToNumber(mustache_width_mod, .8, 1.2, 'Small,Short,Medium,Long,Large');
+    mustache_height_mod = a.turnWordToNumber(mustache_height_mod, .8, 1.2, 'Small,Short,Medium,Long,Large');
+
+    var color = _.clone(face_options.beard_color || face_options.hair_color);
+    if (color == 'Hair') color = face_options.hair_color;
+    var fill_color = color;
+    if (color == 'White' || color == '#000000') color = 'gray';
+    color = maths.hexColorToRGBA(color, 1);
+    fill_color = maths.hexColorToRGBA(fill_color, 1);
+
+    if (mustache_style != "None") {
+
+        //TODO: Link mustache points to lip anchors for mouth movement
+
+        var nose_bottom_line = a.transformLineToGlobalCoordinates(lines, 'nose bottom line');
+        var mouth_line = a.transformLineToGlobalCoordinates(lines, 'lips');
+        var mouth_top_point = a.comparePoints(mouth_line, 'y', 'lowest', true);
+        var nose_bottom_line_bottom_point = a.comparePoints(nose_bottom_line, "y", "highest", true);
+
+        var mustache_line = [];
+        var double_it = true;
+        if (mustache_style == 'Propeller') {
+            mustache_line = [
+                {x: 0, y: 0},
+                {x: -4, y: 1},
+                {x: -10, y: 2},
+                {x: -13, y: 1},
+                {x: -15, y: 3},
+                {x: -12, y: -1},
+                {x: 0, y: -1}
+            ]
+        } else if (mustache_style == 'Handlebar') {
+            mustache_line = [
+                {x: 0, y: 0},
+                {x: 3, y: -2},
+                {x: 8, y: 4},
+                {x: 12, y: 1},
+                {x: 10, y: 3},
+                {x: 8, y: 4},
+                {x: 2, y: 2},
+                {x: 0, y: 1}
+            ]
+        } else if (mustache_style == 'Pointy Handlebar') {
+            mustache_line = [
+                {x: 0, y: 0},
+                {x: 3, y: -2},
+                {x: 8, y: 2},
+                {x: 12, y: 2},
+                {x: 12, y: 2},
+                {x: 9, y: 3},
+                {x: 5, y: 4},
+                {x: 2, y: 2},
+                {x: 0, y: 1}
+            ]
+        } else if (mustache_style == 'Low Handlebar') {
+            mustache_line = [
+                {x: 0, y: 0},
+                {x: 3, y: -2},
+                {x: 8, y: 2},
+                {x: 12, y: 0},
+                {x: 9, y: 2},
+                {x: 5, y: 3},
+                {x: 2, y: 2},
+                {x: 0, y: 1}
+            ]
+        } else if (mustache_style == 'Long Curled Handlebar') {
+            mustache_line = [
+                {x: 0, y: 0},
+                {x: 3, y: -2},
+                {x: 8, y: 2},
+                {x: 12, y: 0},
+                {x: 14, y: -2},
+                {x: 12, y: -4},
+                {x: 10, y: -2},
+                {x: 10, y: -2},
+                {x: 12, y: -4},
+                {x: 14, y: -2},
+                {x: 12, y: 0},
+                {x: 9, y: 2},
+                {x: 5, y: 3},
+                {x: 2, y: 2},
+                {x: 0, y: 1}
+            ]
+        } else if (mustache_style == 'Curled Handlebar') {
+            mustache_line = [
+                {x: 0, y: 0},
+                {x: 3, y: -2},
+                {x: 8, y: 2},
+                {x: 11, y: 0},
+                {x: 13, y: -2},
+                {x: 11, y: -3},
+                {x: 10, y: -1},
+                {x: 10, y: -1},
+                {x: 11, y: -3},
+                {x: 13, y: -2},
+                {x: 11, y: 0},
+                {x: 9, y: 2},
+                {x: 5, y: 3},
+                {x: 2, y: 2},
+                {x: 0, y: 1}
+            ]
+        } else if (mustache_style == 'Lower Dali') {
+            mustache_line = [
+                {x: 0, y: -1},
+                {x: 10, y: 0},
+                {x: 10, y: 0},
+                {x: 3, y: 0},
+                {x: 0, y: -.5}
+            ]
+        } else if (mustache_style == 'Butterfly') {
+            mustache_line = [
+                {x: 0, y: -1},
+                {x: 2, y: -1.1},
+                {x: 10, y: 1.5},
+                {x: 1, y: 2},
+                {x: 0, y: 0}
+            ]
+        } else if (mustache_style == 'Fu Manchu') {
+            mustache_line = [
+                {x: 0, y: .5},
+                {x: 6, y: -1.1},
+                {x: 10, y: 1.5},
+                {x: 10.5, y: 3},
+                {x: 11, y: 10},
+                {x: 11, y: 20},
+                {x: 9, y: 23},
+                {x: 9.5, y: 8},
+                {x: 9.2, y: 2},
+
+                {x: 1, y: 3.5},
+                {x: 0, y: 1.5}
+            ]
+        } else if (mustache_style == 'Dali') {
+            mustache_line = [
+                {x: 0, y: -1},
+                {x: 2, y: -1.1},
+                {x: 8, y: 1.5},
+                {x: 15, y: -10},
+                {x: 15, y: -10},
+                {x: 7, y: 3},
+                {x: 1, y: 2},
+                {x: 0, y: 0}
+            ]
+        } else if (mustache_style == 'Sparrow') {
+            mustache_line = [
+                {x: 0, y: .5},
+                {x: 2, y: -0.1},
+                {x: 10, y: 5},
+                {x: 10, y: 8},
+                {x: 10, y: 10},
+                {x: 10, y: 8},
+                {x: 4, y: 4},
+                {x: .5, y: 4},
+                {x: 0, y: 1}
+            ]
+        } else if (mustache_style == 'Zappa') {
+            mustache_line = [
+                {x: 0, y: .2},
+                {x: 6, y: 0},
+                {x: 9, y: 2},
+                {x: 10, y: 5},
+                {x: 10, y: 8},
+                {x: 10.5, y: 9},
+                {x: 9, y: 8},
+                {x: 7, y: 4},
+                {x: 0, y: 4.5}
+            ]
+        } else if (mustache_style == 'Anchor') {
+            mustache_line = [
+                {x: 0, y: -1},
+                {x: 2, y: -1},
+                {x: 2, y: 3},
+                {x: 12, y: 0},
+                {x: 1, y: 3.5},
+                {x: 0, y: 2}
+            ]
+        } else if (mustache_style == 'Copstash') {
+            mustache_line = [
+                {x: 0, y: 0},
+                {x: 3, y: -.1},
+                {x: 8, y: 2.5},
+                {x: 6, y: 2.5},
+                {x: 1, y: 3},
+                {x: 0, y: 1}
+            ]
+        } else {
+            double_it = false;
+        }
+
+        if (double_it) {
+            var other_side_mustache = a.transformShapeLine({type: 'reverse', direction: 'horizontal', axis: 0}, face_options, mustache_line);
+            mustache_line = mustache_line.concat(other_side_mustache.reverse());
+        }
+
+        var alpha = .9;
+        var x = nose_bottom_line_bottom_point.x;
+        var y = ((mouth_top_point.y * 2) + (nose_bottom_line_bottom_point.y * 8)) / 10;
+        var line_thickness = (f.thick_unit * 2);
+        var width = f.thick_unit * 70 * mustache_width_mod;
+        var height = f.thick_unit * 80 * mustache_height_mod;
+
+        var mustache_outline = a.transformPathFromLocalCoordinates(mustache_line, width, height);
+        var mustache_shape = a.createPath(mustache_outline, {
+            close_line: true, thickness: line_thickness, color: color, fill_color: fill_color
+        });
+        mustache_shape.alpha = alpha;
+        mustache_shape.x = x;
+        mustache_shape.y = y;
+        lines.push({name: 'mustache', line: mustache_outline, shape: mustache_shape, x: x, y: y, alpha: alpha, scale_x: width, scale_y: height});
+        shapes.push(mustache_shape);
+
+
+        var hair_canvas = a.findShape(avatar.textures, 'stubble lines', null, 'canvas');
+        var mustache_shape_texture = a.createPath(mustache_outline, {
+            close_line: true, line_color: 'blank', fill_canvas: hair_canvas
+        });
+        mustache_shape_texture.alpha = 0.2;
+        mustache_shape_texture.x = x;
+        mustache_shape_texture.y = y;
+        shapes.push(mustache_shape_texture);
+
+    }
+
+
+    return shapes;
+}});
+;
+(function (Avatar, net, maths) {
+    var IMAGES = []; //Global list of any images that were loaded by content packs
+
+    var isPhantomJS = (/PhantomJS/.test(window.navigator.userAgent));
 
     var a = new Avatar('get_private_functions');
 
     //-----------------------------
-    //Texture creation
-    a.generateTextures = function (avatar) {
-        //TODO: Have Some of these run for the entire class?
-
-        avatar.textures = _.without(avatar.textures, function (tex) {
-            return tex.type == 'single use'
+    //Image Management
+    function findImage(url) {
+        var existing_image = _.find(IMAGES, function (image) {
+            return image.url == url;
         });
-        avatar.textures = []; //TODO: have this dynamically remove ones that have source variables changed
+        return existing_image ? existing_image.parent_object : null;
+    }
 
-        var height_object = a.getHeightOfStage(avatar);
-        var resolution = height_object.resolution;
-
-
-        //Build stubble colors
-        var hair_tinted_gray = avatar.face_options.beard_color;
-        var hair_tinted_gray2 = avatar.face_options.beard_color;
-
-        if (avatar.face_options.hair_color && hair_tinted_gray && hair_tinted_gray == 'Hair') {
-            hair_tinted_gray = avatar.face_options.hair_color;
-            hair_tinted_gray2 = avatar.face_options.hair_color;
+    function findOrLoadImage(url, run_after_loaded) {
+        var cached = findImage(url);
+        if (!isPhantomJS && cached) {
+            return run_after_loaded(cached);
+        } else {
+            var img = new Image();
+            img.onload = run_after_loaded;
+            img.src = url;
+            IMAGES.push({url: url, parent_object: img});
         }
-        if (!hair_tinted_gray) {
-            hair_tinted_gray = net.brehaut.Color('#666666').toString();
-            hair_tinted_gray2 = net.brehaut.Color('#888888').toString();
+    }
+
+    //-----------------------------
+    //Adding Content Pack
+    a.registerContentPack = function (avatar, name, pack_data) {
+        if (!_.isString(name)) {
+            throw "Name of content pack missing"
         }
-        hair_tinted_gray = net.brehaut.Color('#444444').blend(net.brehaut.Color(hair_tinted_gray), .1).toString();
-        hair_tinted_gray2 = net.brehaut.Color('#666666').blend(net.brehaut.Color(hair_tinted_gray2), .2).toString();
-
-        var canvas_size = 64;
-        //Build Stubble texture
-        var canvas = document.createElement('canvas');
-        canvas.width = canvas_size;
-        canvas.height = canvas_size;
-        var context = canvas.getContext('2d');
-
-        addRandomLines(context, avatar.face_options, canvas_size, resolution * 80, resolution * 4, resolution / 2, hair_tinted_gray);
-        addRandomLines(context, avatar.face_options, canvas_size, resolution * 140, resolution, resolution / 2, hair_tinted_gray2);
-        addRandomLines(context, avatar.face_options, canvas_size, resolution * 300, resolution * 8, resolution / 2, '#444');
-        avatar.textures.push({type: 'single use', name: 'stubble lines', canvas: canvas, context: context});
-
-
-        var canvas3 = document.createElement('canvas');
-        canvas3.width = canvas_size;
-        canvas3.height = canvas_size;
-        var context3 = canvas.getContext('2d');
-
-        addRandomLines(context3, avatar.face_options, canvas_size, resolution * 80, resolution / 2, resolution * 4, hair_tinted_gray);
-        addRandomLines(context3, avatar.face_options, canvas_size, resolution * 140, resolution / 2, resolution, hair_tinted_gray2);
-        avatar.textures.push({type: 'single use', name: 'hair horizontal lines', canvas: canvas3, context: context3});
-
-
-        var skin_color = avatar.face_options.skin_colors.skin;
-        var skin_lighter_2 = net.brehaut.Color(skin_color).lightenByRatio(.02).toString();
-        var skin_darker_1 = net.brehaut.Color(skin_color).darkenByRatio(.01).toString();
-
-        //Build Skin texture
-        var canvas2 = document.createElement('canvas');
-        canvas2.width = canvas_size;
-        canvas2.height = canvas_size;
-        var context2 = canvas2.getContext('2d');
-        addRandomSpots(context2, avatar.face_options, canvas_size, resolution * 10, resolution * 1.5, skin_lighter_2);
-        addRandomSpots(context2, avatar.face_options, canvas_size, resolution * 10, resolution * 1.5, skin_darker_1);
-        avatar.textures.push({type: 'single use', name: 'face bumps', canvas: canvas2, context: context2});
-
-
-        //Build Acne texture
-        var acne_amount = a.turnWordToNumber(avatar.face_options.acne_amount, 0, 9, 'None,Very Light,Light,Few,Some,Spattering,Speckled,Heavy,Very Heavy');
-
-        var face_reddish = net.brehaut.Color(skin_color).blend(net.brehaut.Color('#f00'), .15).toString();
-        var canvas4 = document.createElement('canvas');
-        canvas4.width = canvas_size * 5;
-        canvas4.height = canvas_size * 5;
-        var context4 = canvas4.getContext('2d');
-        addRandomSpots(context4, avatar.face_options, canvas_size * 5, resolution * acne_amount, resolution * 2, face_reddish);
-        avatar.textures.push({type: 'single use', name: 'face spots', canvas: canvas4, context: context4});
-
+        if (!_.isObject(pack_data)) {
+            throw "Detail object of content pack missing"
+        }
+        avatar.content_packs[name] = _.extend({name: name}, avatar.content_packs[name], pack_data);
     };
 
-    function addRandomSpots(context, face_options, context_size, number, radius, color) {
-        context.strokeStyle = color;
-        for (var i = 0; i < number; i++) {
-            var x = a.randInt(context_size, face_options);
-            var y = a.randInt(context_size, face_options);
-            var rad = a.randInt(radius, face_options);
+    function find_pack_that_can_be_shown(avatar, layer) {
+        return _.filter(avatar.content_packs, function (pack) {
+            var feature_list = pack.replace_features;
+            if (_.isString(feature_list)) feature_list = [feature_list];
 
-            context.fillStyle = color;
-            context.beginPath();
-            context.moveTo(x, y);
-            context.arc(x, y, parseInt(rad), 0, 2 * Math.PI);
-            context.closePath();
-            context.fill();
-            context.stroke();
-        }
-        return context;
+            //Check that the pack matches the feature being drawn
+            var isFeatureMatch = _.indexOf(feature_list, layer.feature) > -1;
+
+            //Check that the overall drawing style matches
+            var isMatchingStyle = (pack.style == layer.style);
+
+            var hasData, isFilterMatch, isAllowedPack;
+            if (isFeatureMatch && isMatchingStyle) {
+                //Check if the race or avatar specifies this pack is allowed
+                var packOptions = avatar.face_options.use_content_packs || avatar.getRaceData().use_content_packs;
+                if (_.isString(packOptions)) packOptions = [packOptions];
+
+                isAllowedPack = (_.indexOf(packOptions, 'all') > -1 || _.indexOf(packOptions, pack.name) > -1);
+
+                //Check that the pack seems to have valid data
+                hasData = _.isObject(pack.data) && _.isArray(pack.data.frames) && pack.data.image;
+
+                //Check that the pack doesn't have any filters that exclude it from running
+                isFilterMatch = true;
+                for (var key in pack.filter || {}) {
+                    var filter = pack.filter[key];
+                    //Only exclude if key is set, but is different than filter
+                    if (avatar.face_options[key] && avatar.face_options[key] != filter) {
+                        isFilterMatch = false;
+                    }
+                }
+            }
+
+            return isMatchingStyle && isAllowedPack && hasData && isFeatureMatch && isFilterMatch;
+        });
     }
 
-    function addRandomLines(context, face_options, context_size, number, length_y, length_x, color) {
-        context.strokeStyle = color;
-        for (var i = 0; i < number; i++) {
-            var x = a.randInt(context_size, face_options);
-            var y = a.randInt(context_size, face_options);
-            var x_off = parseInt(a.randInt(length_x * 2, face_options) - length_x);
-            var y_off = parseInt(a.randInt(length_y * 2, face_options) - length_y);
+    function find_frames_that_can_be_shown(avatar, matching_packs) {
+        var matching_frames = [];
 
-            context.beginPath();
-            context.moveTo(x, y);
-            context.lineTo(x + x_off, y + y_off);
-            context.closePath();
-            context.stroke()
+        //Check if there are any 'overrides' specified in face_options, then use those if so
+        _.each(matching_packs, function (pack) {
+            if (pack.name && avatar.face_options[pack.name]) {
+                var override_with_frame = avatar.face_options[pack.name];
+                var frame = _.find(pack.data.frames, function (frame) {
+                    return frame.name == override_with_frame
+                });
+                if (frame) {
+                    frame.pack = pack;
+                    matching_frames.push(frame)
+                }
+            }
+        });
+
+        if (matching_frames.length == 0) {
+            //None specified, find some that match filters
+            _.each(matching_packs, function (pack) {
+                //Look through all matching packs to find frames that match filters
+                var matching_frames_in = _.filter(pack.data.frames, function (frame) {
+                    //TODO: Check for at least 3 points
+                    var isFilterMatch = true;
+                    for (var key in frame.filter || {}) {
+                        var filter = frame.filter[key];
+                        //Only exclude if key is set, but is different than filter
+                        if (avatar.face_options[key] && avatar.face_options[key] != filter) {
+                            isFilterMatch = false;
+                        }
+                    }
+
+                    return isFilterMatch;
+                });
+                //Add a link to the parent pack to each frame
+                _.each(matching_frames_in, function (frame) {
+                    frame.pack = pack;
+                });
+                matching_frames = matching_frames.concat(matching_frames_in);
+            });
         }
-        return context;
+        return matching_frames;
     }
 
-})(Avatar, net);;
+    //Rendering features
+    a.content_packs_renderer = function (avatar, layer) {
+        var matching_frames = [];
+        var render_layer;
+
+        var matching_packs = find_pack_that_can_be_shown(avatar, layer);
+        if (matching_packs.length) {
+            matching_frames = find_frames_that_can_be_shown(avatar, matching_packs);
+        }
+        //There's at least one frame of the pack that matches filters.
+        if (matching_frames.length) {
+            //NOTE: Sometimes a renderer might be built and later not used because frequency isn't high enough
+            var matching_frame = a.randOption(matching_frames, avatar.face_options);
+            var matching_pack = matching_frame.pack;
+
+            render_layer = matching_pack;
+
+            render_layer.renderer = function (face_zones, avatar, layer) {
+                avatar.content_packs_used = avatar.content_packs_used || {};
+                avatar.content_packs_used[matching_pack.name] = matching_frame.name;
+
+                if (_.isFunction(matching_pack.custom_renderer)) {
+                    return matching_pack.custom_renderer(face_zones, avatar, layer, matching_pack, matching_frame);
+                } else {
+                    return default_image_renderer(face_zones, avatar, layer, matching_pack, matching_frame);
+                }
+            }
+        }
+
+        return render_layer;
+    };
+
+    function default_image_renderer(face_zones, avatar, layer, pack, frame) {
+        var a = avatar._private_functions;
+        var shapes = [];
+
+        var frame_coordinates = frame.coordinates || [];
+        var coordinate_transform_list = [];
+
+        //Find the coordinates from the frame and match them to points on avatar
+        _.each(frame_coordinates, function (from_source) {
+            var from = {point: from_source.point, x: from_source.x - frame.x, y: from_source.y - frame.y};
+            var to = a.findPoint(avatar, from.point) || {};
+
+            if (to) {
+                coordinate_transform_list.push({from: from, to: to});
+
+                if (pack.show_reference_points) {
+                    var to_point = new createjs.Shape();
+                    to_point.graphics.beginFill('#f00').drawCircle(to.x, to.y, 4);
+                    shapes.push(to_point);
+                    console.log('To', to.x, to.y);
+                }
+            }
+        });
+
+        //Map the three triangle coordinates from shape onto the face targets
+        if (coordinate_transform_list.length > 2) {
+            //Build triangles of first three mapped points
+            var source = [coordinate_transform_list[0].from, coordinate_transform_list[1].from, coordinate_transform_list[2].from];
+            var dest = [coordinate_transform_list[0].to, coordinate_transform_list[1].to, coordinate_transform_list[2].to];
+
+            //Build the final transform matrix from three points in each reference frame
+            var matrix = maths.buildTransformFromTriangleToTriangle(source, dest);
+
+            //TODO: Verify that loading these is not asynchronous on image draw
+            var render_it = function (obj) {
+                return default_render_after_image_loaded(avatar, pack, frame, matrix, obj);
+            };
+
+            var shape = findOrLoadImage(pack.data.image, render_it);
+            shapes.push(shape);
+
+        }
+        return shapes;
+    }
+
+    function remove_color_and_range(imageData, bg_color, bg_x) {
+        var bg_color_obj = net.brehaut.Color(bg_color);
+        var bg_r = parseInt(bg_color_obj.red * 255);
+        var bg_g = parseInt(bg_color_obj.green * 255);
+        var bg_b = parseInt(bg_color_obj.blue * 255);
+
+        //Set any colors within the specified range to transparent
+        var data = imageData.data;
+        for (var i = 0, n = data.length; i < n; i += 4) {
+            var red = data[i];
+            var green = data[i + 1];
+            var blue = data[i + 2];
+
+            if ((red > bg_r - bg_x) && (red < bg_r + bg_x) &&
+                (blue > bg_b - bg_x) && (blue < bg_b + bg_x) &&
+                (green > bg_g - bg_x) && (green < bg_g + bg_x)) {
+                imageData.data[i + 3] = 0;
+            }
+        }
+        return imageData;
+    }
+
+    function apply_color_transform_to_zone(imageData, avatar, frame) {
+        //TODO: Integrate in tan_colors packs and other transforms from online
+        _.each(frame.zones || [], function (zone) {
+            var x_start, y_start, width, height;
+
+            if (zone.all) {
+                x_start = 0;
+                y_start = 0;
+                width = frame.width;
+                height = frame.height;
+            } else {
+                x_start = zone.x - frame.x;
+                y_start = zone.y - frame.y;
+                width = zone.width;
+                height = zone.height;
+            }
+
+            if (x_start < 0) {
+                width -= (0 - x_start);
+                x_start = 0;
+            }
+            if (y_start < 0) {
+                height -= (0 - y_start);
+                y_start = 0;
+            }
+            var x_end = x_start + width;
+            var y_end = y_start + height;
+
+            //Find the color that should be applied
+            var to_color = avatar.face_options[zone.color];
+            var to_color_object = net.brehaut.Color(to_color);
+            var c_red = parseInt(to_color_object.red * 255);
+            var c_green = parseInt(to_color_object.green * 255);
+            var c_blue = parseInt(to_color_object.blue * 255);
+
+            var data = imageData.data;
+
+            //Loop through all pixels in the zone
+            for (var x = x_start; x < x_end; x++) {
+                for (var y = y_start; y < y_end; y++) {
+                    var i = 4 * (x + y * frame.width);
+                    var red = data[i];
+                    var green = data[i + 1];
+                    var blue = data[i + 2];
+                    if (red < 40 && green < 40 && blue < 50) {
+                        imageData.data[i] = c_red;
+                        imageData.data[i + 1] = c_green;
+                        imageData.data[i + 2] = c_blue;
+                    }
+                }
+            }
+        });
+        return imageData;
+    }
+
+    function default_render_after_image_loaded(avatar, pack, frame, matrix, parent_or_img) {
+
+        //Get either the cached image or the loaded image object
+        var was_cached = false;
+        var img;
+        if (parent_or_img.src) {
+            was_cached = true;
+            img = parent_or_img;
+        } else {
+            img = parent_or_img.target;
+        }
+
+        //Extract the sub-image from the file into a temp canvas
+        var canvas_from_image_frame_cutout = document.createElement('canvas');
+        canvas_from_image_frame_cutout.width = frame.width + frame.x;
+        canvas_from_image_frame_cutout.height = frame.height + frame.y;
+        var context = canvas_from_image_frame_cutout.getContext('2d');
+        context.drawImage(img, frame.x, frame.y, frame.width, frame.height, 0, 0, frame.width, frame.height);
+
+        //Remove background colors
+        if (!avatar.no_local_editing) {
+            try {
+                //Get the image data and remove background color (with a range)
+                var imageData = context.getImageData(0, 0, frame.width, frame.height);
+                var data = imageData.data;
+
+                if (pack.data.removeBackgroundNoise || pack.data.removeBackgroundColor) {
+                    // iterate over all pixels
+                    imageData = remove_color_and_range(imageData,
+                            pack.data.removeBackgroundColor || 'white',
+                            pack.data.removeBackgroundNoise || 20);
+
+                }
+                imageData = apply_color_transform_to_zone(imageData, avatar, frame);
+
+                context.putImageData(imageData, 0, 0);
+            } catch (ex) {
+                if (ex.name == "SecurityError") {
+                    avatar.no_local_editing = true;
+                    console.error("Can't apply image complex transforms because images need to be served from a web url on the same server");
+                } else {
+                    debugger;
+                }
+            }
+        }
+        var canvas1 = document.createElement('canvas');
+        canvas1.width = img.width;
+        canvas1.height = img.height;
+        var context1 = canvas1.getContext('2d');
+
+        //Apply matrix transform to canvas and add as shape
+        context1.setTransform(matrix[0], matrix[1], matrix[2], matrix[3], matrix[4], matrix[5]);
+        context1.drawImage(canvas_from_image_frame_cutout, 0, 0);
+
+
+        //Draw these asynchronously rather than passing them back into the stage list
+        var bitmap;
+        if (isPhantomJS) {
+
+            //TODO: PhantomJS running tests is throwing a security error when editing canvases locally... ugh
+            //TODO: Write pixels onto a rectangle and add as a shape
+
+            var dWidth = canvas_from_image_frame_cutout.width;
+            var dHeight = canvas_from_image_frame_cutout.height;
+            var main_context = avatar.stage.canvas.getContext('2d');
+            main_context.globalCompositeOperation = 'multiply';
+            main_context.drawImage(canvas_from_image_frame_cutout, 0, 0,
+                dWidth, dHeight,
+                matrix[4], matrix[5], dWidth * matrix[0], dHeight * matrix[3]
+            );
+            main_context.globalCompositeOperation = 'normal';
+
+
+        } else {
+            bitmap = new createjs.Bitmap(canvas1);
+            bitmap.compositeOperation = 'multiply';
+            if (!was_cached) {
+                //Wasn't cached, so asynchronously add after loaded
+                avatar.drawOnStage(bitmap, avatar.stage);
+                avatar.faceShapeCollection.addChild(bitmap);
+            }
+        }
+        return bitmap;
+    }
+
+})(Avatar, net, maths);;
+function createHairPattern(options, zone, hair_line, outer_hair_line, a) {
+    //Can take in numbers like '123123' or '212,1231,53' and make hair
+
+    var type = options.type || 'droopy';
+    var pattern = options.pattern || '1111121111';
+    var point_pattern = options.point_pattern || '';
+    var head_width = a.comparePoints(hair_line, 'width');
+    var hair_left = a.comparePoints(hair_line, 'x', 'lowest');
+
+    var head_height = zone.bottom + zone.top;
+
+    var hair_pieces = pattern.split(",");
+    var left_hair, mid_hair, right_hair;
+    if (hair_pieces.length == 1) {
+        left_hair = [];
+        mid_hair = '' + parseInt(hair_pieces[0]);
+        right_hair = [];
+    } else if (hair_pieces.length == 3) {
+        left_hair = '' + parseInt(hair_pieces[0]);
+        mid_hair = '' + parseInt(hair_pieces[1]);
+        right_hair = '' + parseInt(hair_pieces[2]);
+    }
+
+    if (mid_hair.length < 2) {
+        mid_hair = "1" + mid_hair + "1";
+    }
+    var head_slice_width = head_width / (mid_hair.length - 1);
+    var head_slice_height = head_height / 8;
+
+    //TODO: Handle left and right
+    var new_hair_line = [];
+    _.each(mid_hair, function (length_number, i) {
+        var x = hair_left + (i * head_slice_width);
+
+        var height = parseInt(length_number) * head_slice_height;
+        var hair_line_height = a.comparePoints(hair_line, 'crosses x', x);
+        var y = hair_line_height + height;
+
+        new_hair_line.push({x: x, y: y});
+//            new_hair_line.push({
+//                x: zone.x+zone.left+(i * head_slice_width),
+//                y: zone.y+zone.top+height
+//            });
+
+    });
+
+//        var spacing = comparePoints(hair_line, 'width') / hair_line.length;
+//
+//        var hair_spaced = hydratePointsAlongLine(new_hair_line, spacing, true);
+//        _.each(new_hair_line, function(nhl, i){
+//            nhl.y += hair_spaced[i].y;
+//        });
+
+
+    return hair_line.concat(new_hair_line.reverse());
+}
+
+//hair
+new Avatar('add_render_function', {style: 'lines', feature: 'hair', renderer: function (face_zones, avatar) {
+    var f = face_zones;
+    var a = avatar._private_functions;
+    var face_options = avatar.face_options;
+    var lines = avatar.lines;
+    var shapes = [];
+
+    var hair_line_level_adjust = -f.thick_unit * 2;
+    var outer_hair_x = 10;
+    var outer_hair_y = 20;
+
+
+    if (face_options.age < 20) {
+        outer_hair_y *= (face_options.age / 20);
+    }
+
+    var head_line = a.transformLineToGlobalCoordinates(lines, 'face');
+    var eye_line = a.transformLineToGlobalCoordinates(lines, 'left eye');
+
+    head_line = a.hydratePointsAlongLine(head_line, f.thick_unit * 30);
+
+    var zone = f.face;
+    var hair_line = a.lineSegmentCompared(head_line, eye_line, 'above', hair_line_level_adjust);
+
+    if (hair_line && hair_line.length) {
+        var hair_dot_array = a.createPath(hair_line, {dot_array: true, thickness: f.thick_unit * 5, line_color: face_options.hair_color});
+        lines.push({name: 'hair dot line', line: hair_line, shape: hair_dot_array, x: 0, y: 0, scale_x: 1, scale_y: 1});
+//            shapes = shapes.concat(hair);
+
+
+//        var inner_hair_line = a.extrudeHorizontalArc(hair_line, f.thick_unit * inner_hair_x, f.thick_unit * inner_hair_y);
+//            var inner_hair_dots = a.createPath(inner_hair_line, {dot_array:true, thickness: f.thick_unit * 2, line_color: face_options.hair_color});
+//            shapes = shapes.concat(inner_hair_dots);
+
+        var outer_hair_line = a.extrudeHorizontalArc(hair_line, f.thick_unit * outer_hair_x, -f.thick_unit * outer_hair_y);
+//            var outer_hair_dots = a.createPath(outer_hair_line, {dot_array:true, thickness: f.thick_unit * 2, line_color: face_options.hair_color});
+//            shapes = shapes.concat(outer_hair_dots);
+
+        var color = _.clone(face_options.hair_color);
+        var fill_color = color;
+        if (color == 'White' || color == '#000000') color = 'gray';
+        color = maths.hexColorToRGBA(color, 1);
+        fill_color = maths.hexColorToRGBA(fill_color, 1);
+
+//        var full_hair_line = inner_hair_line.concat(outer_hair_line.reverse());
+//        full_hair_line = a.transformShapeLine({type: 'smooth'}, face_options, full_hair_line);
+
+//        var outer_hair = a.createPath(full_hair_line, {close_line: true, thickness: f.thick_unit * 2, color: color, fill_color: fill_color});
+//        lines.push({name: 'full hair', line: full_hair_line, shape: outer_hair});
+//        shapes = shapes.concat(outer_hair);
+
+        var hair_builder = {style: face_options.hair_style, pattern: '111121111', point_pattern: '', pattern_name: face_options.hair_pattern};
+        if (face_options.hair_pattern == "Mid Bump") {
+            hair_builder.pattern = '111121111';
+        } else if (face_options.hair_pattern == "Eye Droop") {
+            hair_builder.pattern = '411114356224';
+        } else if (face_options.hair_pattern == "Side Part") {
+            hair_builder.pattern = '0,123212321,0';
+        } else if (face_options.hair_pattern == "Bowl") {
+            hair_builder.pattern = '0,2222222,0';
+        } else if (face_options.hair_pattern == "Receding") {
+            hair_builder.pattern = '0,1111111,0';
+        } else if (face_options.hair_pattern == "Bowl with Peak") {
+            hair_builder.pattern = '0,111131111,0';
+        } else if (face_options.hair_pattern == "Bowl with Big Peak") {
+            hair_builder.pattern = '0,111242111,0';
+            hair_builder.point_pattern = ' ,    P    , ';
+        } else if (face_options.hair_pattern == "Side Part2") {
+            hair_builder.pattern = '0,4323234,0';
+        } else if (face_options.hair_pattern == "Twin Peaks") {
+            hair_builder.pattern = '0,11242124211,0';
+        }
+
+        if (face_options.hair_style == "Spiky") {
+            //Replace each blank with a "P"
+            var point_pattern = _.str.repeat(" ", hair_builder.pattern.length);
+            _.each(hair_builder.point_pattern, function (style, i) {
+                if (style != " ") point_pattern[i] = style;
+            });
+            _.each(hair_builder.pattern, function (style, i) {
+                if (style == ",") point_pattern[i] = ',';
+                if (style == " ") point_pattern[i] = 'P';
+            })
+        } else if (face_options.hair_style == "Bald" || face_options.hair_style == "None" || face_options.age < 2) {
+            hair_builder = {};
+        }
+
+
+        if (hair_builder.style) {
+            var added_hair_line = createHairPattern(hair_builder, zone, hair_line, outer_hair_line, a);
+            var added_outer_hair = a.createPath(added_hair_line, {
+                close_line: true, thickness: f.thick_unit * 2, line_color: color,
+                fill_color: fill_color
+            });
+            lines.push({name: 'full hair second layer', line: added_hair_line, shape: added_outer_hair});
+            shapes = shapes.concat(added_outer_hair);
+
+            var stubble_fill_canvas = a.findShape(avatar.textures, 'stubble lines', null, 'canvas');
+            var added_outer_hair_fill = a.createPath(added_hair_line, {
+                close_line: true, line_color: 'blank', fill_canvas: stubble_fill_canvas
+            });
+            added_outer_hair_fill.alpha = 0.2;
+            shapes = shapes.concat(added_outer_hair_fill);
+        }
+
+
+    }
+    return shapes;
+}});;
 //-----------------------------------------
 //Avatar.js (lines and circle styles)
 //This set of functions adds rendering capabilities to avatar.js, specifically to draw things like human faces
@@ -6100,949 +6712,337 @@ new Avatar('add_render_function', {style: 'circles', feature: 'mouth', renderer:
 
     return shapes;
 }});;
-function createHairPattern(options, zone, hair_line, outer_hair_line, a) {
-    //Can take in numbers like '123123' or '212,1231,53' and make hair
-
-    var type = options.type || 'droopy';
-    var pattern = options.pattern || '1111121111';
-    var point_pattern = options.point_pattern || '';
-    var head_width = a.comparePoints(hair_line, 'width');
-    var hair_left = a.comparePoints(hair_line, 'x', 'lowest');
-
-    var head_height = zone.bottom + zone.top;
-
-    var hair_pieces = pattern.split(",");
-    var left_hair, mid_hair, right_hair;
-    if (hair_pieces.length == 1) {
-        left_hair = [];
-        mid_hair = '' + parseInt(hair_pieces[0]);
-        right_hair = [];
-    } else if (hair_pieces.length == 3) {
-        left_hair = '' + parseInt(hair_pieces[0]);
-        mid_hair = '' + parseInt(hair_pieces[1]);
-        right_hair = '' + parseInt(hair_pieces[2]);
-    }
-
-    if (mid_hair.length < 2) {
-        mid_hair = "1" + mid_hair + "1";
-    }
-    var head_slice_width = head_width / (mid_hair.length - 1);
-    var head_slice_height = head_height / 8;
-
-    //TODO: Handle left and right
-    var new_hair_line = [];
-    _.each(mid_hair, function (length_number, i) {
-        var x = hair_left + (i * head_slice_width);
-
-        var height = parseInt(length_number) * head_slice_height;
-        var hair_line_height = a.comparePoints(hair_line, 'crosses x', x);
-        var y = hair_line_height + height;
-
-        new_hair_line.push({x: x, y: y});
-//            new_hair_line.push({
-//                x: zone.x+zone.left+(i * head_slice_width),
-//                y: zone.y+zone.top+height
-//            });
-
-    });
-
-//        var spacing = comparePoints(hair_line, 'width') / hair_line.length;
-//
-//        var hair_spaced = hydratePointsAlongLine(new_hair_line, spacing, true);
-//        _.each(new_hair_line, function(nhl, i){
-//            nhl.y += hair_spaced[i].y;
-//        });
-
-
-    return hair_line.concat(new_hair_line.reverse());
-}
-
-//hair
-new Avatar('add_render_function', {style: 'lines', feature: 'hair', renderer: function (face_zones, avatar) {
-    var f = face_zones;
-    var a = avatar._private_functions;
-    var face_options = avatar.face_options;
-    var lines = avatar.lines;
-    var shapes = [];
-
-    var hair_line_level_adjust = -f.thick_unit * 2;
-    var outer_hair_x = 10;
-    var outer_hair_y = 20;
-
-
-    if (face_options.age < 20) {
-        outer_hair_y *= (face_options.age / 20);
-    }
-
-    var head_line = a.transformLineToGlobalCoordinates(lines, 'face');
-    var eye_line = a.transformLineToGlobalCoordinates(lines, 'left eye');
-
-    head_line = a.hydratePointsAlongLine(head_line, f.thick_unit * 30);
-
-    var zone = f.face;
-    var hair_line = a.lineSegmentCompared(head_line, eye_line, 'above', hair_line_level_adjust);
-
-    if (hair_line && hair_line.length) {
-        var hair_dot_array = a.createPath(hair_line, {dot_array: true, thickness: f.thick_unit * 5, line_color: face_options.hair_color});
-        lines.push({name: 'hair dot line', line: hair_line, shape: hair_dot_array, x: 0, y: 0, scale_x: 1, scale_y: 1});
-//            shapes = shapes.concat(hair);
-
-
-//        var inner_hair_line = a.extrudeHorizontalArc(hair_line, f.thick_unit * inner_hair_x, f.thick_unit * inner_hair_y);
-//            var inner_hair_dots = a.createPath(inner_hair_line, {dot_array:true, thickness: f.thick_unit * 2, line_color: face_options.hair_color});
-//            shapes = shapes.concat(inner_hair_dots);
-
-        var outer_hair_line = a.extrudeHorizontalArc(hair_line, f.thick_unit * outer_hair_x, -f.thick_unit * outer_hair_y);
-//            var outer_hair_dots = a.createPath(outer_hair_line, {dot_array:true, thickness: f.thick_unit * 2, line_color: face_options.hair_color});
-//            shapes = shapes.concat(outer_hair_dots);
-
-        var color = _.clone(face_options.hair_color);
-        var fill_color = color;
-        if (color == 'White' || color == '#000000') color = 'gray';
-        color = maths.hexColorToRGBA(color, 1);
-        fill_color = maths.hexColorToRGBA(fill_color, 1);
-
-//        var full_hair_line = inner_hair_line.concat(outer_hair_line.reverse());
-//        full_hair_line = a.transformShapeLine({type: 'smooth'}, face_options, full_hair_line);
-
-//        var outer_hair = a.createPath(full_hair_line, {close_line: true, thickness: f.thick_unit * 2, color: color, fill_color: fill_color});
-//        lines.push({name: 'full hair', line: full_hair_line, shape: outer_hair});
-//        shapes = shapes.concat(outer_hair);
-
-        var hair_builder = {style: face_options.hair_style, pattern: '111121111', point_pattern: '', pattern_name: face_options.hair_pattern};
-        if (face_options.hair_pattern == "Mid Bump") {
-            hair_builder.pattern = '111121111';
-        } else if (face_options.hair_pattern == "Eye Droop") {
-            hair_builder.pattern = '411114356224';
-        } else if (face_options.hair_pattern == "Side Part") {
-            hair_builder.pattern = '0,123212321,0';
-        } else if (face_options.hair_pattern == "Bowl") {
-            hair_builder.pattern = '0,2222222,0';
-        } else if (face_options.hair_pattern == "Receding") {
-            hair_builder.pattern = '0,1111111,0';
-        } else if (face_options.hair_pattern == "Bowl with Peak") {
-            hair_builder.pattern = '0,111131111,0';
-        } else if (face_options.hair_pattern == "Bowl with Big Peak") {
-            hair_builder.pattern = '0,111242111,0';
-            hair_builder.point_pattern = ' ,    P    , ';
-        } else if (face_options.hair_pattern == "Side Part2") {
-            hair_builder.pattern = '0,4323234,0';
-        } else if (face_options.hair_pattern == "Twin Peaks") {
-            hair_builder.pattern = '0,11242124211,0';
-        }
-
-        if (face_options.hair_style == "Spiky") {
-            //Replace each blank with a "P"
-            var point_pattern = _.str.repeat(" ", hair_builder.pattern.length);
-            _.each(hair_builder.point_pattern, function (style, i) {
-                if (style != " ") point_pattern[i] = style;
-            });
-            _.each(hair_builder.pattern, function (style, i) {
-                if (style == ",") point_pattern[i] = ',';
-                if (style == " ") point_pattern[i] = 'P';
-            })
-        } else if (face_options.hair_style == "Bald" || face_options.hair_style == "None" || face_options.age < 2) {
-            hair_builder = {};
-        }
-
-
-        if (hair_builder.style) {
-            var added_hair_line = createHairPattern(hair_builder, zone, hair_line, outer_hair_line, a);
-            var added_outer_hair = a.createPath(added_hair_line, {
-                close_line: true, thickness: f.thick_unit * 2, line_color: color,
-                fill_color: fill_color
-            });
-            lines.push({name: 'full hair second layer', line: added_hair_line, shape: added_outer_hair});
-            shapes = shapes.concat(added_outer_hair);
-
-            var stubble_fill_canvas = a.findShape(avatar.textures, 'stubble lines', null, 'canvas');
-            var added_outer_hair_fill = a.createPath(added_hair_line, {
-                close_line: true, line_color: 'blank', fill_canvas: stubble_fill_canvas
-            });
-            added_outer_hair_fill.alpha = 0.2;
-            shapes = shapes.concat(added_outer_hair_fill);
-        }
-
-
-    }
-    return shapes;
-}});;
-//beard
-new Avatar('add_render_function', {style: 'lines', feature: 'beard', renderer: function (face_zones, avatar) {
-    var f = face_zones;
-    var a = avatar._private_functions;
-    var face_options = avatar.face_options;
-    var lines = avatar.lines;
-    var shapes = [];
-
-    var beard_style = _.clone(face_options.beard_style);
-    if (face_options.gender == 'Female' || face_options.age < 18) beard_style = 'None';
-
-    var stubble_style = face_options.stubble_style;
-    if (face_options.gender == 'Female' || face_options.age < 15) stubble_style = 'None';
-
-    if (beard_style == "None" && stubble_style == "None") return shapes;
-
-    var stubble_alpha = 0.3;
-    if (stubble_style == "Light") {
-        stubble_alpha = 0.1;
-    } else if (stubble_style == "Medium") {
-        stubble_alpha = 0.4;
-    } else if (stubble_style == "Heavy") {
-        stubble_alpha = 0.7;
-    }
-
-    var inner_hair_x = 0;
-    var inner_hair_y = 3;
-    var outer_hair_x = .5;
-    var outer_hair_y = .5;
-    var beard_alpha = 0.95;
-
-    if (beard_style == 'None') {
-        //Skip
-    } else if (beard_style == 'Full Chin') {
-        inner_hair_y = 12;
-        outer_hair_x = 1;
-        outer_hair_y = 2;
-        beard_alpha = .9;
-    } else if (beard_style == 'Chin Warmer') {
-        inner_hair_y = 10;
-        outer_hair_x = .5;
-        outer_hair_y = .5;
-        beard_alpha = .8;
-    } else if (beard_style == 'Soup Catcher') {
-        inner_hair_y = 13;
-        outer_hair_x = 1;
-        outer_hair_y = 10;
-        beard_alpha = .9;
-    } else if (beard_style == 'Thin Chin Wrap') {
-        inner_hair_y = 1;
-        outer_hair_x = 0;
-        outer_hair_y = .2;
-        beard_alpha = .4;
-    } else if (beard_style == 'Thin Low Chin Wrap') {
-        inner_hair_x = 1;
-        inner_hair_y = 1;
-        outer_hair_x = 0;
-        outer_hair_y = .2;
-        beard_alpha = .3;
-    }
-    if (face_options.age < 20) {  //TODO: Make this a scaling function
-        inner_hair_x *= .25;
-        inner_hair_y *= .25;
-        outer_hair_x *= .25;
-        outer_hair_y *= .25;
-    } else if (face_options.age < 23) {
-        inner_hair_x *= .5;
-        inner_hair_y *= .5;
-        outer_hair_x *= .5;
-        outer_hair_y *= .5;
-    } else if (face_options.age < 26) {
-        inner_hair_x *= .75;
-        inner_hair_y *= .75;
-        outer_hair_x *= .75;
-        outer_hair_y *= .75;
-    }
-
-    var color = _.clone(face_options.beard_color || face_options.hair_color);
-    if (color == 'Hair') color = face_options.hair_color;
-    var fill_color = color;
-    if (color == 'White' || color == '#000000') color = 'gray';
-    color = maths.hexColorToRGBA(color, 1);
-    fill_color = maths.hexColorToRGBA(fill_color, 1);
-
-
-    var head_line = a.transformLineToGlobalCoordinates(lines, 'face');
-    var eye_line = a.transformLineToGlobalCoordinates(lines, 'left eye');
-    var nose_bottom_line = a.transformLineToGlobalCoordinates(lines, 'nose bottom line');
-
-    var hair_line_level_adjust = 1;
-    var beard_line = a.lineSegmentCompared(head_line, eye_line, 'below', hair_line_level_adjust * 10 * f.thick_unit);
-
-//    var eye_line_bottom_y = a.comparePoints(eye_line, 'y','highest');
-//    var beard_line_left = a.comparePoints(eye_line, 'x','lowest');
-//    var beard_line_right = a.comparePoints(eye_line, 'x','highest');
-//    var beard_line_bottom = a.comparePoints(eye_line, 'y','highest');
-//
-//    //TODO: Get to same component space
-//    beard_line = a.constrainPolyLineToBox(beard_line, {
-//        tl:{x:beard_line_left,y:eye_line_bottom_y},
-//        br:{x:beard_line_right, y:beard_line_bottom}});
-
-    var beard = a.createPath(beard_line, {thickness: f.thick_unit * 5, line_color: face_options.hair_color});
-    lines.push({name: 'beard line', line: beard_line, shape: beard, x: 0, y: 0, scale_x: 1, scale_y: 1});
-    //Note: this just added the beard as a reference line without showing it
-
-    var nose_bottom_line_bottom_point = a.comparePoints(nose_bottom_line, "y", "highest");
-
-    var stubble_fill_canvas = a.findShape(avatar.textures, 'stubble lines', null, 'canvas');
-    if (beard_style == "None" && stubble_style != "None" && beard_line && beard_line.length && beard_line.length > 2) {
-        var inner_stubble_line = a.extrudeHorizontalArc(beard_line, 0, -f.thick_unit * 100);
-
-        var inner_stubble_line_top_point = a.comparePoints(inner_stubble_line, "y", "highest");
-        if (inner_stubble_line_top_point > nose_bottom_line_bottom_point) {
-            var lower_by = inner_stubble_line_top_point - nose_bottom_line_bottom_point - (f.thick_unit * 10);
-            inner_stubble_line = a.transformShapeLine({type: 'shift', y_offset: -lower_by}, face_options, inner_stubble_line);
-        }
-
-        var full_stubble_line = beard_line.concat(inner_stubble_line.reverse());
-        full_stubble_line = a.transformShapeLine({type: 'smooth'}, face_options, full_stubble_line);
-
-
-        var full_stubble = a.createPath(full_stubble_line, {
-            close_line: true, line_color: 'blank',
-            fill_color: '#444'
-        });
-        full_stubble.alpha = stubble_alpha / 4;
-        lines.push({name: 'full stubble', line: full_stubble_line, shape: full_stubble, alpha: beard_alpha});
-        shapes = shapes.concat(full_stubble);
-
-        var full_stubble_texture = a.createPath(full_stubble_line, {
-            close_line: true, line_color: 'blank',
-            fill_canvas: stubble_fill_canvas
-        });
-        full_stubble_texture.alpha = stubble_alpha;
-        shapes = shapes.concat(full_stubble_texture);
-    }
-
-    if (beard_style != "None" && beard_line && beard_line.length && beard_line.length > 2) {
-
-        var inner_hair_line = a.extrudeHorizontalArc(beard_line, -f.thick_unit * inner_hair_x * 10, -f.thick_unit * inner_hair_y * 10);
-        var outer_hair_line = a.extrudeHorizontalArc(beard_line, -f.thick_unit * outer_hair_x * 10, f.thick_unit * outer_hair_y * 10);
-
-        //TODO: Adjust differently by ear
-        var inner_hair_line_top_point = a.comparePoints(inner_hair_line, "y", "highest");
-        if (inner_hair_line_top_point < nose_bottom_line_bottom_point) {
-            var lower_by = inner_hair_line_top_point - nose_bottom_line_bottom_point;
-            inner_hair_line = a.transformShapeLine({type: 'shift', y_offset: -lower_by}, face_options, inner_hair_line);
-        }
-
-        var full_beard_line = outer_hair_line.concat(inner_hair_line.reverse());
-        full_beard_line = a.transformShapeLine({type: 'smooth'}, face_options, full_beard_line);
-
-
-        var full_beard = a.createPath(full_beard_line, {
-            close_line: true, thickness: f.thick_unit * .5, line_color: color,
-            fill_color: fill_color
-        });
-        full_beard.alpha = beard_alpha;
-        lines.push({name: 'full beard', line: full_beard_line, shape: full_beard, x: 0, y: 0, scale_x: 1, scale_y: 1, alpha: beard_alpha});
-        shapes = shapes.concat(full_beard);
-
-        var full_beard_texture = a.createPath(full_beard_line, {
-            close_line: true, line_color: 'blank',
-            fill_canvas: stubble_fill_canvas
-        });
-        full_beard_texture.alpha = beard_alpha;
-        shapes = shapes.concat(full_beard_texture);
-    }
-    return shapes;
-}});
-
-
-//mustache
-new Avatar('add_render_function', {style: 'lines', feature: 'mustache', renderer: function (face_zones, avatar) {
-    var f = face_zones;
-    var a = avatar._private_functions;
-    var face_options = avatar.face_options;
-    var lines = avatar.lines;
-    var shapes = [];
-
-    var mustache_style = face_options.mustache_style;
-    if (face_options.gender == 'Female' || face_options.age < 18) mustache_style = 'None';
-
-    var mustache_width_mod = face_options.mustache_width;
-    var mustache_height_mod = face_options.mustache_height;
-
-    //TODO: Stretch to cover face
-    mustache_width_mod = a.turnWordToNumber(mustache_width_mod, .8, 1.2, 'Small,Short,Medium,Long,Large');
-    mustache_height_mod = a.turnWordToNumber(mustache_height_mod, .8, 1.2, 'Small,Short,Medium,Long,Large');
-
-    var color = _.clone(face_options.beard_color || face_options.hair_color);
-    if (color == 'Hair') color = face_options.hair_color;
-    var fill_color = color;
-    if (color == 'White' || color == '#000000') color = 'gray';
-    color = maths.hexColorToRGBA(color, 1);
-    fill_color = maths.hexColorToRGBA(fill_color, 1);
-
-    if (mustache_style != "None") {
-
-        //TODO: Link mustache points to lip anchors for mouth movement
-
-        var nose_bottom_line = a.transformLineToGlobalCoordinates(lines, 'nose bottom line');
-        var mouth_line = a.transformLineToGlobalCoordinates(lines, 'lips');
-        var mouth_top_point = a.comparePoints(mouth_line, 'y', 'lowest', true);
-        var nose_bottom_line_bottom_point = a.comparePoints(nose_bottom_line, "y", "highest", true);
-
-        var mustache_line = [];
-        var double_it = true;
-        if (mustache_style == 'Propeller') {
-            mustache_line = [
-                {x: 0, y: 0},
-                {x: -4, y: 1},
-                {x: -10, y: 2},
-                {x: -13, y: 1},
-                {x: -15, y: 3},
-                {x: -12, y: -1},
-                {x: 0, y: -1}
-            ]
-        } else if (mustache_style == 'Handlebar') {
-            mustache_line = [
-                {x: 0, y: 0},
-                {x: 3, y: -2},
-                {x: 8, y: 4},
-                {x: 12, y: 1},
-                {x: 10, y: 3},
-                {x: 8, y: 4},
-                {x: 2, y: 2},
-                {x: 0, y: 1}
-            ]
-        } else if (mustache_style == 'Pointy Handlebar') {
-            mustache_line = [
-                {x: 0, y: 0},
-                {x: 3, y: -2},
-                {x: 8, y: 2},
-                {x: 12, y: 2},
-                {x: 12, y: 2},
-                {x: 9, y: 3},
-                {x: 5, y: 4},
-                {x: 2, y: 2},
-                {x: 0, y: 1}
-            ]
-        } else if (mustache_style == 'Low Handlebar') {
-            mustache_line = [
-                {x: 0, y: 0},
-                {x: 3, y: -2},
-                {x: 8, y: 2},
-                {x: 12, y: 0},
-                {x: 9, y: 2},
-                {x: 5, y: 3},
-                {x: 2, y: 2},
-                {x: 0, y: 1}
-            ]
-        } else if (mustache_style == 'Long Curled Handlebar') {
-            mustache_line = [
-                {x: 0, y: 0},
-                {x: 3, y: -2},
-                {x: 8, y: 2},
-                {x: 12, y: 0},
-                {x: 14, y: -2},
-                {x: 12, y: -4},
-                {x: 10, y: -2},
-                {x: 10, y: -2},
-                {x: 12, y: -4},
-                {x: 14, y: -2},
-                {x: 12, y: 0},
-                {x: 9, y: 2},
-                {x: 5, y: 3},
-                {x: 2, y: 2},
-                {x: 0, y: 1}
-            ]
-        } else if (mustache_style == 'Curled Handlebar') {
-            mustache_line = [
-                {x: 0, y: 0},
-                {x: 3, y: -2},
-                {x: 8, y: 2},
-                {x: 11, y: 0},
-                {x: 13, y: -2},
-                {x: 11, y: -3},
-                {x: 10, y: -1},
-                {x: 10, y: -1},
-                {x: 11, y: -3},
-                {x: 13, y: -2},
-                {x: 11, y: 0},
-                {x: 9, y: 2},
-                {x: 5, y: 3},
-                {x: 2, y: 2},
-                {x: 0, y: 1}
-            ]
-        } else if (mustache_style == 'Lower Dali') {
-            mustache_line = [
-                {x: 0, y: -1},
-                {x: 10, y: 0},
-                {x: 10, y: 0},
-                {x: 3, y: 0},
-                {x: 0, y: -.5}
-            ]
-        } else if (mustache_style == 'Butterfly') {
-            mustache_line = [
-                {x: 0, y: -1},
-                {x: 2, y: -1.1},
-                {x: 10, y: 1.5},
-                {x: 1, y: 2},
-                {x: 0, y: 0}
-            ]
-        } else if (mustache_style == 'Fu Manchu') {
-            mustache_line = [
-                {x: 0, y: .5},
-                {x: 6, y: -1.1},
-                {x: 10, y: 1.5},
-                {x: 10.5, y: 3},
-                {x: 11, y: 10},
-                {x: 11, y: 20},
-                {x: 9, y: 23},
-                {x: 9.5, y: 8},
-                {x: 9.2, y: 2},
-
-                {x: 1, y: 3.5},
-                {x: 0, y: 1.5}
-            ]
-        } else if (mustache_style == 'Dali') {
-            mustache_line = [
-                {x: 0, y: -1},
-                {x: 2, y: -1.1},
-                {x: 8, y: 1.5},
-                {x: 15, y: -10},
-                {x: 15, y: -10},
-                {x: 7, y: 3},
-                {x: 1, y: 2},
-                {x: 0, y: 0}
-            ]
-        } else if (mustache_style == 'Sparrow') {
-            mustache_line = [
-                {x: 0, y: .5},
-                {x: 2, y: -0.1},
-                {x: 10, y: 5},
-                {x: 10, y: 8},
-                {x: 10, y: 10},
-                {x: 10, y: 8},
-                {x: 4, y: 4},
-                {x: .5, y: 4},
-                {x: 0, y: 1}
-            ]
-        } else if (mustache_style == 'Zappa') {
-            mustache_line = [
-                {x: 0, y: .2},
-                {x: 6, y: 0},
-                {x: 9, y: 2},
-                {x: 10, y: 5},
-                {x: 10, y: 8},
-                {x: 10.5, y: 9},
-                {x: 9, y: 8},
-                {x: 7, y: 4},
-                {x: 0, y: 4.5}
-            ]
-        } else if (mustache_style == 'Anchor') {
-            mustache_line = [
-                {x: 0, y: -1},
-                {x: 2, y: -1},
-                {x: 2, y: 3},
-                {x: 12, y: 0},
-                {x: 1, y: 3.5},
-                {x: 0, y: 2}
-            ]
-        } else if (mustache_style == 'Copstash') {
-            mustache_line = [
-                {x: 0, y: 0},
-                {x: 3, y: -.1},
-                {x: 8, y: 2.5},
-                {x: 6, y: 2.5},
-                {x: 1, y: 3},
-                {x: 0, y: 1}
-            ]
-        } else {
-            double_it = false;
-        }
-
-        if (double_it) {
-            var other_side_mustache = a.transformShapeLine({type: 'reverse', direction: 'horizontal', axis: 0}, face_options, mustache_line);
-            mustache_line = mustache_line.concat(other_side_mustache.reverse());
-        }
-
-        var alpha = .9;
-        var x = nose_bottom_line_bottom_point.x;
-        var y = ((mouth_top_point.y * 2) + (nose_bottom_line_bottom_point.y * 8)) / 10;
-        var line_thickness = (f.thick_unit * 2);
-        var width = f.thick_unit * 70 * mustache_width_mod;
-        var height = f.thick_unit * 80 * mustache_height_mod;
-
-        var mustache_outline = a.transformPathFromLocalCoordinates(mustache_line, width, height);
-        var mustache_shape = a.createPath(mustache_outline, {
-            close_line: true, thickness: line_thickness, color: color, fill_color: fill_color
-        });
-        mustache_shape.alpha = alpha;
-        mustache_shape.x = x;
-        mustache_shape.y = y;
-        lines.push({name: 'mustache', line: mustache_outline, shape: mustache_shape, x: x, y: y, alpha: alpha, scale_x: width, scale_y: height});
-        shapes.push(mustache_shape);
-
-
-        var hair_canvas = a.findShape(avatar.textures, 'stubble lines', null, 'canvas');
-        var mustache_shape_texture = a.createPath(mustache_outline, {
-            close_line: true, line_color: 'blank', fill_canvas: hair_canvas
-        });
-        mustache_shape_texture.alpha = 0.2;
-        mustache_shape_texture.x = x;
-        mustache_shape_texture.y = y;
-        shapes.push(mustache_shape_texture);
-
-    }
-
-
-    return shapes;
-}});
-;
-(function (Avatar, net, maths) {
-    var IMAGES = []; //Global list of any images that were loaded by content packs
-
-    var isPhantomJS = (/PhantomJS/.test(window.navigator.userAgent));
+(function (AvatarClass) {
+    var isPhantomJS = ( /PhantomJS/.test(window.navigator.userAgent));
+    var isLoacalFile = (document.location.protocol == 'file:');
+
+    var _face_options = {
+        style: 'lines',
+        race: 'Human',
+        rand_seed: 0,
+
+        //'Living' settings that can change over time
+        age: 30,
+        era: 'Industrial',
+        thickness: 0,
+        cleanliness: 0,
+
+        hair_style: null,
+        hair_pattern: null,
+        hair_texture: 'Smooth',
+        hair_color: null,
+
+        beard_color: null,
+        beard_style: null,
+        stubble_style: null,
+        mustache_style: null,
+        mustache_width: null,
+        mustache_height: null,
+        acne_style: null,
+        acne_amount: null,
+        skin_texture: 'Normal',
+        teeth_condition: 'Normal',
+        lip_color: null,
+
+        emotionality: 0,
+        emotion_shown: 'none', //TODO: Have an array of current emotions?
+        tattoos: [],
+        jewelry: [],
+        scars: [],
+
+        //DNA settings that don't change easily
+        gender: null,
+        height: 0,
+
+        skin_shade_tint: null,
+        skin_shade: null,
+        skin_colors: null,
+        face_shape: null,
+        skull_thickness: 'Normal',
+        chin_divot: null,
+        chin_shape: null,
+
+        neck_size: null,
+
+        eye_color: null,
+        eye_shape: null,
+        eye_spacing: null,
+        eye_size: null,
+        eye_rotation: null,
+        eyelid_shape: null,
+        eye_cloudiness: null,
+        eyebrow_shape: null,
+        pupil_color: null,
+        eye_sunken: null,
+
+        head_size: 'Normal',
+        hairiness: null,
+        forehead_height: null,
+        hair_color_roots: null,
+
+        nose_shape: null,
+        nose_size: null,
+        nose_height: null,
+
+        teeth_shape: 'Normal',
+        lip_shape: null,
+        mouth_height: null,
+        mouth_left_upturn: null,
+        mouth_right_upturn: null,
+        mouth_width: null,
+        mouth_upturn: null,
+        mouth_downturn: null,
+        lip_bottom_height: null,
+        lip_top_height: null,
+        lip_bottom_bottom: null,
+        lip_top_top: null,
+
+        ear_shape: null,
+        ear_thickness: null,
+        ear_lobe_left: null,
+        ear_lobe_right: null,
+
+        wrinkle_pattern_mouth: null,
+        wrinkle_mouth_width: null,
+        wrinkle_mouth_height: null,
+        wrinkle_resistance: null
+
+    };
+
+    var _human_options = {
+        rendering_order: [
+            {decoration: "box-behind"},
+            {feature: "shoulders", style: "lines"},
+            {feature: "neck", style: "lines"},
+            {feature: "face", style: "lines"},
+            {feature: "eye_position", style: "lines"},
+            {feature: "nose", style: "lines"}, //Uses: right eye intermost
+            {feature: "chin", style: "lines"}, //Uses: chin mid line, face
+            {feature: "mouth", style: "lines", hide:true}, //NOTE: Shown twice to predraw positions
+            {feature: "wrinkles", style: "lines"}, //Uses: face, left eye, right eye, lips, full nose, chin top line
+            {feature: "beard", style: "lines"}, //Uses: face, left eye
+            {feature: "mouth", style: "lines"},
+            {feature: "mustache", style: "lines"},
+            {feature: "eyes", style: "lines"},
+            {feature: "hair", style: "lines"}, //Uses: face, left eye
+            {feature: "ears", style: "lines"},
+            {decoration: "name-plate"}
+        ],
+        use_content_packs: ['all'],
+//        use_content_packs: isPhantomJS ? ['none'] : ['all'],
+
+        //If Preset, then use one of the skin_color_options and change tint, otherwise calculate by tint and lightness
+        skin_shade_options: "Light,Dark,Preset".split(","),
+        skin_shade_tint_options: "Darkest,Darker,Dark,Very Low,Low,Less,Below,Reduce,Raised,Above,More,High,Very High,Bright,Brighter,Brightest".split(","),
+        skin_colors_options: [
+            {name: 'Fair', highlights: 'rgb(254,202,182)', skin: 'rgb(245,185,158)', cheek: 'rgb(246,171,142)', darkflesh: 'rgb(217,118,76)', deepshadow: 'rgb(202,168,110'},
+            {name: 'Brown', highlights: 'rgb(229,144,90)', skin: 'rgb(228,131,86)', cheek: ' rgb(178,85,44)', darkflesh: 'rgb(143,70,29)', deepshadow: 'rgb(152,57,17'},
+            {name: 'Tanned', highlights: 'rgb(245,194,151)', skin: 'rgb(234,154,95)', cheek: 'rgb(208,110,56)', darkflesh: 'rgb(168,66,17)', deepshadow: 'rgb(147,68,27'},
+            {name: 'White', highlights: 'rgb(250,220,196)', skin: 'rgb(245,187,149)', cheek: 'rgb(239,165,128)', darkflesh: 'rgb(203,137,103)', deepshadow: 'rgb(168,102,68'},
+            {name: 'Medium', highlights: 'rgb(247,188,154)', skin: 'rgb(243,160,120)', cheek: 'rgb(213,114,75)', darkflesh: 'rgb(154,79,48)', deepshadow: 'rgb(127,67,41'},
+            {name: 'Yellow', highlights: 'rgb(255,218,179)', skin: 'rgb(250,187,134)', cheek: 'rgb(244,159,104)', darkflesh: 'rgb(189,110,46)', deepshadow: 'rgb(138,67,3'},
+            {name: 'Pink', highlights: 'rgb(253,196,179)', skin: 'rgb(245,158,113)', cheek: 'rgb(236,134,86)', darkflesh: 'rgb(182,88,34)', deepshadow: 'rgb(143,60,18'},
+            {name: 'Bronzed', highlights: 'rgb(236,162,113)', skin: 'rgb(233,132,86)', cheek: 'rgb(219,116,75)', darkflesh: 'rgb(205,110,66)', deepshadow: 'rgb(173,83,46'},
+            {name: 'Light Brown', highlights: 'rgb(242,207,175)', skin: 'rgb(215,159,102)', cheek: 'rgb(208,138,86)', darkflesh: 'rgb(195,134,80)', deepshadow: 'rgb(168,112,63'},
+            {name: 'Peach', highlights: 'rgb(247,168,137)', skin: 'rgb(221,132,98)', cheek: 'rgb(183,90,57)', darkflesh: 'rgb(165,87,51)', deepshadow: 'rgb(105,29,15'},
+            {name: 'Black', highlights: 'rgb(140,120,110)', skin: 'rgb(160,90,66)', cheek: 'rgb(140,80,40)', darkflesh: 'rgb(120,90,29)', deepshadow: 'rgb(30,30,30'},
+            {name: 'Deep Black', highlights: 'rgb(40,40,50)', skin: 'rgb(80,80,80)', cheek: 'rgb(70,70,70)', darkflesh: 'rgb(80,70,29)', deepshadow: 'rgb(30,30,30'}
+        ],
+
+        gender_options: "Male,Female".split(","),
+        thickness_options: [-1.5, -1, -.5, 0, .5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6],  //TODO: Turn these to word options
+
+        face_shape_options: "Oblong,Oval,Round,Rectangular,Square,Triangular,Diamond,Inverted Triangle,Heart".split(","),
+        acne_style_options: "None,Very Light,Light,Medium,Heavy".split(","),
+        acne_amount_options: 'None,Very Light,Light,Few,Some,Spattering,Speckled,Heavy,Very Heavy'.split(","),
+        chin_divot_options: "Double,Small,Large,Smooth".split(","),
+        chin_shape_options: "Pronounced,Smooth".split(","),
+
+        hair_color_roots_options: "Midnight Black,Off Black,Darkest Brown,Medium Dark Brown,Chestnut Brown,Light Chestnut Brown,Dark Golden Brown,Light Golden Brown,Dark Honey Blond,Bleached Blond,Light Ash Blond,Light Ash Brown,Lightest Blond,Pale Golden Blond,Strawberry Blond,Light Auburn,Dark Auburn,Darkest Gray,Medium Gray,Light Gray,White Blond,Platinum Blond,Toasted Wheat,Melted Butter,Wheat Milk,Cake Two,Poor Jean,Shoe Brown,Cookie,Tree Bark,Russet Red,Terra Cotta".split(","), //Yellow,Brown,Black,White,Gray,Dark Brown,Dark Yellow,Red
+        hair_style_options: "Bald,Droopy".split(","),
+        hair_pattern_options: "Mid Bump,Side Part,Eye Droop,Receding,Bowl,Bowl with Peak,Bowl with Big Peak,Side Part2,Twin Peaks".split(","),
+        hairiness_options: "Bald,Thin Hair,Thick Hair,Hairy,Fuzzy,Bearded,Covered in Hair,Fury".split(","), //TODO
+
+        beard_color_options: "Hair,Black,Gray".split(","),
+        beard_style_options: "None,Full Chin,Chin Warmer,Soup Catcher,Thin Chin Wrap,Thin Low Chin Wrap".split(","),
+        mustache_style_options: "None,Propeller,Butterfly,Fu Manchu,Lower Dali,Dali,Sparrow,Zappa,Anchor,Copstash,Handlebar,Low Handlebar,Long Curled Handlebar,Curled Handlebar".split(","),
+        mustache_width_options: "Small,Short,Medium,Long,Large".split(","),
+        mustache_height_options: "Small,Short,Medium,Long,Large".split(","),
+        stubble_style_options: "None,Light,Medium,Heavy".split(","),
+        neck_size_options: "Thick,Concave".split(","),
+
+        nose_shape_options: "Flat,Wide,Thin,Turned up/perky,Normal,Hooked down,Bulbous,Giant Nostrils".split(","),
+        nose_size_options: "Tiny,Small,Normal,Large,Big,Giant,Huge".split(","),
+        nose_height_options: "Low,Normal,Raised".split(","),
+
+        eye_spacing_options: "Pinched,Thin,Normal,Wide".split(","),
+        eye_size_options: "Small,Normal,Big".split(","),
+        eye_shape_options: "Almond".split(","),
+        eye_color_options: "Hazel,Amber,Green,Blue,Gray,Brown,Dark Brown,Black".split(","),
+        eye_lids_options: "None,Smooth,Folded,Thick".split(","), //TODO
+        eye_cloudiness_options: "Normal,Clear,Misty".split(","),
+        eyebrow_shape_options: "Straight,Squiggle,Squiggle Flip,Slim,Lifted,Arch,Thick Arch,Caterpiller,Wide Caterpiller,Unibrow".split(","),
+        eye_rotation_options: "Flat,Small,Medium,Large,Slanted".split(","),
+        pupil_color_options: "Black".split(","),
+        eye_sunken_options: "Cavernous,Deep,Dark,Light,Smooth,None".split(","),
+
+        ear_shape_options: "Round".split(","),
+        ear_thickness_options: "Wide,Normal,Big,Tall,Splayed".split(","),
+        ear_lobe_left_options: "Hanging,Attached".split(","),
+        ear_lobe_right_options: "Hanging,Attached,Same".split(","),
+
+        mouth_height_options: "Low,Normal,Raised,High".split(","),
+        mouth_left_upturn_options: "Down,Low,Normal,Raised,High".split(","),
+        mouth_right_upturn_options: "Down,Low,Normal,Raised,High".split(","),
+        mouth_width_options: "Wide,Big,Normal,Short,Small,Tiny".split(","),
+        mouth_upturn_options: "Large,Short,Small,Tiny".split(","),
+        mouth_downturn_options: "Large,Short,Small,Tiny".split(","),
+
+        lip_color_options: "#f00,#e00,#d00,#c00,#f10,#f01,#b22,#944".split(","),
+        lip_bottom_height_options: "Down,Low,Normal,Raised,High".split(","),
+        lip_top_height_options: "Down,Low,Normal,Raised,High".split(","),
+        lip_bottom_bottom_options: "Down,Low,Normal,Raised,High".split(","),
+        lip_top_top_options: "Down,Low,Normal,Raised,High".split(","),
+        lip_shape_options: "Puckered,Thin,Thick".split(","),
+
+        wrinkle_pattern_mouth_options: "None,Gentle,Straight,Top,Middle,Bottom,Heavy".split(","),
+        wrinkle_resistance_options: "Very Low,Low,Less,Below,Reduce,Raised,Above,More,High,Very High".split(","),
+        wrinkle_mouth_width_options: "Far Out,Out,Middle,In,Far In".split(","),
+        wrinkle_mouth_height_options: "Far Up,Up,Middle,Down,Far Down".split(","),
+
+        forehead_height_options: "Under,Low,Less,Normal,Above,Raised,High,Floating".split(","),
+
+        decorations: [
+            {name: "box-behind", type: 'rectangle', p1: 'facezone topleft', p2: 'facezone bottomright',
+                fill_color: 'blue', alpha: 0.3, line_color: 'light blue', size: '2', forceInBounds: true},
+            {name: "name-plate", type: 'rectangle', height: 16, docked: 'bottom', forceInBounds: true, font_size: 9,
+                text: '{{name}}', text_color: 'black', line_color: 'brown', fill_color: 'white', alpha: 0.8}
+        ]
+    };
+
+    AvatarClass.initializeOptions(_face_options, _human_options);
+
+})(Avatar);;
+(function (Avatar, net) {
+    //TODO: Have textures be removed based on face_options modified
 
     var a = new Avatar('get_private_functions');
 
     //-----------------------------
-    //Image Management
-    function findImage(url) {
-        var existing_image = _.find(IMAGES, function (image) {
-            return image.url == url;
+    //Texture creation
+    a.generateTextures = function (avatar) {
+        //TODO: Have Some of these run for the entire class?
+
+        avatar.textures = _.without(avatar.textures, function (tex) {
+            return tex.type == 'single use'
         });
-        return existing_image ? existing_image.parent_object : null;
-    }
+        avatar.textures = []; //TODO: have this dynamically remove ones that have source variables changed
 
-    function findOrLoadImage(url, run_after_loaded) {
-        var cached = findImage(url);
-        if (!isPhantomJS && cached) {
-            return run_after_loaded(cached);
-        } else {
-            var img = new Image();
-            img.onload = run_after_loaded;
-            img.src = url;
-            IMAGES.push({url: url, parent_object: img});
-        }
-    }
+        var height_object = a.getHeightOfStage(avatar);
+        var resolution = height_object.resolution;
 
-    //-----------------------------
-    //Adding Content Pack
-    a.registerContentPack = function (avatar, name, pack_data) {
-        if (!_.isString(name)) {
-            throw "Name of content pack missing"
+
+        //Build stubble colors
+        var hair_tinted_gray = avatar.face_options.beard_color;
+        var hair_tinted_gray2 = avatar.face_options.beard_color;
+
+        if (avatar.face_options.hair_color && hair_tinted_gray && hair_tinted_gray == 'Hair') {
+            hair_tinted_gray = avatar.face_options.hair_color;
+            hair_tinted_gray2 = avatar.face_options.hair_color;
         }
-        if (!_.isObject(pack_data)) {
-            throw "Detail object of content pack missing"
+        if (!hair_tinted_gray) {
+            hair_tinted_gray = net.brehaut.Color('#666666').toString();
+            hair_tinted_gray2 = net.brehaut.Color('#888888').toString();
         }
-        avatar.content_packs[name] = _.extend({name: name}, avatar.content_packs[name], pack_data);
+        hair_tinted_gray = net.brehaut.Color('#444444').blend(net.brehaut.Color(hair_tinted_gray), .1).toString();
+        hair_tinted_gray2 = net.brehaut.Color('#666666').blend(net.brehaut.Color(hair_tinted_gray2), .2).toString();
+
+        var canvas_size = 64;
+        //Build Stubble texture
+        var canvas = document.createElement('canvas');
+        canvas.width = canvas_size;
+        canvas.height = canvas_size;
+        var context = canvas.getContext('2d');
+
+        addRandomLines(context, avatar.face_options, canvas_size, resolution * 80, resolution * 4, resolution / 2, hair_tinted_gray);
+        addRandomLines(context, avatar.face_options, canvas_size, resolution * 140, resolution, resolution / 2, hair_tinted_gray2);
+        addRandomLines(context, avatar.face_options, canvas_size, resolution * 300, resolution * 8, resolution / 2, '#444');
+        avatar.textures.push({type: 'single use', name: 'stubble lines', canvas: canvas, context: context});
+
+
+        var canvas3 = document.createElement('canvas');
+        canvas3.width = canvas_size;
+        canvas3.height = canvas_size;
+        var context3 = canvas.getContext('2d');
+
+        addRandomLines(context3, avatar.face_options, canvas_size, resolution * 80, resolution / 2, resolution * 4, hair_tinted_gray);
+        addRandomLines(context3, avatar.face_options, canvas_size, resolution * 140, resolution / 2, resolution, hair_tinted_gray2);
+        avatar.textures.push({type: 'single use', name: 'hair horizontal lines', canvas: canvas3, context: context3});
+
+
+        var skin_color = avatar.face_options.skin_colors.skin;
+        var skin_lighter_2 = net.brehaut.Color(skin_color).lightenByRatio(.02).toString();
+        var skin_darker_1 = net.brehaut.Color(skin_color).darkenByRatio(.01).toString();
+
+        //Build Skin texture
+        var canvas2 = document.createElement('canvas');
+        canvas2.width = canvas_size;
+        canvas2.height = canvas_size;
+        var context2 = canvas2.getContext('2d');
+        addRandomSpots(context2, avatar.face_options, canvas_size, resolution * 10, resolution * 1.5, skin_lighter_2);
+        addRandomSpots(context2, avatar.face_options, canvas_size, resolution * 10, resolution * 1.5, skin_darker_1);
+        avatar.textures.push({type: 'single use', name: 'face bumps', canvas: canvas2, context: context2});
+
+
+        //Build Acne texture
+        var acne_amount = a.turnWordToNumber(avatar.face_options.acne_amount, 0, 9, 'None,Very Light,Light,Few,Some,Spattering,Speckled,Heavy,Very Heavy');
+
+        var face_reddish = net.brehaut.Color(skin_color).blend(net.brehaut.Color('#f00'), .15).toString();
+        var canvas4 = document.createElement('canvas');
+        canvas4.width = canvas_size * 5;
+        canvas4.height = canvas_size * 5;
+        var context4 = canvas4.getContext('2d');
+        addRandomSpots(context4, avatar.face_options, canvas_size * 5, resolution * acne_amount, resolution * 2, face_reddish);
+        avatar.textures.push({type: 'single use', name: 'face spots', canvas: canvas4, context: context4});
+
     };
 
-    function find_pack_that_can_be_shown(avatar, layer) {
-        return _.filter(avatar.content_packs, function (pack) {
-            var feature_list = pack.replace_features;
-            if (_.isString(feature_list)) feature_list = [feature_list];
+    function addRandomSpots(context, face_options, context_size, number, radius, color) {
+        context.strokeStyle = color;
+        for (var i = 0; i < number; i++) {
+            var x = a.randInt(context_size, face_options);
+            var y = a.randInt(context_size, face_options);
+            var rad = a.randInt(radius, face_options);
 
-            //Check that the pack matches the feature being drawn
-            var isFeatureMatch = _.indexOf(feature_list, layer.feature) > -1;
-
-            //Check that the overall drawing style matches
-            var isMatchingStyle = (pack.style == layer.style);
-
-            var hasData, isFilterMatch, isAllowedPack;
-            if (isFeatureMatch && isMatchingStyle) {
-                //Check if the race or avatar specifies this pack is allowed
-                var packOptions = avatar.face_options.use_content_packs || avatar.getRaceData().use_content_packs;
-                if (_.isString(packOptions)) packOptions = [packOptions];
-
-                isAllowedPack = (_.indexOf(packOptions, 'all') > -1 || _.indexOf(packOptions, pack.name) > -1);
-
-                //Check that the pack seems to have valid data
-                hasData = _.isObject(pack.data) && _.isArray(pack.data.frames) && pack.data.image;
-
-                //Check that the pack doesn't have any filters that exclude it from running
-                isFilterMatch = true;
-                for (var key in pack.filter || {}) {
-                    var filter = pack.filter[key];
-                    //Only exclude if key is set, but is different than filter
-                    if (avatar.face_options[key] && avatar.face_options[key] != filter) {
-                        isFilterMatch = false;
-                    }
-                }
-            }
-
-            return isMatchingStyle && isAllowedPack && hasData && isFeatureMatch && isFilterMatch;
-        });
+            context.fillStyle = color;
+            context.beginPath();
+            context.moveTo(x, y);
+            context.arc(x, y, parseInt(rad), 0, 2 * Math.PI);
+            context.closePath();
+            context.fill();
+            context.stroke();
+        }
+        return context;
     }
 
-    function find_frames_that_can_be_shown(avatar, matching_packs) {
-        var matching_frames = [];
+    function addRandomLines(context, face_options, context_size, number, length_y, length_x, color) {
+        context.strokeStyle = color;
+        for (var i = 0; i < number; i++) {
+            var x = a.randInt(context_size, face_options);
+            var y = a.randInt(context_size, face_options);
+            var x_off = parseInt(a.randInt(length_x * 2, face_options) - length_x);
+            var y_off = parseInt(a.randInt(length_y * 2, face_options) - length_y);
 
-        //Check if there are any 'overrides' specified in face_options, then use those if so
-        _.each(matching_packs, function (pack) {
-            if (pack.name && avatar.face_options[pack.name]) {
-                var override_with_frame = avatar.face_options[pack.name];
-                var frame = _.find(pack.data.frames, function (frame) {
-                    return frame.name == override_with_frame
-                });
-                if (frame) {
-                    frame.pack = pack;
-                    matching_frames.push(frame)
-                }
-            }
-        });
-
-        if (matching_frames.length == 0) {
-            //None specified, find some that match filters
-            _.each(matching_packs, function (pack) {
-                //Look through all matching packs to find frames that match filters
-                var matching_frames_in = _.filter(pack.data.frames, function (frame) {
-                    //TODO: Check for at least 3 points
-                    var isFilterMatch = true;
-                    for (var key in frame.filter || {}) {
-                        var filter = frame.filter[key];
-                        //Only exclude if key is set, but is different than filter
-                        if (avatar.face_options[key] && avatar.face_options[key] != filter) {
-                            isFilterMatch = false;
-                        }
-                    }
-
-                    return isFilterMatch;
-                });
-                //Add a link to the parent pack to each frame
-                _.each(matching_frames_in, function (frame) {
-                    frame.pack = pack;
-                });
-                matching_frames = matching_frames.concat(matching_frames_in);
-            });
+            context.beginPath();
+            context.moveTo(x, y);
+            context.lineTo(x + x_off, y + y_off);
+            context.closePath();
+            context.stroke()
         }
-        return matching_frames;
+        return context;
     }
 
-    //Rendering features
-    a.content_packs_renderer = function (avatar, layer) {
-        var matching_frames = [];
-        var render_layer;
-
-        var matching_packs = find_pack_that_can_be_shown(avatar, layer);
-        if (matching_packs.length) {
-            matching_frames = find_frames_that_can_be_shown(avatar, matching_packs);
-        }
-        //There's at least one frame of the pack that matches filters.
-        if (matching_frames.length) {
-            //NOTE: Sometimes a renderer might be built and later not used because frequency isn't high enough
-            var matching_frame = a.randOption(matching_frames, avatar.face_options);
-            var matching_pack = matching_frame.pack;
-
-            render_layer = matching_pack;
-
-            render_layer.renderer = function (face_zones, avatar, layer) {
-                avatar.content_packs_used = avatar.content_packs_used || {};
-                avatar.content_packs_used[matching_pack.name] = matching_frame.name;
-
-                if (_.isFunction(matching_pack.custom_renderer)) {
-                    return matching_pack.custom_renderer(face_zones, avatar, layer, matching_pack, matching_frame);
-                } else {
-                    return default_image_renderer(face_zones, avatar, layer, matching_pack, matching_frame);
-                }
-            }
-        }
-
-        return render_layer;
-    };
-
-    function default_image_renderer(face_zones, avatar, layer, pack, frame) {
-        var a = avatar._private_functions;
-        var shapes = [];
-
-        var frame_coordinates = frame.coordinates || [];
-        var coordinate_transform_list = [];
-
-        //Find the coordinates from the frame and match them to points on avatar
-        _.each(frame_coordinates, function (from_source) {
-            var from = {point: from_source.point, x: from_source.x - frame.x, y: from_source.y - frame.y};
-            var to = a.findPoint(avatar, from.point) || {};
-
-            if (to) {
-                coordinate_transform_list.push({from: from, to: to});
-
-                if (pack.show_reference_points) {
-                    var to_point = new createjs.Shape();
-                    to_point.graphics.beginFill('#f00').drawCircle(to.x, to.y, 4);
-                    shapes.push(to_point);
-                    console.log('To', to.x, to.y);
-                }
-            }
-        });
-
-        //Map the three triangle coordinates from shape onto the face targets
-        if (coordinate_transform_list.length > 2) {
-            //Build triangles of first three mapped points
-            var source = [coordinate_transform_list[0].from, coordinate_transform_list[1].from, coordinate_transform_list[2].from];
-            var dest = [coordinate_transform_list[0].to, coordinate_transform_list[1].to, coordinate_transform_list[2].to];
-
-            //Build the final transform matrix from three points in each reference frame
-            var matrix = maths.buildTransformFromTriangleToTriangle(source, dest);
-
-            //TODO: Verify that loading these is not asynchronous on image draw
-            var render_it = function (obj) {
-                return default_render_after_image_loaded(avatar, pack, frame, matrix, obj);
-            };
-
-            var shape = findOrLoadImage(pack.data.image, render_it);
-            shapes.push(shape);
-
-        }
-        return shapes;
-    }
-
-    function remove_color_and_range(imageData, bg_color, bg_x) {
-        var bg_color_obj = net.brehaut.Color(bg_color);
-        var bg_r = parseInt(bg_color_obj.red * 255);
-        var bg_g = parseInt(bg_color_obj.green * 255);
-        var bg_b = parseInt(bg_color_obj.blue * 255);
-
-        //Set any colors within the specified range to transparent
-        var data = imageData.data;
-        for (var i = 0, n = data.length; i < n; i += 4) {
-            var red = data[i];
-            var green = data[i + 1];
-            var blue = data[i + 2];
-
-            if ((red > bg_r - bg_x) && (red < bg_r + bg_x) &&
-                (blue > bg_b - bg_x) && (blue < bg_b + bg_x) &&
-                (green > bg_g - bg_x) && (green < bg_g + bg_x)) {
-                imageData.data[i + 3] = 0;
-            }
-        }
-        return imageData;
-    }
-
-    function apply_color_transform_to_zone(imageData, avatar, frame) {
-        //TODO: Integrate in tan_colors packs and other transforms from online
-        _.each(frame.zones || [], function (zone) {
-            var x_start, y_start, width, height;
-
-            if (zone.all) {
-                x_start = 0;
-                y_start = 0;
-                width = frame.width;
-                height = frame.height;
-            } else {
-                x_start = zone.x - frame.x;
-                y_start = zone.y - frame.y;
-                width = zone.width;
-                height = zone.height;
-            }
-
-            if (x_start < 0) {
-                width -= (0 - x_start);
-                x_start = 0;
-            }
-            if (y_start < 0) {
-                height -= (0 - y_start);
-                y_start = 0;
-            }
-            var x_end = x_start + width;
-            var y_end = y_start + height;
-
-            //Find the color that should be applied
-            var to_color = avatar.face_options[zone.color];
-            var to_color_object = net.brehaut.Color(to_color);
-            var c_red = parseInt(to_color_object.red * 255);
-            var c_green = parseInt(to_color_object.green * 255);
-            var c_blue = parseInt(to_color_object.blue * 255);
-
-            var data = imageData.data;
-
-            //Loop through all pixels in the zone
-            for (var x = x_start; x < x_end; x++) {
-                for (var y = y_start; y < y_end; y++) {
-                    var i = 4 * (x + y * frame.width);
-                    var red = data[i];
-                    var green = data[i + 1];
-                    var blue = data[i + 2];
-                    if (red < 40 && green < 40 && blue < 50) {
-                        imageData.data[i] = c_red;
-                        imageData.data[i + 1] = c_green;
-                        imageData.data[i + 2] = c_blue;
-                    }
-                }
-            }
-        });
-        return imageData;
-    }
-
-    function default_render_after_image_loaded(avatar, pack, frame, matrix, parent_or_img) {
-
-        //Get either the cached image or the loaded image object
-        var was_cached = false;
-        var img;
-        if (parent_or_img.src) {
-            was_cached = true;
-            img = parent_or_img;
-        } else {
-            img = parent_or_img.target;
-        }
-
-        //Extract the sub-image from the file into a temp canvas
-        var canvas_from_image_frame_cutout = document.createElement('canvas');
-        canvas_from_image_frame_cutout.width = frame.width + frame.x;
-        canvas_from_image_frame_cutout.height = frame.height + frame.y;
-        var context = canvas_from_image_frame_cutout.getContext('2d');
-        context.drawImage(img, frame.x, frame.y, frame.width, frame.height, 0, 0, frame.width, frame.height);
-
-        //Remove background colors
-        if (!avatar.no_local_editing) {
-            try {
-                //Get the image data and remove background color (with a range)
-                var imageData = context.getImageData(0, 0, frame.width, frame.height);
-                var data = imageData.data;
-
-                if (pack.data.removeBackgroundNoise || pack.data.removeBackgroundColor) {
-                    // iterate over all pixels
-                    imageData = remove_color_and_range(imageData,
-                            pack.data.removeBackgroundColor || 'white',
-                            pack.data.removeBackgroundNoise || 20);
-
-                }
-                imageData = apply_color_transform_to_zone(imageData, avatar, frame);
-
-                context.putImageData(imageData, 0, 0);
-            } catch (ex) {
-                if (ex.name == "SecurityError") {
-                    avatar.no_local_editing = true;
-                    console.error("Can't apply image complex transforms because images need to be served from a web url on the same server");
-                } else {
-                    debugger;
-                }
-            }
-        }
-        var canvas1 = document.createElement('canvas');
-        canvas1.width = img.width;
-        canvas1.height = img.height;
-        var context1 = canvas1.getContext('2d');
-
-        //Apply matrix transform to canvas and add as shape
-        context1.setTransform(matrix[0], matrix[1], matrix[2], matrix[3], matrix[4], matrix[5]);
-        context1.drawImage(canvas_from_image_frame_cutout, 0, 0);
-
-
-        //Draw these asynchronously rather than passing them back into the stage list
-        var bitmap;
-        if (isPhantomJS) {
-
-            //TODO: PhantomJS running tests is throwing a security error when editing canvases locally... ugh
-            //TODO: Write pixels onto a rectangle and add as a shape
-
-            var dWidth = canvas_from_image_frame_cutout.width;
-            var dHeight = canvas_from_image_frame_cutout.height;
-            var main_context = avatar.stage.canvas.getContext('2d');
-            main_context.globalCompositeOperation = 'multiply';
-            main_context.drawImage(canvas_from_image_frame_cutout, 0, 0,
-                dWidth, dHeight,
-                matrix[4], matrix[5], dWidth * matrix[0], dHeight * matrix[3]
-            );
-            main_context.globalCompositeOperation = 'normal';
-
-
-        } else {
-            bitmap = new createjs.Bitmap(canvas1);
-            bitmap.compositeOperation = 'multiply';
-            if (!was_cached) {
-                //Wasn't cached, so asynchronously add after loaded
-                avatar.drawOnStage(bitmap, avatar.stage);
-                avatar.faceShapeCollection.addChild(bitmap);
-            }
-        }
-        return bitmap;
-    }
-
-})(Avatar, net, maths);;
+})(Avatar, net);;
 var content_pack_data = {
     image: '../js/content_packs/female_eyes_1/woman-eyes-collection-vector-illustration-8573624.jpg',
     frames: [
@@ -7496,44 +7496,6 @@ new Avatar('register_content_pack', 'woman_face_parts_1_eyes', {
     data: content_pack_data_eyes, show_reference_points: false
 });
 ;
-var ogreTemplate = new Avatar('copy_data_template', 'Human');
-
-ogreTemplate.ear_shape_options.push('Pointed');
-
-ogreTemplate.eye_color_options = ['Red', 'Pink', 'Purple', 'Yellow'];
-ogreTemplate.eye_cloudiness_options = ['Pink', 'Blue', 'Misty'];
-
-ogreTemplate.skin_colors_options = [
-    {name: 'Fair', highlights: 'rgb(40,202,30)', skin: 'rgb(50,185,50)'},
-    {name: 'Dark', highlights: 'rgb(80,80,80)', skin: 'rgb(80,185,70)'}
-];
-
-ogreTemplate.skin_shade_options = ['Preset'];
-
-new Avatar('set_data_template', 'Ogre', ogreTemplate);
-;
-var naviTemplate = new Avatar('copy_data_template', 'Human');
-
-naviTemplate.ear_shape_options.push('Pointed');
-
-naviTemplate.eye_cloudiness = ['Pink'];
-
-naviTemplate.skin_colors_options = [
-    {skin: '#8888EE', cheek: '#898acc'},
-    {skin: '#8888CC', cheek: '#898add'},
-    {skin: '#8080DD', cheek: '#898aee'},
-    {skin: '#9090DD', cheek: '#898add'}
-];
-naviTemplate.skin_shade_options = ['Preset'];
-naviTemplate.beard_style_options = ['None'];
-naviTemplate.stubble_style_options = ['None'];
-
-naviTemplate.thickness_options = [-1, .5, 0, .5, 1];
-
-naviTemplate.face_shape_options = "Oval,Rectangular,Diamond".split(",");
-
-new Avatar('set_data_template', 'Navi', naviTemplate);
-;
 new Avatar('add_render_function', {style: 'lines', feature: 'horns', renderer: function (face_zones, avatar) {
     var f = face_zones;
     var a = avatar._private_functions;
@@ -7665,3 +7627,41 @@ demonTemplate.rendering_order.push({feature: 'horns', style: 'lines'});
 
 
 new Avatar('set_data_template', 'Demon', demonTemplate);
+;
+var naviTemplate = new Avatar('copy_data_template', 'Human');
+
+naviTemplate.ear_shape_options.push('Pointed');
+
+naviTemplate.eye_cloudiness = ['Pink'];
+
+naviTemplate.skin_colors_options = [
+    {skin: '#8888EE', cheek: '#898acc'},
+    {skin: '#8888CC', cheek: '#898add'},
+    {skin: '#8080DD', cheek: '#898aee'},
+    {skin: '#9090DD', cheek: '#898add'}
+];
+naviTemplate.skin_shade_options = ['Preset'];
+naviTemplate.beard_style_options = ['None'];
+naviTemplate.stubble_style_options = ['None'];
+
+naviTemplate.thickness_options = [-1, .5, 0, .5, 1];
+
+naviTemplate.face_shape_options = "Oval,Rectangular,Diamond".split(",");
+
+new Avatar('set_data_template', 'Navi', naviTemplate);
+;
+var ogreTemplate = new Avatar('copy_data_template', 'Human');
+
+ogreTemplate.ear_shape_options.push('Pointed');
+
+ogreTemplate.eye_color_options = ['Red', 'Pink', 'Purple', 'Yellow'];
+ogreTemplate.eye_cloudiness_options = ['Pink', 'Blue', 'Misty'];
+
+ogreTemplate.skin_colors_options = [
+    {name: 'Fair', highlights: 'rgb(40,202,30)', skin: 'rgb(50,185,50)'},
+    {name: 'Dark', highlights: 'rgb(80,80,80)', skin: 'rgb(80,185,70)'}
+];
+
+ogreTemplate.skin_shade_options = ['Preset'];
+
+new Avatar('set_data_template', 'Ogre', ogreTemplate);

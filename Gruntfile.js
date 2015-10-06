@@ -3,9 +3,9 @@
 'use strict';
 
 var libraryFiles = ['js-libs/color.js', 'js-libs/colors.min.js', 'js/maths.js', 'js/helpers.js'];
-var avatarFiles = [ 'js/avatar.js', 'js/avatar-options.js', 'js/avatar-textures.js', 'js/avatar-lines.js', 'js/avatar-hair.js', 'js/avatar-beard.js', 'js/avatar-content-packs.js'];
+var avatarFiles = [ 'js/avatar.js', 'js/avatar-*.js'];
 var contentFiles = ['js/content_packs/**/manifest.js'];
-var raceFiles = [ 'js/races/ogre.js', 'js/races/navi.js', 'js/races/demon.js'];
+var raceFiles = [ 'js/races/*.js'];
 var dropbox_root = '/Users/jcrossler/Dropbox/Public/sites/avatar/';
 
 var screenshot_count = 12;

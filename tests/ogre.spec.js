@@ -7,7 +7,7 @@ describe("Avatar Ogre Race", function () {
         expect(is_ogre).toBeGreaterThan(-1);
     });
     it("have Greenish skin", function () {
-        //TODO: There is periodically an array size exception. Figure out where
+        //TODO: There is periodically an array size exception. Figure out where - bad input image somewhere?
         try {
             var av = new Avatar({age: 30, race: 'Ogre'});
         } catch (ex) {
