@@ -1,7 +1,16 @@
 //----------------
 var saved_box;
-var saved_points=[];
-var startX,startY;
+var saved_points = [];
+var startX, startY;
+var next_collect_method = 'Start drawing a rectangular frame';
+
+var pack_render_type;
+var point_names = {
+    mouth: ['left mouth wedge', 'right mouth wedge', 'mouth bottom middle', "{ all: true, color: 'lip_color'}"],
+    eyes: ['left eye center', 'right eye center', 'eyebrow midpoint', ''],
+    glasses: ['left eye center', 'right eye center', 'eyebrow midpoint', '']
+};
+
 //----------------
 
 function getMousePos(canvas, evt) {
@@ -21,11 +30,11 @@ function loadImageToCanvas(canvas, pack) {
 
         context.lineWidth = 3;
 
-        _.each(pack.data.frames, function(frame){
+        _.each(pack.data.frames, function (frame) {
 
-            _.each(frame.zones, function(zone){
-                context.strokeStyle="rgba(255,255,0,0.3)";
-                context.fillStyle="rgba(255,0,0,0.3)";
+            _.each(frame.zones, function (zone) {
+                context.strokeStyle = "rgba(255,255,0,0.3)";
+                context.fillStyle = "rgba(255,0,0,0.3)";
                 var x = zone.x;
                 var y = zone.y;
                 var w = zone.width;
@@ -42,18 +51,17 @@ function loadImageToCanvas(canvas, pack) {
                 context.closePath();
             });
 
-            _.each(frame.coordinates, function(coord){
-                context.strokeStyle="#ffffff";
-                context.fillStyle="#0000ff";
+            _.each(frame.coordinates, function (coord) {
+                context.strokeStyle = "#ffffff";
+                context.fillStyle = "#0000ff";
                 context.beginPath();
-                context.arc(coord.x,coord.y,6,0,2*Math.PI);
+                context.arc(coord.x, coord.y, 6, 0, 2 * Math.PI);
                 context.fill();
                 context.stroke();
             });
 
-            context.strokeStyle="rgba(255,0,0,1)";
+            context.strokeStyle = "rgba(255,0,0,1)";
             context.strokeRect(frame.x, frame.y, frame.width, frame.height);
-
 
         });
 
@@ -75,35 +83,35 @@ var htmlLeft = html.offsetLeft;
 function initDraw(canvas) {
     var element = null;
 
-    function getMousePos (canvas, e) {
-      var element = canvas, offsetX = 0, offsetY = 0, mx, my;
+    function getMousePos(canvas, e) {
+        var element = canvas, offsetX = 0, offsetY = 0, mx, my;
 
-      // Compute the total offset. It's possible to cache this if you want
-      if (element.offsetParent !== undefined) {
-        do {
-          offsetX += element.offsetLeft;
-          offsetY += element.offsetTop;
-        } while ((element = element.offsetParent));
-      }
+        // Compute the total offset. It's possible to cache this if you want
+        if (element.offsetParent !== undefined) {
+            do {
+                offsetX += element.offsetLeft;
+                offsetY += element.offsetTop;
+            } while ((element = element.offsetParent));
+        }
 
-      // Add padding and border style widths to offset
-      // Also add the <html> offsets in case there's a position:fixed bar (like the stumbleupon bar)
-      // This part is not strictly necessary, it depends on your styling
-      offsetX += stylePaddingLeft + styleBorderLeft + htmlLeft;
-      offsetY += stylePaddingTop + styleBorderTop + htmlTop;
+        // Add padding and border style widths to offset
+        // Also add the <html> offsets in case there's a position:fixed bar (like the stumbleupon bar)
+        // This part is not strictly necessary, it depends on your styling
+        offsetX += stylePaddingLeft + styleBorderLeft + htmlLeft;
+        offsetY += stylePaddingTop + styleBorderTop + htmlTop;
 
-      mx = e.pageX - offsetX;
-      my = e.pageY - offsetY;
+        mx = e.pageX - offsetX;
+        my = e.pageY - offsetY;
 
-      // We return a simple javascript object with x and y defined
-      return {x: mx, y: my};
+        // We return a simple javascript object with x and y defined
+        return {x: mx, y: my};
     }
 
 
     canvas.onmousemove = function (e) {
 //        setMousePosition();
-        var mouseX = getMousePos(canvas,e).x;//parseInt(e.clientX - offsetX);
-        var mouseY = getMousePos(canvas,e).y;//parseInt(e.clientY - offsetY);
+        var mouseX = getMousePos(canvas, e).x;//parseInt(e.clientX - offsetX);
+        var mouseY = getMousePos(canvas, e).y;//parseInt(e.clientY - offsetY);
         if (element !== null) {
             element.style.width = parseInt(mouseX - startX) + 'px';
             element.style.height = parseInt(mouseY - startY) + 'px';
@@ -112,8 +120,10 @@ function initDraw(canvas) {
         }
     };
 
+    var $status_text = $('#status_text');
     canvas.onclick = function (e) {
-        if (element !== null ) {
+        var context = canvas.getContext('2d');
+        if (element !== null) {
             console.log("shouldn't get here...")
         } else {
             if (saved_box) {
@@ -121,23 +131,48 @@ function initDraw(canvas) {
 //                $("#new_frame").text(buildText());
 
             } else {
-                console.log("box begun.");
-                startX = getMousePos(canvas,e).x;
-                startY = getMousePos(canvas,e).y;
+                $status_text.text("Rectangle begun, click on end point.");
+                startX = getMousePos(canvas, e).x;
+                startY = getMousePos(canvas, e).y;
                 element = document.createElement('div');
                 element.className = 'rectangle';
                 element.style.left = startX + 'px';
                 element.style.top = startY + 'px';
                 element.onclick = function (e) {
-                    var mouseX = getMousePos(canvas,e).x;
-                    var mouseY = getMousePos(canvas,e).y;
+                    var mouseX = getMousePos(canvas, e).x;
+                    var mouseY = getMousePos(canvas, e).y;
+
+                    var point_name_prompt = '';
 
                     if (saved_box) {
                         saved_points.push({x: mouseX, y: mouseY});
-                        $("#new_frame").text(buildText());
+
+                        context.strokeStyle = "#ffffff";
+                        context.fillStyle = "#0000ff";
+                        context.beginPath();
+                        context.arc(mouseX, mouseY, 6, 0, 2 * Math.PI);
+                        context.fill();
+                        context.stroke();
+
+                        if (pack_render_type) {
+                            point_name_prompt = point_names[pack_render_type][saved_points.length];
+                        }
+                        next_collect_method = 'point ' + (saved_points.length + 1) + ': ' + point_name_prompt;
+                        $status_text.text(next_collect_method);
+
+                        var build_text = buildText();
+                        $("#new_frame").text(build_text);
+                        if (saved_points.length > 2) {
+                            var $add_data = $('#add_data');
+                            var current_text = $add_data.text();
+                            $add_data.text(current_text + "\n" + build_text);
+                            saved_box = null;
+                            saved_points = [];
+                            next_collect_method = 'Draw a rectangle';
+                        }
+
                     } else {
                         canvas.style.cursor = "default";
-                        console.log("box finsihed.");
                         var x = parseInt(element.style.left);
                         var y = parseInt(element.style.top);
                         var w = parseInt(element.style.width);
@@ -145,7 +180,15 @@ function initDraw(canvas) {
                         saved_box = {x: x, y: y, w: w, h: h};
                         $("#new_frame").text(buildText());
                         element = null;
+
+                        if (pack_render_type) {
+                            point_name_prompt = point_names[pack_render_type][saved_points.length];
+                        }
+                        next_collect_method = 'point ' + (saved_points.length + 1) + ': ' + point_name_prompt;
+                        $status_text.text(next_collect_method);
+
                     }
+                    $status_text.text(next_collect_method);
                 };
 
                 canvas.parentElement.appendChild(element);
@@ -162,14 +205,7 @@ function copyToClipboard($element) {
     $temp.remove();
 }
 
-var pack_render_type;
-var point_names = {
-    mouth: ['left mouth wedge', 'right mouth wedge', 'mouth bottom middle', "{ all: true, color: 'lip_color'}"],
-    eyes: ['left eye center', 'right eye center', 'eyebrow midpoint', ''],
-    glasses: ['left eye center', 'right eye center', 'eyebrow midpoint', '']
-};
-
-function buildText(){
+function buildText() {
     var text = "Click to build a rectangle, then click three points on key places";
     if (saved_box) {
         var x = saved_box.x;
@@ -183,18 +219,18 @@ function buildText(){
         var text_mid = "";
         var names = point_names[pack_render_type];
 
-        if (saved_points.length>0 && names) {
-            text_mid += "     {point: '"+names[0]+"', x: "+saved_points[0].x+", y: "+saved_points[0].y+"},\n";
+        if (saved_points.length > 0 && names) {
+            text_mid += "     {point: '" + names[0] + "', x: " + saved_points[0].x + ", y: " + saved_points[0].y + "},\n";
         }
-        if (saved_points.length>1 && names) {
-            text_mid += "     {point: '"+names[1]+"', x: "+saved_points[1].x+", y: "+saved_points[1].y+"},\n"
+        if (saved_points.length > 1 && names) {
+            text_mid += "     {point: '" + names[1] + "', x: " + saved_points[1].x + ", y: " + saved_points[1].y + "},\n"
         }
-        if (saved_points.length>2 && names) {
-            text_mid += "     {point: '"+names[2]+"', x: "+saved_points[2].x+", y: "+saved_points[2].y+"}\n"
+        if (saved_points.length > 2 && names) {
+            text_mid += "     {point: '" + names[2] + "', x: " + saved_points[2].x + ", y: " + saved_points[2].y + "}\n"
         }
 
         var zone_info = '';
-        if (names && names.length>3) {
+        if (names && names.length > 3) {
             zone_info = names[3];
         }
         var text_post = " ], zones: [" + zone_info + "]\n" +
@@ -209,11 +245,10 @@ $(document).ready(function () {
         .attr({width: 2000, height: 2000, id: 'pack_canvas'})
         .appendTo($('#pack_image_holder'));
     var canvas = $canvas[0];
-    stylePaddingLeft = parseInt(document.defaultView.getComputedStyle(canvas, null)['paddingLeft'], 10)      || 0;
-    stylePaddingTop  = parseInt(document.defaultView.getComputedStyle(canvas, null)['paddingTop'], 10)       || 0;
-    styleBorderLeft  = parseInt(document.defaultView.getComputedStyle(canvas, null)['borderLeftWidth'], 10)  || 0;
-    styleBorderTop   = parseInt(document.defaultView.getComputedStyle(canvas, null)['borderTopWidth'], 10)   || 0;
-
+    stylePaddingLeft = parseInt(document.defaultView.getComputedStyle(canvas, null)['paddingLeft'], 10) || 0;
+    stylePaddingTop = parseInt(document.defaultView.getComputedStyle(canvas, null)['paddingTop'], 10) || 0;
+    styleBorderLeft = parseInt(document.defaultView.getComputedStyle(canvas, null)['borderLeftWidth'], 10) || 0;
+    styleBorderTop = parseInt(document.defaultView.getComputedStyle(canvas, null)['borderTopWidth'], 10) || 0;
 
 
     var $pack_name = $("#pack_name");
@@ -221,9 +256,12 @@ $(document).ready(function () {
     var $new_frame = $("#new_frame")
         .text(buildText());
 
-    $new_frame.on('click',function(){
+    $new_frame.on('click', function () {
 //        copyToClipboard($new_frame)
         $new_frame[0].select();
+    });
+    $('#add_data').on('click', function () {
+        $('#add_data')[0].select();
     });
 
 
@@ -233,7 +271,7 @@ $(document).ready(function () {
     }
 
     canvas.addEventListener('mousemove', draw, false);
-    var av = new Avatar();
+    var av = new Avatar(); //Avatar is created, not drawn
 
     $pack_name
         .on('change', function () {
@@ -242,6 +280,8 @@ $(document).ready(function () {
             loadImageToCanvas(canvas, pack);
 
             pack_render_type = pack.replace_features[0];
+
+            document.location.hash = "#" + val;
         });
 
     var packs = av.content_packs;
@@ -254,12 +294,13 @@ $(document).ready(function () {
             .appendTo($pack_name);
     }
 
-    //Set it to the last item
+    //Set it to a key specified in the hash or the last item in the list
+    if (document.location.hash) {
+        last = document.location.hash.substring(1);
+    }
     $pack_name.val(last);
     loadImageToCanvas(canvas, av.content_packs[last]);
     pack_render_type = av.content_packs[last].replace_features[0];
 
     initDraw(canvas);
-
-
 });

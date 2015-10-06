@@ -86,7 +86,7 @@ $(document).ready(function () {
         {feature: "eyes", style: "lines"},
         {feature: "hair", style: "lines"}, //Uses: face, left eye
         {feature: "ears", style: "lines"},
-        {feature: "glasses", style: "lines"},
+        {feature: "glasses", style: "lines"} //TODO: glasses and other layers need to be defined and passed in to face_options
 
     ];
 

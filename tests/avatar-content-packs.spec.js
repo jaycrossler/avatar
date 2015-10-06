@@ -9,6 +9,7 @@ describe("Avatar-Content-Packs", function () {
         expect(eyes1.style).toBe('lines');
     });
     it("can load additional content pack data", function () {
+
         var av = new Avatar();
         var eyes1 = av.content_packs['female_eyes_1'];
         expect(eyes1.note).toBeUndefined();
@@ -41,4 +42,28 @@ describe("Avatar-Content-Packs", function () {
             }
         }
     });
+
+    //TODO: Fix testing these
+//    it("imports content pack images onto avatar", function () {
+//        $('<canvas>').attr({height: 400, width: 400, id: 'test_canvas'}).css({width: 400, height: 400}).appendTo('body');
+//        new Avatar('register_content_pack','mouths_1',{use_frequency:1});
+//        var av1 = new Avatar({use_content_packs:['mouths_1'], gender:'Female'}, {canvas_name: 'test_canvas'});
+//
+//    //expect( function(){ parser.parse(raw); } ).toThrow(new Error("Parsing is not possible"));
+//        //TODO: This should be throwing a DOM exception Error that it doesn't allow pixel writing, but isn't
+//        expect(av1.lastTimeDrawn()).toBeGreaterThan(0);
+//
+//    });
+//
+//    it("allows overriding a content pack to choose a specific frame", function () {
+//        var av1 = new Avatar({woman_face_parts_1_glasses: '3 goggles', gender:'Female'});
+//        var pack_frame_used = av1.content_packs_used['woman_face_parts_1_glasses'];
+//
+//        //TODO: This won't work as images aren't being allowed to load via phantomjs
+//        console.log(JSON.stringify(av1.content_packs_used));
+//        expect(pack_frame_used).toBe('3 goggles');
+//
+//    });
+
+
 });

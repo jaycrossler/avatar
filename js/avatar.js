@@ -59,6 +59,9 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         this.event_list = [];
         this.registered_points = [];
         this.textures = [];
+        this.content_packs_used = {};
+        this.no_local_editing = false;//(document.location.protocol == 'file:');
+
 
         return this.initialize(option1, option2, option3);
     }
@@ -176,6 +179,15 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
                 }
                 addStageByCanvas({canvas_id: this.stage_options.canvas_name, $canvas: this.$canvas, stage: this.stage});
             }
+        } else {
+            //There was no canvas given.  Create a fake canvas to give to the stage
+            var fake_canvas = document.createElement('canvas');
+            fake_canvas.width = this.stage_options.width || 400;
+            fake_canvas.height = this.stage_options.height || 400;
+            this.$canvas = $(fake_canvas);
+            this.stage = setupStage(fake_canvas);
+            var id = 'fake_canvas_' + STAGES.length;
+            addStageByCanvas({canvas_id: id, $canvas: this.$canvas, stage: this.stage});
         }
 
         //Draw the faces
@@ -199,11 +211,16 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             registerEvents(this);
 
             this.stage.update();
+
+            var timing_end_draw = window.performance.now();
+            var time_elapsed_draw = (timing_end_draw - timing_start);
+            this.timing_log.push({name: "draw-elapsed", elapsed: time_elapsed_draw, times_redrawn: ++this.times_avatar_drawn});
+
         }
 
         var timing_end = window.performance.now();
         var time_elapsed = (timing_end - timing_start);
-        this.timing_log.push({name: "draw-elapsed", elapsed: time_elapsed, times_redrawn: ++this.times_avatar_drawn});
+        this.timing_log.push({name: "build-elapsed", elapsed: time_elapsed, times_redrawn: this.times_avatar_drawn});
     };
 
     //-----------------------------
@@ -353,7 +370,8 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
                 var render_layer = find_renderer(avatar, layer, layer.hide);
 
                 if (render_layer && render_layer.renderer) {
-                    if (render_layer.prerenderer) { //Pre-render something but don't draw it
+                    if (render_layer.prerenderer) {
+                        //Pre-render something but don't draw it (used to caclulate point locations)
                         var feature_shapes_pre = render_layer.prerenderer(face_zones, avatar, layer);
 //                        addSceneChildren(container, feature_shapes_pre);
                     }

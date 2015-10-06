@@ -1,4 +1,6 @@
 (function (AvatarClass) {
+    var isPhantomJS = ( /PhantomJS/.test(window.navigator.userAgent));
+    var isLoacalFile = (document.location.protocol == 'file:');
 
     var _face_options = {
         style: 'lines',
@@ -113,6 +115,7 @@
             {decoration: "name-plate"}
         ],
         use_content_packs: ['all'],
+//        use_content_packs: isPhantomJS ? ['none'] : ['all'],
 
         //If Preset, then use one of the skin_color_options and change tint, otherwise calculate by tint and lightness
         skin_shade_options: "Light,Dark,Preset".split(","),

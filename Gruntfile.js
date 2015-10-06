@@ -4,7 +4,7 @@
 
 var libraryFiles = ['js-libs/color.js', 'js-libs/colors.min.js', 'js/maths.js', 'js/helpers.js'];
 var avatarFiles = [ 'js/avatar.js', 'js/avatar-options.js', 'js/avatar-textures.js', 'js/avatar-lines.js', 'js/avatar-hair.js', 'js/avatar-beard.js', 'js/avatar-content-packs.js'];
-var contentFiles = ['js/content_packs/female_eyes_1/manifest.js', 'js/content_packs/mouths_1/manifest.js', 'js/content_packs/woman_face_parts_1/manifest.js'];
+var contentFiles = ['js/content_packs/**/manifest.js'];
 var raceFiles = [ 'js/races/ogre.js', 'js/races/navi.js', 'js/races/demon.js'];
 var dropbox_root = '/Users/jcrossler/Dropbox/Public/sites/avatar/';
 
@@ -202,7 +202,7 @@ module.exports = function (grunt) {
     grunt.registerTask('quick', ['concat:quick', 'notify:quick', 'jasmine']);
     grunt.registerTask('server', ['concat:quick', 'notify:quick', 'connect:live']);
     grunt.registerTask('dropbox', ['copy:dropbox']);
-    grunt.registerTask('shots', ['connect', 'screenshots', 'replace:screenshots']);
+    grunt.registerTask('shots', ['connect:server', 'screenshots', 'replace:screenshots']);
 
     grunt.task.run('notify_hooks');
 

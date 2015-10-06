@@ -23,10 +23,17 @@
     </style>
 </head>
 <body>
-<h1 id="content_title">Avatar Content Packs</h1>
-<label for="pack_name">Content Pack:</label><select id="pack_name"></select><br/>
-<textarea id="new_frame" cols="80" rows="7" style="font-size: 8px;">New Frames Here</textarea>
-
+<div style=" border:1px solid black">
+    <div style="display: inline-block;">
+        <h1 id="content_title">Avatar Content Packs</h1>
+        <textarea id="new_frame" cols="80" rows="7" style="font-size: 9px;">New Frames Here</textarea><br/>
+        <label for="pack_name">Content Pack:</label><select id="pack_name"></select>
+    </div>
+    <div style="display: inline-block;vertical-align: top">
+        <h1 id="status_text">Draw a rectangle</h1>
+        <textarea id="add_data" cols="80" rows="7" style="font-size: 9px;"></textarea>
+    </div>
+</div>
 <div id="pack_image_holder"></div>
 
 <script src="../../js-libs/jquery-1.11.3.min.js"></script>

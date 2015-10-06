@@ -2,6 +2,16 @@ describe("Avatar", function () {
     it("is ready in grunt and Jasmine", function () {
         expect("Test").toContain("Test");
     });
+
+    it("is being tested in a Jasmine SpecRunner", function () {
+        var isInJasmine = document.location.pathname.indexOf('_SpecRunner.html');
+        var isPhantom = window.navigator.userAgent.indexOf('PhantomJS');
+        //console.log(window.navigator.userAgent);
+
+        expect(isInJasmine).toBeGreaterThan(-1);
+        expect(isPhantom).toBeTruthy();
+    });
+
     it("loads with dependencies", function () {
         var av = new Avatar();
         var ver = av.version;
@@ -74,15 +84,15 @@ describe("Avatar", function () {
     });
     it("draws onto a canvas and mid point is not white", function () {
         var $canvas_av = $('<canvas>').attr({id: 'avatar_canvas', height: 400, width: 400}).css({width: 400, height: 400}).appendTo('body');
-        var blank_canvas = $canvas_av[0].toDataURL("image/png"); //.replace("image/png", "image/octet-stream");
+        var blank_canvas = $canvas_av[0].toDataURL("image/png");
         var context = $canvas_av[0].getContext("2d");
 
         var midPixel1 = context.getImageData(100, 100, 1, 1).data;
         expect(blank_canvas.length).toEqual(jasmine.any(Number));
         expect(midPixel1[0]).toEqual(0);
 
-        new Avatar({rand_seed: 1}, {canvas_name: 'avatar_canvas'});
-        var drawn_canvas = $canvas_av[0].toDataURL("image/png"); //.replace("image/png", "image/octet-stream");
+        new Avatar({rand_seed: 1, use_content_packs:['none']}, {canvas_name: 'avatar_canvas'});
+        var drawn_canvas = $canvas_av[0].toDataURL("image/png");
         var midPixel2 = context.getImageData(100, 100, 1, 1).data;
 
         expect(drawn_canvas.length).toEqual(jasmine.any(Number));
@@ -92,7 +102,7 @@ describe("Avatar", function () {
     it("has valid named fazezone points that take up real size", function () {
         $('<canvas>').attr({height: 400, width: 400, id: 'test_canvas'}).css({width: 400, height: 400}).appendTo('body');
 
-        var av = new Avatar({rand_seed: 1}, {canvas_name: 'test_canvas'});
+        var av = new Avatar({rand_seed: 1, use_content_packs:['none']}, {canvas_name: 'test_canvas'});
         var fz_tl = av._private_functions.findPoint(av, 'facezone topleft');
         var fz_br = av._private_functions.findPoint(av, 'facezone bottomright');
 
@@ -107,15 +117,28 @@ describe("Avatar", function () {
     it("renders in less than 250ms", function () {
         $('<canvas>').attr({height: 400, width: 400, id: 'test_canvas'}).css({width: 400, height: 400}).appendTo('body');
 
-        var av = new Avatar({}, {canvas_name: 'test_canvas'});
+        var av = new Avatar({use_content_packs:['none']}, {canvas_name: 'test_canvas'});
         var time_taken = av.lastTimeDrawn();
         expect(time_taken).toBeLessThan(300);
     });
     it("has less than 250 shapes", function () {
         $('<canvas>').attr({height: 400, width: 400, id: 'test_canvas'}).css({width: 400, height: 400}).appendTo('body');
 
-        var av = new Avatar({}, {canvas_name: 'test_canvas'});
+        var av = new Avatar({use_content_packs:['none']}, {canvas_name: 'test_canvas'});
         expect(av.faceShapeCollection.children.length).toBeLessThan(250);
     });
+    it("builds and draws if a canvas exists", function () {
+         $('<canvas>').attr({height: 400, width: 400, id: 'test_canvas'}).css({width: 400, height: 400}).appendTo('body');
 
+         var av = new Avatar({use_content_packs:['none']}, {canvas_name: 'test_canvas'});
+         var time_log = av.log();
+         expect(time_log).toContain('build-elapsed');
+         expect(time_log).toContain('draw-elapsed');
+     });
+    it("builds and draws if a canvas doesn't exists", function () {
+         var av = new Avatar({use_content_packs:['none']});
+         var time_log = av.log();
+         expect(time_log).toContain('build-elapsed');
+         expect(time_log).toContain('draw-elapsed');
+     });
 });
