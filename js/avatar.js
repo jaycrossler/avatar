@@ -30,7 +30,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
     //-----------------------------
     //Private Global variables
-    var version = '0.0.8',
+    var version = '0.0.9',
         summary = 'Procedurally render people on HTML5 canvas.',
         author = 'Jay Crossler - http://github.com/jaycrossler',
         file_name = 'avatar.js';
@@ -205,12 +205,22 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             if (stage_options && stage_options.clear_before_draw) this.stage.removeAllChildren();
 
             var face = this.buildFace();
-            this.drawOnStage(face, this.stage);
+            try {
+                this.drawOnStage(face, this.stage);
+            } catch (ex) {
+                this.timing_log.push({name:"exception", elapsed: -1, ex: ex});
+                console.error("Problem when drawing part of a face: " + ex.name);
+            }
             this.faceShapeCollection = face;
 
             registerEvents(this);
 
-            this.stage.update();
+            try {
+                this.stage.update();
+            } catch (ex) {
+                this.timing_log.push({name:"exception", elapsed: -1, ex: ex});
+                console.error("Problem 2 when drawing part of a face: " + ex.name);
+            }
 
             var timing_end_draw = window.performance.now();
             var time_elapsed_draw = (timing_end_draw - timing_start);
@@ -228,7 +238,11 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     AvatarClass.prototype.log = function (showToConsole) {
         var log = "Avatar: [seed:" + this.face_options.rand_seed + " #" + this.times_avatar_drawn + "]";
         _.each(this.timing_log, function (time_item) {
-            log += "\n - " + time_item.name + ": " + Helpers.round(time_item.elapsed, 4) + "ms";
+            if (time_item.name == 'exception') {
+                log += "\n -- EXCEPTION: " + time_item.ex.name + ", " + time_item.ex.message;
+            } else {
+                log += "\n - " + time_item.name + ": " + Helpers.round(time_item.elapsed, 4) + "ms";
+            }
         });
 
         if (showToConsole) console.log(log);

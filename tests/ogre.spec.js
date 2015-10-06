@@ -7,7 +7,13 @@ describe("Avatar Ogre Race", function () {
         expect(is_ogre).toBeGreaterThan(-1);
     });
     it("have Greenish skin", function () {
-        var av = new Avatar({age: 30, race: 'Ogre'});
+        //TODO: There is periodically an array size exception. Figure out where
+        try {
+            var av = new Avatar({age: 30, race: 'Ogre'});
+        } catch (ex) {
+            console.log("EXCEPTION");
+            console.log("Seed: " + av.face_options.rand_seed);
+        }
         var skin = av.face_options.skin_colors.skin;
         var skin_color = net.brehaut.Color(skin);
 

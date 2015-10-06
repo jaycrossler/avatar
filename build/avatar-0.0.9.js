@@ -1,4 +1,4 @@
-/*! avatar ( and supporting libraries) - v0.0.8 - 2015-10-05 */// Copyright (c) 2008-2013, Andrew Brehaut, Tim Baumann, Matt Wilson,
+/*! avatar ( and supporting libraries) - v0.0.9 - 2015-10-05 */// Copyright (c) 2008-2013, Andrew Brehaut, Tim Baumann, Matt Wilson,
 //                          Simon Heimler, Michel Vielmetter
 //
 // All rights reserved.
@@ -1698,7 +1698,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
     //-----------------------------
     //Private Global variables
-    var version = '0.0.8',
+    var version = '0.0.9',
         summary = 'Procedurally render people on HTML5 canvas.',
         author = 'Jay Crossler - http://github.com/jaycrossler',
         file_name = 'avatar.js';

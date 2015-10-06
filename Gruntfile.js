@@ -165,7 +165,7 @@ module.exports = function (grunt) {
                     {
                         from: '<div id="screenshot-list"></div>',
                         to: function () {
-                            var versions = ['0.0.8', '0.0.7'];
+                            var versions = ['0.0.9', '0.0.8', '0.0.7'];
                             var list = "";
                             for (var v = 0; v < versions.length; v++) {
                                 var version = versions[v];

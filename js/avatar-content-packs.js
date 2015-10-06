@@ -20,11 +20,7 @@
             return run_after_loaded(cached);
         } else {
             var img = new Image();
-            try {
-                img.onload = run_after_loaded;
-            } catch (ex) {
-                console.log("caught!")
-            }
+            img.onload = run_after_loaded;
             img.src = url;
             IMAGES.push({url: url, parent_object: img});
         }
@@ -222,6 +218,61 @@
         return imageData;
     }
 
+    function apply_color_transform_to_zone(imageData, avatar, frame) {
+        //TODO: Integrate in tan_colors packs and other transforms from online
+        _.each(frame.zones || [], function (zone) {
+            var x_start, y_start, width, height;
+
+            if (zone.all) {
+                x_start = 0;
+                y_start = 0;
+                width = frame.width;
+                height = frame.height;
+            } else {
+                x_start = zone.x - frame.x;
+                y_start = zone.y - frame.y;
+                width = zone.width;
+                height = zone.height;
+            }
+
+            if (x_start < 0) {
+                width -= (0 - x_start);
+                x_start = 0;
+            }
+            if (y_start < 0) {
+                height -= (0 - y_start);
+                y_start = 0;
+            }
+            var x_end = x_start + width;
+            var y_end = y_start + height;
+
+            //Find the color that should be applied
+            var to_color = avatar.face_options[zone.color];
+            var to_color_object = net.brehaut.Color(to_color);
+            var c_red = parseInt(to_color_object.red * 255);
+            var c_green = parseInt(to_color_object.green * 255);
+            var c_blue = parseInt(to_color_object.blue * 255);
+
+            var data = imageData.data;
+
+            //Loop through all pixels in the zone
+            for (var x = x_start; x < x_end; x++) {
+                for (var y = y_start; y < y_end; y++) {
+                    var i = 4 * (x + y * frame.width);
+                    var red = data[i];
+                    var green = data[i + 1];
+                    var blue = data[i + 2];
+                    if (red < 40 && green < 40 && blue < 50) {
+                        imageData.data[i] = c_red;
+                        imageData.data[i + 1] = c_green;
+                        imageData.data[i + 2] = c_blue;
+                    }
+                }
+            }
+        });
+        return imageData;
+    }
+
     function default_render_after_image_loaded(avatar, pack, frame, matrix, parent_or_img) {
 
         //Get either the cached image or the loaded image object
@@ -255,55 +306,7 @@
                             pack.data.removeBackgroundNoise || 20);
 
                 }
-                //TODO: Make this more efficient, maybe group all zones into one stack for one pass?
-                _.each(frame.zones || [], function (zone) {
-                    var x_start, y_start, width, height;
-
-                    if (zone.all) {
-                        x_start = 0;
-                        y_start = 0;
-                        width = frame.width;
-                        height = frame.height;
-                    } else {
-                        x_start = zone.x - frame.x;
-                        y_start = zone.y - frame.y;
-                        width = zone.width;
-                        height = zone.height;
-                    }
-
-                    if (x_start < 0) {
-                        width -= (0 - x_start);
-                        x_start = 0;
-                    }
-                    if (y_start < 0) {
-                        height -= (0 - y_start);
-                        y_start = 0;
-                    }
-                    var x_end = x_start + width;
-                    var y_end = y_start + height;
-
-                    //Find the color that should be applied
-                    var to_color = avatar.face_options[zone.color];
-                    var to_color_object = net.brehaut.Color(to_color);
-                    var c_red = parseInt(to_color_object.red * 255);
-                    var c_green = parseInt(to_color_object.green * 255);
-                    var c_blue = parseInt(to_color_object.blue * 255);
-
-                    //Loop through all pixels in the zone
-                    for (var x = x_start; x < x_end; x++) {
-                        for (var y = y_start; y < y_end; y++) {
-                            var i = 4 * (x + y * frame.width);
-                            var red = data[i];
-                            var green = data[i + 1];
-                            var blue = data[i + 2];
-                            if (red < 40 && green < 40 && blue < 50) {
-                                imageData.data[i] = c_red;
-                                imageData.data[i + 1] = c_green;
-                                imageData.data[i + 2] = c_blue;
-                            }
-                        }
-                    }
-                });
+                imageData = apply_color_transform_to_zone(imageData, avatar, frame);
 
                 context.putImageData(imageData, 0, 0);
             } catch (ex) {
