@@ -1,7 +1,7 @@
 (function (Avatar, net, maths) {
     var IMAGES = []; //Global list of any images that were loaded by content packs
 
-    var isPhantomJS = (/PhantomJS/.test(window.navigator.userAgent));
+    var isPhantomJS = (/PhantomJS/.test(window.navigator.userAgent)); //Used during test cases
 
     var a = new Avatar('get_private_functions');
 
@@ -184,7 +184,7 @@
             //Build the final transform matrix from three points in each reference frame
             var matrix = maths.buildTransformFromTriangleToTriangle(source, dest);
 
-            //TODO: Verify that loading these is not asynchronous on image draw
+            //TODO: Verify that loading these is not asynchronous on image draw especially on mobile
             var render_it = function (obj) {
                 return default_render_after_image_loaded(avatar, pack, frame, matrix, obj);
             };
@@ -331,8 +331,8 @@
         //Draw these asynchronously rather than passing them back into the stage list
         var bitmap;
         if (isPhantomJS) {
-
-            //TODO: PhantomJS running tests is throwing a security error when editing canvases locally... ugh
+            //Note:PhantomJS running tests is throwing a security error when editing canvases locally using
+            // the EaselJS Bitmap object, so when using PhantomJS, write pixels directly to canvas
             //TODO: Write pixels onto a rectangle and add as a shape
 
             var dWidth = canvas_from_image_frame_cutout.width;
@@ -344,7 +344,6 @@
                 matrix[4], matrix[5], dWidth * matrix[0], dHeight * matrix[3]
             );
             main_context.globalCompositeOperation = 'normal';
-
 
         } else {
             bitmap = new createjs.Bitmap(canvas1);

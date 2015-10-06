@@ -60,8 +60,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         this.registered_points = [];
         this.textures = [];
         this.content_packs_used = {};
-        this.no_local_editing = false;//(document.location.protocol == 'file:');
-
+        this.no_local_editing = (document.location.protocol == 'file:');
 
         return this.initialize(option1, option2, option3);
     }
