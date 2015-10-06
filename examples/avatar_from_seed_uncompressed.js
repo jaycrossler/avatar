@@ -2,6 +2,12 @@ var seed;
 var av;
 var height;
 
+var augmentations = [
+    {feature: 'glasses', name: '3 goggles', options: {color: 'blue'}, ignore_filters:true},
+    {feature: 'scar', name: 'right cheek cut'}
+
+];
+
 function getMousePos(canvas, evt) {
     var rect = canvas.getBoundingClientRect();
     return {
@@ -50,17 +56,17 @@ $(document).ready(function () {
             av.face_options = null;
             av.erase();
         }
-        av = new Avatar({rand_seed: seed}, {canvas_name: $canvas, x: 0});
+        av = new Avatar({rand_seed: seed, augmentations: augmentations}, {canvas_name: $canvas, x: 0});
         av.unregisterEvent('all');
         av.registerEvent('face', function (avatar) {
             seed = parseInt(Math.random() * 300000);
             $seed_number.val(seed);
 
             avatar.face_options = null;
-            avatar.drawOrRedraw({rand_seed: seed});
+            avatar.drawOrRedraw({rand_seed: seed, augmentations: augmentations});
 
             var text = avatar.face_options.name || "Avatar";
-            text += " : new Avatar({rand_seed: " + avatar.initialization_seed + "});";
+            text += " : new Avatar("+JSON.stringify(av.initialization_options)+");";
             $avatar_name.text(text);
         });
     }
@@ -78,7 +84,7 @@ $(document).ready(function () {
         {feature: "eye_position", style: "lines"},
         {feature: "nose", style: "lines"}, //Uses: right eye innermost
         {feature: "chin", style: "lines"}, //Uses: chin mid line, face
-        {feature: "mouth", style: "lines", hide:true}, //NOTE: Shown twice to predraw positions
+        {feature: "mouth", style: "lines", hide: true}, //NOTE: Shown twice to predraw positions
         {feature: "wrinkles", style: "lines"}, //Uses: face, left eye, right eye, lips, full nose, chin top line
         {feature: "beard", style: "lines"}, //Uses: face, left eye
         {feature: "mouth", style: "lines"},
@@ -86,7 +92,7 @@ $(document).ready(function () {
         {feature: "eyes", style: "lines"},
         {feature: "hair", style: "lines"}, //Uses: face, left eye
         {feature: "ears", style: "lines"},
-        {feature: "glasses", style: "lines"} //TODO: glasses and other layers need to be defined and passed in to face_options
+        {feature: "augmentations", style: "lines"}
 
     ];
 

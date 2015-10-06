@@ -267,7 +267,7 @@ $(document).ready(function () {
 
     function draw(e) {
         var pos = getMousePos(canvas, e);
-        $content_title.text("x=" + pos.x + " : y=" + pos.y);
+        $content_title.text("x=" + parseInt(pos.x) + " : y=" + parseInt(pos.y));
     }
 
     canvas.addEventListener('mousemove', draw, false);

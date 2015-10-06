@@ -236,11 +236,19 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //Supporting functions
     AvatarClass.prototype.log = function (showToConsole) {
         var log = "Avatar: [seed:" + this.face_options.rand_seed + " #" + this.times_avatar_drawn + "]";
-        _.each(this.timing_log, function (time_item) {
-            if (time_item.name == 'exception') {
-                log += "\n -- EXCEPTION: " + time_item.ex.name + ", " + time_item.ex.message;
+        _.each(this.timing_log, function (log_item) {
+            if (log_item.name == 'exception') {
+                if (log_item.ex) {
+                    log += "\n -- EXCEPTION: " + log_item.ex.name + ", " + log_item.ex.message;
+                } else if (log_item.msg) {
+                    log += "\n -- EXCEPTION: " + log_item.msg;
+                } else {
+                    log += "\n -- EXCEPTION";
+                }
+            } else if (log_item.elapsed) {
+                log += "\n - " + log_item.name + ": " + Helpers.round(log_item.elapsed, 4) + "ms";
             } else {
-                log += "\n - " + time_item.name + ": " + Helpers.round(time_item.elapsed, 4) + "ms";
+                log += "\n - " + log_item.name;
             }
         });
 
@@ -393,7 +401,9 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
                         addSceneChildren(container, feature_shapes);
                     }
                 } else {
-                    console.error("avatar.js - Renderer named " + layer.feature + " not found, skipping.");
+                    var msg = "avatar.js - Renderer named " + layer.feature + " not found, skipping.";
+                    console.error(msg);
+                    avatar.timing_log.push({name: "exception", elapsed: -1, msg: msg});
                 }
             }
         });
@@ -1908,6 +1918,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         getFirstRaceFromData: getFirstRaceFromData,
         registerEvents: registerEvents,
         buildDecoration: buildDecoration,
+        find_renderer: find_renderer,
         buildFaceZones: buildFaceZones,
         addSceneChildren: addSceneChildren,
         transformPathFromLocalCoordinates: transformPathFromLocalCoordinates,

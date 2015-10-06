@@ -62,11 +62,13 @@
 
                 //Check that the pack doesn't have any filters that exclude it from running
                 isFilterMatch = true;
-                for (var key in pack.filter || {}) {
-                    var filter = pack.filter[key];
-                    //Only exclude if key is set, but is different than filter
-                    if (avatar.face_options[key] && avatar.face_options[key] != filter) {
-                        isFilterMatch = false;
+                if (!layer.ignore_filters) {
+                    for (var key in pack.filter || {}) {
+                        var filter = pack.filter[key];
+                        //Only exclude if key is set, but is different than filter
+                        if (avatar.face_options[key] && avatar.face_options[key] != filter) {
+                            isFilterMatch = false;
+                        }
                     }
                 }
             }
@@ -75,13 +77,13 @@
         });
     }
 
-    function find_frames_that_can_be_shown(avatar, matching_packs) {
+    function find_frames_that_can_be_shown(avatar, matching_packs, item_override) {
         var matching_frames = [];
 
         //Check if there are any 'overrides' specified in face_options, then use those if so
         _.each(matching_packs, function (pack) {
-            if (pack.name && avatar.face_options[pack.name]) {
-                var override_with_frame = avatar.face_options[pack.name];
+            if ((item_override && item_override.name) || (pack.name && avatar.face_options[pack.name])) {
+                var override_with_frame = item_override.name || avatar.face_options[pack.name];
                 var frame = _.find(pack.data.frames, function (frame) {
                     return frame.name == override_with_frame
                 });
@@ -120,13 +122,13 @@
     }
 
     //Rendering features
-    a.content_packs_renderer = function (avatar, layer) {
+    a.content_packs_renderer = function (avatar, layer, item_override) {
         var matching_frames = [];
         var render_layer;
 
         var matching_packs = find_pack_that_can_be_shown(avatar, layer);
         if (matching_packs.length) {
-            matching_frames = find_frames_that_can_be_shown(avatar, matching_packs);
+            matching_frames = find_frames_that_can_be_shown(avatar, matching_packs, item_override);
         }
         //There's at least one frame of the pack that matches filters.
         if (matching_frames.length) {
@@ -136,14 +138,14 @@
 
             render_layer = matching_pack;
 
-            render_layer.renderer = function (face_zones, avatar, layer) {
+            render_layer.renderer = function (face_zones, avatar, layer, options) {
                 avatar.content_packs_used = avatar.content_packs_used || {};
                 avatar.content_packs_used[matching_pack.name] = matching_frame.name;
 
                 if (_.isFunction(matching_pack.custom_renderer)) {
-                    return matching_pack.custom_renderer(face_zones, avatar, layer, matching_pack, matching_frame);
+                    return matching_pack.custom_renderer(face_zones, avatar, layer, matching_pack, matching_frame, options);
                 } else {
-                    return default_image_renderer(face_zones, avatar, layer, matching_pack, matching_frame);
+                    return default_image_renderer(face_zones, avatar, layer, matching_pack, matching_frame, options);
                 }
             }
         }
@@ -151,7 +153,7 @@
         return render_layer;
     };
 
-    function default_image_renderer(face_zones, avatar, layer, pack, frame) {
+    function default_image_renderer(face_zones, avatar, layer, pack, frame, options) {
         var a = avatar._private_functions;
         var shapes = [];
 

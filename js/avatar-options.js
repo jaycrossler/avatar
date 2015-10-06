@@ -91,7 +91,6 @@
         wrinkle_mouth_width: null,
         wrinkle_mouth_height: null,
         wrinkle_resistance: null
-
     };
 
     var _human_options = {
@@ -111,10 +110,10 @@
             {feature: "eyes", style: "lines"},
             {feature: "hair", style: "lines"}, //Uses: face, left eye
             {feature: "ears", style: "lines"},
+            {feature: "augmentations", style: "lines"},
             {decoration: "name-plate"}
         ],
         use_content_packs: ['all'],
-//        use_content_packs: isPhantomJS ? ['none'] : ['all'],
 
         //If Preset, then use one of the skin_color_options and change tint, otherwise calculate by tint and lightness
         skin_shade_options: "Light,Dark,Preset".split(","),
