@@ -2,6 +2,11 @@ var seed;
 var av;
 var height;
 
+var augmentations = [
+//    {feature: 'glasses', name: '3 goggles', options: {color: 'blue'}, ignore_filters:true},
+//    {feature: 'scar', name: 'right cheek cut'}
+];
+
 function getMousePos(canvas, evt) {
     var rect = canvas.getBoundingClientRect();
     return {
@@ -25,14 +30,20 @@ $(document).ready(function () {
 
     function draw(e) {
         var pos = getMousePos(canvas, e);
-        $avatar_name.text("x=" + pos.x + " : y=" + pos.y);
+        $avatar_name.text("x=" + parseInt(pos.x) + " : y=" + parseInt(pos.y));
     }
 
+    var bg_color = Helpers.getQueryVariable("bg");
+    if (bg_color) {
+        $('body').css({backgroundColor:bg_color});
+    }
     var hide_title = Helpers.getQueryVariable("hide") || false;
     if (hide_title) {
         $avatar_name.hide();
         $seed_number.hide();
         $("#seed_number_label").hide();
+        $("#details").hide();
+        $("#show_points").hide();
         $("body").css({margin: '0px'});
     } else {
         canvas.addEventListener('mousemove', draw, false);
@@ -50,22 +61,34 @@ $(document).ready(function () {
             av.face_options = null;
             av.erase();
         }
-        av = new Avatar({rand_seed: seed}, {canvas_name: $canvas, x: 0});
+        av = new Avatar({rand_seed: seed, augmentations: augmentations}, {canvas_name: $canvas, x: 0});
+        var show_points = Helpers.getQueryVariable("points") || false;
+        if (show_points){
+            av._private_functions.highlight_named_points(av)
+        }
+
         av.unregisterEvent('all');
         av.registerEvent('face', function (avatar) {
             seed = parseInt(Math.random() * 300000);
             $seed_number.val(seed);
 
             avatar.face_options = null;
-            avatar.drawOrRedraw({rand_seed: seed});
+            avatar.drawOrRedraw({rand_seed: seed, augmentations: augmentations});
+            if (show_points){
+                av._private_functions.highlight_named_points(av)
+            }
 
             var text = avatar.face_options.name || "Avatar";
-            text += " : new Avatar({rand_seed: " + avatar.initialization_seed + "});";
-            $avatar_name.text(text);
+            text += " : new Avatar("+JSON.stringify(av.initialization_options)+");";
+            $("#details").text(text);
         });
     }
 
     $seed_number.on('keypress', generateAvatar);
+
+    $('#show_points').on('click', function(){
+        av._private_functions.highlight_named_points(av)
+    });
 
     //Pull a pointer to the current avatar  template for that race
     var AvatarRace = new Avatar('get_linked_template', 'Human');
@@ -78,14 +101,15 @@ $(document).ready(function () {
         {feature: "eye_position", style: "lines"},
         {feature: "nose", style: "lines"}, //Uses: right eye innermost
         {feature: "chin", style: "lines"}, //Uses: chin mid line, face
-        {feature: "mouth", style: "lines"}, //NOTE: Shown twice to predraw positions
+        {feature: "mouth", style: "lines", hide: true}, //NOTE: Shown twice to predraw positions
         {feature: "wrinkles", style: "lines"}, //Uses: face, left eye, right eye, lips, full nose, chin top line
         {feature: "beard", style: "lines"}, //Uses: face, left eye
         {feature: "mouth", style: "lines"},
         {feature: "mustache", style: "lines"},
         {feature: "eyes", style: "lines"},
         {feature: "hair", style: "lines"}, //Uses: face, left eye
-        {feature: "ears", style: "lines"}
+        {feature: "ears", style: "lines"},
+        {feature: "augmentations", style: "lines"}
     ];
 
     generateAvatar();

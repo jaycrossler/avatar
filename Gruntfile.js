@@ -14,9 +14,20 @@ var allFiles = libraryFiles.concat(avatarFiles, contentFiles, raceFiles);
 function screenshots_list(version) {
     var output = {};
     for (var i = 1; i <= screenshot_count; i++) {
+        var options = '';
+        if (i > screenshot_count-2) {
+            options += "&points=true";
+        }
+        if (i % 3 == 1) {
+            options += "&bg=gold";
+        }
+        if (i % 3 == 2) {
+            options += "&bg=lightyellow";
+        }
+
         output['avatar_' + i] = {
             options: {
-                url: 'http://localhost:9001/examples/avatar_from_seed.html?seed=' + i + '&hide=true',
+                url: 'http://localhost:9001/examples/avatar_from_seed.html?seed=' + i + '&hide=true'+options,
                 output: 'images/screenshots/' + version + '/avatar-seed-' + i
             }
         };
@@ -177,16 +188,27 @@ module.exports = function (grunt) {
                         to: function () {
                             var versions = ['0.0.9', '0.0.8', '0.0.7'];
                             var list = "";
+                            var list_js = "";
                             for (var v = 0; v < versions.length; v++) {
                                 var version = versions[v];
-                                var ver_link = '<a href="../../build/avatar-'+version+'.js">avatar-'+version+'.js</a>';
-                                list += '<p><b>Screenshots of Avatars from Version ' + version + ' (link to ' + ver_link + '):</b></p>\n';
+                                var ver_link = '(link to <a href="../../build/avatar-'+version+'.js">avatar-'+version+'.js</a>)';
+                                list += '<p><b>Screenshots of Avatars from Version ' + version + ' ' + ver_link + ':</b></p>\n';
                                 for (var i = 1; i <= screenshot_count; i++) {
                                     var name = version + '/avatar-seed-' + i + '.png';
-                                    list += '<img style="width:200px;height:200px" src="' + name + '">\n';
+                                    list += '<a id="popover_'+i+'" class="btn" rel="popover" data-content="" title="Avatar.js auto-generated image"><img style="width:200px;height:200px" src="' + name + '"></a>\n';
+
+                                    var img = '<img src="'+name+'">';
+                                    list_js += "$('#popover_"+i+"').popover({trigger:'hover', placement:'bottom', content: '" + img + "', html: true});\n";
+
                                 }
                             }
-                            return '<div id="screenshot-list">\n' + list + '</div>';
+                            var output = '<div id="screenshot-list">\n' + list + '</div>';
+                            output += "\n<scr" + "ipt>\n" +
+                                      "$(function(){\n" +
+                                      list_js + "\n" +
+                                      "});\n</scr" + "ipt>";
+
+                            return output;
                         }
                     }
                 ]

@@ -10,7 +10,6 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //TODO: Decorations are weird on faces.html
 
     //TODO: Have a shape builder function to standardize and make reusable
-    //TODO: Generate points for each important face zone, generate all these first before rendering
 
     //TODO: Zones should work by polygons
     //TODO: Zones specify color zones that can be shifted or have image effects applied

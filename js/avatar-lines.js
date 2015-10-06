@@ -3,6 +3,44 @@
 //This set of functions adds rendering capabilities to avatar.js, specifically to draw things like human faces
 //-----------------------------------------
 
+
+(function (Avatar, _) {
+    var a = new Avatar('get_private_functions');
+    a.highlight_named_points = function(avatar){
+        var container = new createjs.Container();
+
+        var size = 3;
+
+        _.each(avatar.registered_points, function(point){
+            var x = point.point.x;
+            var y = point.point.y;
+
+            var shape_point = new createjs.Shape();
+            var color = "blue";
+            if (point.name.indexOf('face') > -1) {
+                color = "yellow";
+            } else if (point.name.indexOf('nose') > -1) {
+                color = "red";
+            } else if (point.name.indexOf('eye') > -1) {
+                color = "orange";
+            }
+
+            shape_point.graphics.beginStroke('black').beginFill(color).drawRect(x-size, y-size, size*2, size*2);
+
+            shape_point.addEventListener('click', function(){
+               console.log('Clicked names point: '+point.name + ' - ' + JSON.stringify(point.point));
+            });
+
+            container.addChild(shape_point);
+            avatar.faceShapeCollection.addChild(shape_point);
+        });
+
+        avatar.drawOnStage(container, avatar.stage);
+        avatar.stage.update();
+    }
+
+})(Avatar, _);
+
 //=====Line Styles==========
 //face
 new Avatar('add_render_function', {style: 'lines', feature: 'face', renderer: function (face_zones, avatar) {
@@ -39,7 +77,15 @@ new Avatar('add_render_function', {style: 'lines', feature: 'face', renderer: fu
 
     var face_line = a.transformShapeLine(options, face_options);
 
-    //TODO: Add Some skin variations, noise, dirtiness
+    // Draw some points to help track boundaries later when mapping overlay images
+    options.steps = 16;
+    var face_line_low_res = a.transformShapeLine(options, face_options);
+    _.each(face_line_low_res, function(face_point, i){
+        var x = zone.x + (face_point.x * radius_x /10);
+        var y = zone.y + (face_point.y * radius_y /10);
+        a.namePoint(avatar, 'face boundary #'+i, {x: x, y: y});
+    });
+
     var skin_lighter = net.brehaut.Color(face_options.skin_colors.skin).lightenByRatio(0.05).toString();
     var skin_bright = net.brehaut.Color(face_options.skin_colors.skin).lightenByRatio(0.1).toString();
     var cheek_darker = net.brehaut.Color(face_options.skin_colors.cheek).darkenByRatio(0.05).toString();
@@ -368,6 +414,9 @@ new Avatar('add_render_function', {style: 'lines', feature: 'ears', renderer: fu
     lines.push({name: 'ear right line', line: ear_line_r, shape: ear_r, scale_x: width, scale_y: height, x: x, y: y});
     shapes.push(ear_r);
 
+    a.namePoint(avatar, 'middle left ear', {x: x, y: y});
+
+
     var ear_l = a.createPathFromLocalCoordinates(ear_line_l, {close_line: true, thickness: f.thick_unit, fill_color: face_options.skin_colors.skin, color: face_options.skin_colors.deepshadow}, width, height);
     x = zone.right_x + (f.thick_unit * ear_inset_adjust);
     y = zone.y - (f.thick_unit * ear_head_height_adjust);
@@ -375,6 +424,8 @@ new Avatar('add_render_function', {style: 'lines', feature: 'ears', renderer: fu
     ear_l.y = y;
     lines.push({name: 'ear left line', line: ear_line_l, shape: ear_l, scale_x: width, scale_y: height, x: x, y: y});
     shapes.push(ear_l);
+
+    a.namePoint(avatar, 'middle right ear', {x: x, y: y});
 
 
     var in_scale = .7;
@@ -485,6 +536,12 @@ new Avatar('add_render_function', {style: 'lines', feature: 'eye_position', rend
     inner_point_x = x + (inner_point_x * width_eye / 2 / eye_radius);
     inner_point_y = y + (inner_point_y * height_eye / 2 / eye_radius);
     a.namePoint(avatar, 'right eye innermost', {x: inner_point_x, y: inner_point_y});
+
+    inner_point_x = a.comparePoints(right_eye_line, 'x', 'highest');
+    inner_point_y = a.comparePoints(right_eye_line, 'y', 'middle');
+    inner_point_x = x + (inner_point_x * width_eye / 2 / eye_radius);
+    inner_point_y = y + (inner_point_y * height_eye / 2 / eye_radius);
+    a.namePoint(avatar, 'right eye outermost', {x: inner_point_x, y: inner_point_y});
 
 }});
 
@@ -666,6 +723,11 @@ new Avatar('add_render_function', {style: 'lines', feature: 'eyes', renderer: fu
     inner_point_y = y + (inner_point_y * height_eye / 2 / eye_radius);
     a.namePoint(avatar, 'left eye innermost', {x: inner_point_x, y: inner_point_y});
 
+    inner_point_x = a.comparePoints(left_eye_line, 'x', 'lowest');
+    inner_point_y = a.comparePoints(left_eye_line, 'y', 'middle');
+    inner_point_x = x + (inner_point_x * width_eye / 2 / eye_radius);
+    inner_point_y = y + (inner_point_y * height_eye / 2 / eye_radius);
+    a.namePoint(avatar, 'left eye outermost', {x: inner_point_x, y: inner_point_y});
 
     x = zone.left_x;
     y = zone.y - (f.thick_unit * 4);
@@ -1048,6 +1110,12 @@ new Avatar('add_render_function', {style: 'lines', feature: 'nose', renderer: fu
     nose_bottom_squiggle.y = y;
     lines.push({name: 'nose bottom line', line: nose_line, shape: nose_bottom_squiggle, x: x, y: y, scale_x: width, scale_y: height});
 
+    var inner_point_x = a.comparePoints(nose_line, 'x', 'middle');
+    var inner_point_y = a.comparePoints(nose_line, 'y', 'highest');
+    inner_point_x = x + (inner_point_x * width / 10);
+    inner_point_y = y + (inner_point_y * height / 10);
+    a.namePoint(avatar, 'nose squiggle bottom middle', {x: inner_point_x, y: inner_point_y});
+
 
     //Sides of nose, that get taller based on size
     var nose_line_side = [
@@ -1119,6 +1187,17 @@ new Avatar('add_render_function', {style: 'lines', feature: 'nose', renderer: fu
     shapes.push(l_l);
 
 
+    var point = a.comparePoints(nose_line_l, 'x', 'lowest', true);
+    inner_point_x = x + (point.x * width/10);
+    inner_point_y = y + (point.y * height/10);
+    a.namePoint(avatar, 'nose left line flaring point', {x: inner_point_x, y: inner_point_y});
+
+    point = a.comparePoints(nose_line_r, 'x', 'highest', true);
+    inner_point_x = x + (point.x * width/10);
+    inner_point_y = y + (point.y * height/10);
+    a.namePoint(avatar, 'nose right line flaring point', {x: inner_point_x, y: inner_point_y});
+
+
     //TODO: These should connect to nose
     var mouth_high_left_line = [
         {x: -3.5, y: -4},
@@ -1126,21 +1205,34 @@ new Avatar('add_render_function', {style: 'lines', feature: 'nose', renderer: fu
         {x: -3.7, y: 0},
         {x: -3.5, y: 2}
     ];
+    x = f.mouth.x;
+    y = f.mouth.y - (f.thick_unit * 24);
+
     var l5 = a.createPathFromLocalCoordinates(mouth_high_left_line, {close_line: false, thickness: 0, color: face_options.skin_colors.deepshadow, fill_color: 'pink'}, width, height);
-    l5.x = f.mouth.x;
-    l5.y = f.mouth.y - (f.thick_unit * 24);
+    l5.x = x;
+    l5.y = y;
     l5.alpha = 0.5;
     lines.push({name: 'above lip left line', line: mouth_high_left_line, shape: l5, x: f.mouth.x, y: f.mouth.y - (f.thick_unit * 24), scale_x: width, scale_y: height});
     shapes.push(l5);
 
     var mouth_high_right_line = a.transformShapeLine({type: 'reverse'}, face_options, mouth_high_left_line);
     var l6 = a.createPathFromLocalCoordinates(mouth_high_right_line, {close_line: false, thickness: 0, color: face_options.skin_colors.deepshadow, fill_color: 'pink'}, width, height);
-    l6.x = f.mouth.x;
-    l6.y = f.mouth.y - (f.thick_unit * 24);
+    l6.x = x;
+    l6.y = y;
     l6.alpha = 0.5;
     lines.push({name: 'above lip right line', line: mouth_high_right_line, shape: l6, x: f.mouth.x, y: f.mouth.y - (f.thick_unit * 24), scale_x: width, scale_y: height});
     shapes.push(l6);
 
+
+    point = a.comparePoints(mouth_high_left_line, 'x', 'lowest', true);
+    inner_point_x = x + (point.x * width/10);
+    inner_point_y = y + (point.y * height/10);
+    a.namePoint(avatar, 'nose-lip left line middle point', {x: inner_point_x, y: inner_point_y});
+
+    point = a.comparePoints(mouth_high_right_line, 'x', 'highest', true);
+    inner_point_x = x + (point.x * width/10);
+    inner_point_y = y + (point.y * height/10);
+    a.namePoint(avatar, 'nose-lip right line middle point', {x: inner_point_x, y: inner_point_y});
 
     return shapes;
 }});
@@ -1173,6 +1265,8 @@ new Avatar('add_render_function', {style: 'lines', feature: 'wrinkles', renderer
         var mid_y = a.comparePoints(hair_line, 'y', 'middle') + (f.thick_unit * 30);
         var base_width = (f.thick_unit * 220);
         var height = (f.thick_unit * 100);
+
+        a.namePoint(avatar, 'hair line mid point', {x: mid_x, y: mid_y});
 
         var forehead_wrinkle_line = [
             {x: -4, y: 0},
@@ -1529,6 +1623,10 @@ new Avatar('add_render_function', {style: 'lines', feature: 'wrinkles', renderer
     shapes.push(left_cheek);
 
 
+    a.namePoint(avatar, 'right cheek', {x: eye_right_right, y: cheek_y});
+    a.namePoint(avatar, 'left cheek', {x: eye_left_left, y: cheek_y});
+
+
     //Cheek lines
     mid_y = right_eye_line[0].y;
     var cheekbone_lines = [];
@@ -1695,6 +1793,9 @@ new Avatar('add_render_function', {style: 'lines', feature: 'chin', renderer: fu
     lines.push({name: 'chin top line', line: chin_line, shape: chin_top_line, x: x, y: y, alpha: alpha, scale_x: width, scale_y: height});
     shapes.push(chin_top_line);
 
+    a.namePoint(avatar, 'chin top line', {x: x, y: y});
+
+
     var chin_mid_line = a.createPathFromLocalCoordinates(chin_line, {close_line: false, thickness: (f.thick_unit * 7), color: face_options.skin_colors.deepshadow}, width * .9, height);
     x = f.mouth.x;
     y = f.mouth.y + (f.thick_unit * 32);
@@ -1720,6 +1821,8 @@ new Avatar('add_render_function', {style: 'lines', feature: 'chin', renderer: fu
     chin_under_line.alpha = alpha;
     lines.push({name: 'chin bottom line', line: chin_line_lower, shape: chin_under_line, x: x, y: y, alpha: alpha, scale_x: width, scale_y: height});
     shapes.push(chin_under_line);
+
+    a.namePoint(avatar, 'chin bottom line', {x: x, y: y});
 
     var head_line = a.transformLineToGlobalCoordinates(lines, 'face');
     var chin_mid_line_piece = a.transformLineToGlobalCoordinates(lines, 'chin mid line');
