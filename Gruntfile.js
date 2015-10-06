@@ -26,13 +26,23 @@ function screenshots_list(version) {
 
 module.exports = function (grunt) {
 
+    var banner = '/*\n'+
+                 '-----------------------------------------------------------------------------------\n' +
+                 '-- <%= pkg.name %>.js - v<%= pkg.version %> - Built on <%= grunt.template.today("yyyy-mm-dd") %> by <%= pkg.author %> using Grunt.js\n' +
+                 '-----------------------------------------------------------------------------------\n' +
+                 '-- Packaged with color.js - Copyright (c) 2008-2013, Andrew Brehaut, Tim Baumann, \n' +
+                 '--                          Matt Wilson, Simon Heimler, Michel Vielmetter\n'+
+                 '-- colors.js - Copyright 2012-2013 Matt Jordan - https://github.com/mbjordan/Colors \n' +
+                 '-----------------------------------------------------------------------------------\n' +
+                 ' color.js: */\n';
+
     // Project configuration.
     var config = {
         pkg: grunt.file.readJSON('package.json'),
         concat: {
             options: {
-                separator: ';\n',
-                banner: '/*! <%= pkg.name %> ( and supporting libraries) - v<%= pkg.version %> - <%= grunt.template.today("yyyy-mm-dd") %> */'
+                separator: '\n',
+                banner: banner
             },
             build: {
                 src: allFiles,
@@ -169,7 +179,8 @@ module.exports = function (grunt) {
                             var list = "";
                             for (var v = 0; v < versions.length; v++) {
                                 var version = versions[v];
-                                list += '<p><b>Screenshots of Avatars from Version ' + version + ':</b></p>\n';
+                                var ver_link = '<a href="../../build/avatar-'+version+'.js">avatar-'+version+'.js</a>';
+                                list += '<p><b>Screenshots of Avatars from Version ' + version + ' (link to ' + ver_link + '):</b></p>\n';
                                 for (var i = 1; i <= screenshot_count; i++) {
                                     var name = version + '/avatar-seed-' + i + '.png';
                                     list += '<img style="width:200px;height:200px" src="' + name + '">\n';

@@ -1,4 +1,13 @@
-/*! avatar ( and supporting libraries) - v0.0.9 - 2015-10-06 */// Copyright (c) 2008-2013, Andrew Brehaut, Tim Baumann, Matt Wilson,
+/*
+-----------------------------------------------------------------------------------
+-- avatar.js - v0.0.9 - Built on 2015-10-06 by Jay Crossler using Grunt.js
+-----------------------------------------------------------------------------------
+-- Packaged with color.js - Copyright (c) 2008-2013, Andrew Brehaut, Tim Baumann, 
+--                          Matt Wilson, Simon Heimler, Michel Vielmetter
+-- colors.js - Copyright 2012-2013 Matt Jordan - https://github.com/mbjordan/Colors 
+-----------------------------------------------------------------------------------
+ color.js: */
+// Copyright (c) 2008-2013, Andrew Brehaut, Tim Baumann, Matt Wilson,
 //                          Simon Heimler, Michel Vielmetter
 //
 // All rights reserved.
@@ -836,7 +845,7 @@ if (!net.brehaut) { net.brehaut = {}; }
 */
 if(typeof module !== 'undefined') {
   module.exports = net.brehaut.Color;
-};
+}
 /*
  Colors JS Library v1.2.4
  Copyright 2012-2013 Matt Jordan
@@ -856,7 +865,7 @@ orangered:"#ff4500",orchid:"#da70d6",palegoldenrod:"#eee8aa",palegreen:"#98fb98"
 snow:"#fffafa",springgreen:"#00ff7f",steelblue:"#4682b4",tan:"#d2b48c",teal:"#008080",thistle:"#d8bfd8",tomato:"#ff6347",turquoise:"#40e0d0",violet:"#ee82ee",wheat:"#f5deb3",white:"#ffffff",whitesmoke:"#f5f5f5",yellow:"#ffff00",yellowgreen:"#9acd32"}[a];return void 0===a?"Invalid Color Name":a};g.name2rgb=function(a){a=this.name2hex(a);return/^[a-fA-F0-9#]{7}$/.test(a)?this.hex2rgb(a):l.render(["Invalid Color Name","Invalid Color Name","Invalid Color Name"],"rgb")};g.name2hsv=function(a){a=this.name2hex(a);
 return/^[a-fA-F0-9#]{7}$/.test(a)?this.hex2hsv(a):l.render(["Invalid Color Name","Invalid Color Name","Invalid Color Name"],"hsv")};g.complement=function(a,b,d){var c;if("string"==typeof a&&/(#([A-Fa-f0-9]){3}(([A-Fa-f0-9]){3})?)/.test(a))return a=a.replace("#",""),b="#",6===a.length&&(b+=l.paddedHex(255-this.hex2rgb(a.substr(0,2))),b+=l.paddedHex(255-this.hex2rgb(a.substr(2,2))),b+=l.paddedHex(255-this.hex2rgb(a.substr(4,2)))),3===a.length&&(b+=l.paddedHex(255-this.hex2rgb(a.substr(0,1)+a.substr(0,
 1))),b+=l.paddedHex(255-this.hex2rgb(a.substr(1,1)+a.substr(1,1))),b+=l.paddedHex(255-this.hex2rgb(a.substr(2,1)+a.substr(2,1)))),b;void 0!==a&&void 0!==b&&void 0!==d&&(c=[255-a,255-b,255-d]);"object"==typeof a&&(c=[255-a[0],255-a[1],255-a[2]]);return l.render(c,"rgb")};g.rand=function(a){var b,d;if("hex"===a||void 0===a){a="";for(d=0;6>d;d++)b=Math.floor(16*Math.random()),a+="0123456789abcdef".substring(b,b+1);return"#"+a}if("rgb"==a)return a=Math.floor(-254*Math.random()+255),b=Math.floor(-254*
-Math.random()+255),d=Math.floor(-254*Math.random()+255),l.render([a,b,d],"rgb")};n.Colors=n.$c=g})(window);;
+Math.random()+255),d=Math.floor(-254*Math.random()+255),l.render([a,b,d],"rgb")};n.Colors=n.$c=g})(window);
 //Jay's math helpers
 _.mixin({ deepClone: function (p_object) {
     return JSON.parse(JSON.stringify(p_object));
@@ -981,7 +990,7 @@ maths.buildTransformFromTriangleToTriangle = function (sourceTriangle, destTrian
 
     //Return a matrix in a format that can be used by canvas.context.transform(m[0],m[1],m[2],m[3],m[4],m[5])
     return [a1, a4, a2, a5, a3, a6];
-};;
+};
 //--------------------------------------------
 // Library of commonly used generic functions.
 //--------------------------------------------
@@ -1665,7 +1674,7 @@ Helpers.isInArray = function (searchFor, searchIn, ignoreCase) {
     }
   }
 
-})();;
+})();
 var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //Uses jquery and Underscore and colors.js and createjs's easel.js
 
@@ -3621,7 +3630,7 @@ Avatar.getRaces = function () {
 Avatar.initializeOptions = function (face_options_basic, human_data_options) {
     var av_pointer = new Avatar('');
     av_pointer.initializeOptions(face_options_basic, human_data_options);
-};;
+};
 //beard
 new Avatar('add_render_function', {style: 'lines', feature: 'beard', renderer: function (face_zones, avatar) {
     var f = face_zones;
@@ -4036,7 +4045,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mustache', renderer
 
     return shapes;
 }});
-;
+
 (function (Avatar, net, maths) {
     var IMAGES = []; //Global list of any images that were loaded by content packs
 
@@ -4397,7 +4406,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mustache', renderer
         return bitmap;
     }
 
-})(Avatar, net, maths);;
+})(Avatar, net, maths);
 function createHairPattern(options, zone, hair_line, outer_hair_line, a) {
     //Can take in numbers like '123123' or '212,1231,53' and make hair
 
@@ -4564,7 +4573,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'hair', renderer: fu
 
     }
     return shapes;
-}});;
+}});
 //-----------------------------------------
 //Avatar.js (lines and circle styles)
 //This set of functions adds rendering capabilities to avatar.js, specifically to draw things like human faces
@@ -6711,17 +6720,17 @@ new Avatar('add_render_function', {style: 'circles', feature: 'mouth', renderer:
     shapes.push(mouth_line);
 
     return shapes;
-}});;
+}});
 (function (AvatarClass) {
-    var isPhantomJS = ( /PhantomJS/.test(window.navigator.userAgent));
-    var isLoacalFile = (document.location.protocol == 'file:');
 
     var _face_options = {
         style: 'lines',
         race: 'Human',
         rand_seed: 0,
 
+        //----------------------------------------
         //'Living' settings that can change over time
+        //NOTE: Items that aren't null are ones that haven't been implemented yet
         age: 30,
         era: 'Industrial',
         thickness: 0,
@@ -6746,10 +6755,9 @@ new Avatar('add_render_function', {style: 'circles', feature: 'mouth', renderer:
 
         emotionality: 0,
         emotion_shown: 'none', //TODO: Have an array of current emotions?
-        tattoos: [],
-        jewelry: [],
-        scars: [],
+        augmentations: [],
 
+        //----------------------------------------
         //DNA settings that don't change easily
         gender: null,
         height: 0,
@@ -6922,7 +6930,7 @@ new Avatar('add_render_function', {style: 'circles', feature: 'mouth', renderer:
 
     AvatarClass.initializeOptions(_face_options, _human_options);
 
-})(Avatar);;
+})(Avatar);
 (function (Avatar, net) {
     //TODO: Have textures be removed based on face_options modified
 
@@ -7042,7 +7050,7 @@ new Avatar('add_render_function', {style: 'circles', feature: 'mouth', renderer:
         return context;
     }
 
-})(Avatar, net);;
+})(Avatar, net);
 var content_pack_data = {
     image: '../js/content_packs/female_eyes_1/woman-eyes-collection-vector-illustration-8573624.jpg',
     frames: [
@@ -7147,7 +7155,7 @@ new Avatar('register_content_pack', 'female_eyes_1', {
     data: content_pack_data
 });
 
-;
+
 var content_pack_data = {
     image: '../js/content_packs/mouths_1/25468547-vector-lips-and-mouth-silhouette-and-glossy-open-and-close-up-man-and-woman-face-parts.jpg',
     frames: [
@@ -7345,7 +7353,7 @@ new Avatar('register_content_pack', 'mouths_1', {
     data: content_pack_data, show_reference_points: false
 });
 
-;
+
 var image = '../js/content_packs/woman_face_parts_1/woman-face-parts-eye-glasses-hat-lips-hair-head-character-40398911.jpg'
 var content_pack_data_glasses = {
     image: image,
@@ -7495,7 +7503,7 @@ new Avatar('register_content_pack', 'woman_face_parts_1_eyes', {
     style: 'lines', replace_features: ['eyes'], use_frequency: .5, filter: {gender: 'Female'},
     data: content_pack_data_eyes, show_reference_points: false
 });
-;
+
 new Avatar('add_render_function', {style: 'lines', feature: 'horns', renderer: function (face_zones, avatar) {
     var f = face_zones;
     var a = avatar._private_functions;
@@ -7627,7 +7635,7 @@ demonTemplate.rendering_order.push({feature: 'horns', style: 'lines'});
 
 
 new Avatar('set_data_template', 'Demon', demonTemplate);
-;
+
 var naviTemplate = new Avatar('copy_data_template', 'Human');
 
 naviTemplate.ear_shape_options.push('Pointed');
@@ -7649,7 +7657,7 @@ naviTemplate.thickness_options = [-1, .5, 0, .5, 1];
 naviTemplate.face_shape_options = "Oval,Rectangular,Diamond".split(",");
 
 new Avatar('set_data_template', 'Navi', naviTemplate);
-;
+
 var ogreTemplate = new Avatar('copy_data_template', 'Human');
 
 ogreTemplate.ear_shape_options.push('Pointed');
