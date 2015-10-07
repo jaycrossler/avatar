@@ -27,6 +27,10 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //TODO: Eyes get eyelashes
     //TODO: Iris smaller with variable shapes, pattern in retina
 
+    //TODO: If showing cache on multiple images on same canvas, then images don't draw
+    //TODO: Lots to fix on parent/child example - skin colors bleeding over, images offset on margins
+    //TODO: On Option Explorer, "Heart" only shows for all face options after 1 option is set
+
     //-----------------------------
     //Private Global variables
     var version = '0.0.9',

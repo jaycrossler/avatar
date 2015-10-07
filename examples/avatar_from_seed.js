@@ -41,12 +41,16 @@ $(document).ready(function () {
     if (hide_title) {
         $avatar_name.hide();
         $seed_number.hide();
+        $('nav').hide();
         $("#seed_number_label").hide();
         $("#details").hide();
         $("#show_points").hide();
         $("body").css({margin: '0px'});
+        $('#avatar_holder').css({margin: '0px'});
+        $('.container').css({marginLeft:'0px',marginRight:'0px'})
     } else {
         canvas.addEventListener('mousemove', draw, false);
+        $('#avatar_holder').css({margin: '40px 0px 0px 0px'});
     }
     $seed_number.val(Helpers.getQueryVariable("seed"));
 

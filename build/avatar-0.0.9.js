@@ -1,6 +1,6 @@
 /*
 -----------------------------------------------------------------------------------
--- avatar.js - v0.0.9 - Built on 2015-10-06 by Jay Crossler using Grunt.js
+-- avatar.js - v0.0.9 - Built on 2015-10-07 by Jay Crossler using Grunt.js
 -----------------------------------------------------------------------------------
 -- Packaged with color.js - Copyright (c) 2008-2013, Andrew Brehaut, Tim Baumann, 
 --                          Matt Wilson, Simon Heimler, Michel Vielmetter
@@ -1703,6 +1703,10 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //TODO: Multiline function has shadow, offset shadow
     //TODO: Eyes get eyelashes
     //TODO: Iris smaller with variable shapes, pattern in retina
+
+    //TODO: If showing cache on multiple images on same canvas, then images don't draw
+    //TODO: Lots to fix on parent/child example - skin colors bleeding over, images offset on margins
+    //TODO: On Option Explorer, "Heart" only shows for all face options after 1 option is set
 
     //-----------------------------
     //Private Global variables

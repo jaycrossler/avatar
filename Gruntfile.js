@@ -7,6 +7,7 @@ var avatarFiles = [ 'js/avatar.js', 'js/avatar-*.js'];
 var contentFiles = ['js/content_packs/**/manifest.js'];
 var raceFiles = [ 'js/races/*.js'];
 var dropbox_root = '/Users/jcrossler/Dropbox/Public/sites/avatar/';
+var cordova_root = '/Users/jcrossler/Sites/avatar-mobile/platforms/ios/www/';
 
 var screenshot_count = 12;
 var allFiles = libraryFiles.concat(avatarFiles, contentFiles, raceFiles);
@@ -144,7 +145,19 @@ module.exports = function (grunt) {
                     {expand: true, src: ['js-libs/**'], dest: dropbox_root},
                     {expand: false, src: ['index.html'], dest: dropbox_root}
                 ]
+            },
+            cordova: {
+                files: [
+                    {expand: true, src: ['build/**'], dest: cordova_root},
+                    {expand: true, src: ['css/**'], dest: cordova_root},
+                    {expand: true, src: ['examples/**'], dest: cordova_root},
+                    {expand: true, src: ['images/**'], dest: cordova_root},
+                    {expand: true, src: ['js/**'], dest: cordova_root},
+                    {expand: true, src: ['js-libs/**'], dest: cordova_root},
+                    {expand: false, src: ['index.html'], dest: cordova_root}
+                ]
             }
+
         },
         replace: {
             version: {
@@ -235,6 +248,7 @@ module.exports = function (grunt) {
     grunt.registerTask('quick', ['concat:quick', 'notify:quick', 'jasmine']);
     grunt.registerTask('server', ['concat:quick', 'notify:quick', 'connect:live']);
     grunt.registerTask('dropbox', ['copy:dropbox']);
+    grunt.registerTask('cordova', ['copy:cordova']);
     grunt.registerTask('shots', ['connect:server', 'screenshots', 'replace:screenshots']);
 
     grunt.task.run('notify_hooks');

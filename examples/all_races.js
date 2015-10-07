@@ -22,7 +22,7 @@ $(document).ready(function () {
 
         var $canvas = $("<canvas>")
             .attr({width: 320, height: 400, id: 'avatar_' + i})
-            .css({width: 320, height: 400})
+            .css({width: 320, height: 400, margin: '40px 0px 0px 0px'})
             .appendTo($('#avatar_holder'));
 
         var av = new Avatar({rand_seed: seed, race: race_name, age: 38}, {canvas_name: $canvas});
