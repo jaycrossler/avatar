@@ -27,6 +27,7 @@ $(document).ready(function () {
 
         var av = new Avatar({rand_seed: seed, race: race_name, age: 38}, {canvas_name: $canvas});
         avatars.push(av);
+        console.log(av.numberOfStagesDrawn());
 
         //On every click, generate a new random seed for each face
         av.registerEvent('face', function (avatar) {

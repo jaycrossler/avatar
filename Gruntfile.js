@@ -7,7 +7,7 @@ var avatarFiles = [ 'js/avatar.js', 'js/avatar-*.js'];
 var contentFiles = ['js/content_packs/**/manifest.js'];
 var raceFiles = [ 'js/races/*.js'];
 var dropbox_root = '/Users/jcrossler/Dropbox/Public/sites/avatar/';
-var cordova_root = '/Users/jcrossler/Sites/avatar-mobile/platforms/ios/www/';
+var cordova_root = '/Users/jcrossler/Sites/avatar-mobile/';
 
 var screenshot_count = 12;
 var allFiles = libraryFiles.concat(avatarFiles, contentFiles, raceFiles);
@@ -16,7 +16,7 @@ function screenshots_list(version) {
     var output = {};
     for (var i = 1; i <= screenshot_count; i++) {
         var options = '';
-        if (i > screenshot_count-2) {
+        if (i > screenshot_count - 2) {
             options += "&points=true";
         }
         if (i % 3 == 1) {
@@ -28,7 +28,7 @@ function screenshots_list(version) {
 
         output['avatar_' + i] = {
             options: {
-                url: 'http://localhost:9001/examples/avatar_from_seed.html?seed=' + i + '&hide=true'+options,
+                url: 'http://localhost:9001/examples/avatar_from_seed.html?seed=' + i + '&hide=true' + options,
                 output: 'images/screenshots/' + version + '/avatar-seed-' + i
             }
         };
@@ -38,15 +38,15 @@ function screenshots_list(version) {
 
 module.exports = function (grunt) {
 
-    var banner = '/*\n'+
-                 '-----------------------------------------------------------------------------------\n' +
-                 '-- <%= pkg.name %>.js - v<%= pkg.version %> - Built on <%= grunt.template.today("yyyy-mm-dd") %> by <%= pkg.author %> using Grunt.js\n' +
-                 '-----------------------------------------------------------------------------------\n' +
-                 '-- Packaged with color.js - Copyright (c) 2008-2013, Andrew Brehaut, Tim Baumann, \n' +
-                 '--                          Matt Wilson, Simon Heimler, Michel Vielmetter\n'+
-                 '-- colors.js - Copyright 2012-2013 Matt Jordan - https://github.com/mbjordan/Colors \n' +
-                 '-----------------------------------------------------------------------------------\n' +
-                 ' color.js: */\n';
+    var banner = '/*\n' +
+        '-----------------------------------------------------------------------------------\n' +
+        '-- <%= pkg.name %>.js - v<%= pkg.version %> - Built on <%= grunt.template.today("yyyy-mm-dd") %> by <%= pkg.author %> using Grunt.js\n' +
+        '-----------------------------------------------------------------------------------\n' +
+        '-- Packaged with color.js - Copyright (c) 2008-2013, Andrew Brehaut, Tim Baumann, \n' +
+        '--                          Matt Wilson, Simon Heimler, Michel Vielmetter\n' +
+        '-- colors.js - Copyright 2012-2013 Matt Jordan - https://github.com/mbjordan/Colors \n' +
+        '-----------------------------------------------------------------------------------\n' +
+        ' color.js: */\n';
 
     // Project configuration.
     var config = {
@@ -100,6 +100,17 @@ module.exports = function (grunt) {
                 }
             }
         },
+        shell: {
+            emulate: {
+                command: 'cd ' + cordova_root + ' && cordova build && cordova emulate'
+            },
+            emulate_ios: {
+                command: 'cd ' + cordova_root + ' && cordova build ios && cordova emulate ios'
+            },
+            run: {
+                command: 'cd ' + cordova_root + ' && cordova build && cordova run'
+            }
+        },
         notify: {
             build: {
                 options: {
@@ -148,13 +159,13 @@ module.exports = function (grunt) {
             },
             cordova: {
                 files: [
-                    {expand: true, src: ['build/**'], dest: cordova_root},
-                    {expand: true, src: ['css/**'], dest: cordova_root},
-                    {expand: true, src: ['examples/**'], dest: cordova_root},
-                    {expand: true, src: ['images/**'], dest: cordova_root},
-                    {expand: true, src: ['js/**'], dest: cordova_root},
-                    {expand: true, src: ['js-libs/**'], dest: cordova_root},
-                    {expand: false, src: ['index.html'], dest: cordova_root}
+                    {expand: true, src: ['build/**'], dest: cordova_root + 'www/'},
+                    {expand: true, src: ['css/**'], dest: cordova_root + 'www/'},
+                    {expand: true, src: ['examples/**'], dest: cordova_root + 'www/'},
+                    {expand: true, src: ['images/**'], dest: cordova_root + 'www/'},
+                    {expand: true, src: ['js/**'], dest: cordova_root + 'www/'},
+                    {expand: true, src: ['js-libs/**'], dest: cordova_root + 'www/'},
+                    {expand: false, src: ['index.html'], dest: cordova_root + 'www/'}
                 ]
             }
 
@@ -204,22 +215,22 @@ module.exports = function (grunt) {
                             var list_js = "";
                             for (var v = 0; v < versions.length; v++) {
                                 var version = versions[v];
-                                var ver_link = '(link to <a href="../../build/avatar-'+version+'.js">avatar-'+version+'.js</a>)';
+                                var ver_link = '(link to <a href="../../build/avatar-' + version + '.js">avatar-' + version + '.js</a>)';
                                 list += '<p><b>Screenshots of Avatars from Version ' + version + ' ' + ver_link + ':</b></p>\n';
                                 for (var i = 1; i <= screenshot_count; i++) {
                                     var name = version + '/avatar-seed-' + i + '.png';
-                                    list += '<a id="popover_'+i+'" class="btn" rel="popover" data-content="" title="Avatar.js auto-generated image"><img style="width:200px;height:200px" src="' + name + '"></a>\n';
+                                    list += '<a id="popover_' + i + '" class="btn" rel="popover" data-content="" title="Avatar.js auto-generated image"><img style="width:200px;height:200px" src="' + name + '"></a>\n';
 
-                                    var img = '<img src="'+name+'">';
-                                    list_js += "$('#popover_"+i+"').popover({trigger:'hover', placement:'bottom', content: '" + img + "', html: true});\n";
+                                    var img = '<img src="' + name + '">';
+                                    list_js += "$('#popover_" + i + "').popover({trigger:'hover', placement:'bottom', content: '" + img + "', html: true});\n";
 
                                 }
                             }
                             var output = '<div id="screenshot-list">\n' + list + '</div>';
                             output += "\n<scr" + "ipt>\n" +
-                                      "$(function(){\n" +
-                                      list_js + "\n" +
-                                      "});\n</scr" + "ipt>";
+                                "$(function(){\n" +
+                                list_js + "\n" +
+                                "});\n</scr" + "ipt>";
 
                             return output;
                         }
@@ -240,6 +251,7 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-text-replace');
     grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks('grunt-notify');
+    grunt.loadNpmTasks('grunt-shell');
     grunt.loadNpmTasks('grunt-contrib-connect');
     grunt.loadNpmTasks('grunt-contrib-copy');
 
@@ -248,9 +260,8 @@ module.exports = function (grunt) {
     grunt.registerTask('quick', ['concat:quick', 'notify:quick', 'jasmine']);
     grunt.registerTask('server', ['concat:quick', 'notify:quick', 'connect:live']);
     grunt.registerTask('dropbox', ['copy:dropbox']);
-    grunt.registerTask('cordova', ['copy:cordova']);
+    grunt.registerTask('ios', ['copy:cordova', 'shell:emulate_ios']);
     grunt.registerTask('shots', ['connect:server', 'screenshots', 'replace:screenshots']);
-
     grunt.task.run('notify_hooks');
 
 };

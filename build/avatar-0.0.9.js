@@ -1704,7 +1704,6 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //TODO: Eyes get eyelashes
     //TODO: Iris smaller with variable shapes, pattern in retina
 
-    //TODO: If showing cache on multiple images on same canvas, then images don't draw
     //TODO: Lots to fix on parent/child example - skin colors bleeding over, images offset on margins
     //TODO: On Option Explorer, "Heart" only shows for all face options after 1 option is set
 
@@ -1801,6 +1800,9 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     AvatarClass.prototype.data = _data;
     AvatarClass.prototype.content_packs = {};
 
+    AvatarClass.prototype.numberOfStagesDrawn = function () {
+        return STAGES.length;
+    };
     AvatarClass.prototype.initializeOptions = function (face_options_basic, human_data_options) {
         _face_options = face_options_basic;
         _data['Human'] = human_data_options;
@@ -4113,8 +4115,11 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mustache', renderer
         return existing_image ? existing_image.parent_object : null;
     }
 
-    function findOrLoadImage(url, run_after_loaded) {
-        var cached = findImage(url);
+    function findOrLoadImage(avatar, url, run_after_loaded) {
+        //Don't use cached images if more than 1 avatar is being drawn, as the overdraw can screw things up
+        var isFirstStage = (avatar.numberOfStagesDrawn() == 1);
+
+        var cached = isFirstStage && findImage(url);
         if (!isPhantomJS && cached) {
             return run_after_loaded(cached);
         } else {
@@ -4290,7 +4295,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mustache', renderer
                 return default_render_after_image_loaded(avatar, pack, frame, matrix, obj);
             };
 
-            var shape = findOrLoadImage(pack.data.image, render_it);
+            var shape = findOrLoadImage(avatar, pack.data.image, render_it);
             shapes.push(shape);
 
         }
@@ -4454,6 +4459,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mustache', renderer
                 avatar.drawOnStage(bitmap, avatar.stage);
                 avatar.faceShapeCollection.addChild(bitmap);
             }
+            avatar.stage.update();
         }
         return bitmap;
     }

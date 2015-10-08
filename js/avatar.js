@@ -27,7 +27,6 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //TODO: Eyes get eyelashes
     //TODO: Iris smaller with variable shapes, pattern in retina
 
-    //TODO: If showing cache on multiple images on same canvas, then images don't draw
     //TODO: Lots to fix on parent/child example - skin colors bleeding over, images offset on margins
     //TODO: On Option Explorer, "Heart" only shows for all face options after 1 option is set
 
@@ -124,6 +123,9 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     AvatarClass.prototype.data = _data;
     AvatarClass.prototype.content_packs = {};
 
+    AvatarClass.prototype.numberOfStagesDrawn = function () {
+        return STAGES.length;
+    };
     AvatarClass.prototype.initializeOptions = function (face_options_basic, human_data_options) {
         _face_options = face_options_basic;
         _data['Human'] = human_data_options;

@@ -14,8 +14,11 @@
         return existing_image ? existing_image.parent_object : null;
     }
 
-    function findOrLoadImage(url, run_after_loaded) {
-        var cached = findImage(url);
+    function findOrLoadImage(avatar, url, run_after_loaded) {
+        //Don't use cached images if more than 1 avatar is being drawn, as the overdraw can screw things up
+        var isFirstStage = (avatar.numberOfStagesDrawn() == 1);
+
+        var cached = isFirstStage && findImage(url);
         if (!isPhantomJS && cached) {
             return run_after_loaded(cached);
         } else {
@@ -191,7 +194,7 @@
                 return default_render_after_image_loaded(avatar, pack, frame, matrix, obj);
             };
 
-            var shape = findOrLoadImage(pack.data.image, render_it);
+            var shape = findOrLoadImage(avatar, pack.data.image, render_it);
             shapes.push(shape);
 
         }
@@ -355,6 +358,7 @@
                 avatar.drawOnStage(bitmap, avatar.stage);
                 avatar.faceShapeCollection.addChild(bitmap);
             }
+            avatar.stage.update();
         }
         return bitmap;
     }
