@@ -2,10 +2,11 @@ var seed;
 var av;
 var height;
 
-var augmentations = [
+var augmentations = null;
+//[
 //    {feature: 'glasses', name: '3 goggles', options: {color: 'blue'}, ignore_filters:true},
 //    {feature: 'scar', name: 'right cheek cut'}
-];
+//];
 
 function getMousePos(canvas, evt) {
     var rect = canvas.getBoundingClientRect();
@@ -49,7 +50,7 @@ $(document).ready(function () {
         $('#avatar_holder').css({margin: '0px'});
         $('.container').css({marginLeft:'0px',marginRight:'0px'})
     } else {
-        canvas.addEventListener('mousemove', draw, false);
+//        canvas.addEventListener('mousemove', draw, false);
         $('#avatar_holder').css({margin: '40px 0px 0px 0px'});
     }
     $seed_number.val(Helpers.getQueryVariable("seed"));
@@ -65,7 +66,11 @@ $(document).ready(function () {
             av.face_options = null;
             av.erase();
         }
-        av = new Avatar({rand_seed: seed, augmentations: augmentations}, {canvas_name: $canvas, x: 0});
+
+        var options = {rand_seed: seed};
+        if (augmentations) options.augmentations = augmentations;
+
+        av = new Avatar(options, {canvas_name: $canvas, x: 0});
         var show_points = Helpers.getQueryVariable("points") || false;
         if (show_points){
             av._private_functions.highlight_named_points(av)
@@ -77,15 +82,21 @@ $(document).ready(function () {
             $seed_number.val(seed);
 
             avatar.face_options = null;
-            avatar.drawOrRedraw({rand_seed: seed, augmentations: augmentations});
+            var options = {rand_seed: seed};
+            if (augmentations) options.augmentations = augmentations;
+            avatar.drawOrRedraw(options);
+
             if (show_points){
-                av._private_functions.highlight_named_points(av)
+                avatar._private_functions.highlight_named_points(av)
             }
+            $avatar_name.html(avatar.log(false, true));
 
             var text = avatar.face_options.name || "Avatar";
-            text += " : new Avatar("+JSON.stringify(av.initialization_options)+");";
+            text += " : new Avatar("+JSON.stringify(avatar.initialization_options)+");";
             $("#details").text(text);
         });
+        $avatar_name.html(av.log(false, true));
+
     }
 
     $seed_number.on('keypress', generateAvatar);

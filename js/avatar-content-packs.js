@@ -301,8 +301,9 @@
         if (!avatar.no_local_editing) {
             try {
                 //Get the image data and remove background color (with a range)
+
+                //getImageData throws an exception if there is a security problem
                 var imageData = context.getImageData(0, 0, frame.width, frame.height);
-                var data = imageData.data;
 
                 if (pack.data.removeBackgroundNoise || pack.data.removeBackgroundColor) {
                     // iterate over all pixels
@@ -317,8 +318,12 @@
             } catch (ex) {
                 if (ex.name == "SecurityError") {
                     avatar.no_local_editing = true;
-                    console.error("Can't apply image complex transforms because images need to be served from a web url on the same server");
+                    var error = "Can't apply image complex transforms because images need to be served from a web url on the same server";
+                    console.error(error);
+                    avatar.logMessage({msg:error, name:'exception'});
+
                 } else {
+                    //Some other exception
                     debugger;
                 }
             }
@@ -344,10 +349,14 @@
             var dHeight = canvas_from_image_frame_cutout.height;
             var main_context = avatar.stage.canvas.getContext('2d');
             main_context.globalCompositeOperation = 'multiply';
-            main_context.drawImage(canvas_from_image_frame_cutout, 0, 0,
-                dWidth, dHeight,
-                matrix[4], matrix[5], dWidth * matrix[0], dHeight * matrix[3]
-            );
+            try {
+                main_context.drawImage(canvas_from_image_frame_cutout, 0, 0,
+                    dWidth, dHeight,
+                    matrix[4], matrix[5], dWidth * matrix[0], dHeight * matrix[3]
+                );
+            } catch (ex) {
+                avatar.logMessage({ex:ex, name:'exception'});
+            }
             main_context.globalCompositeOperation = 'normal';
 
         } else {
@@ -358,7 +367,7 @@
                 avatar.drawOnStage(bitmap, avatar.stage);
                 avatar.faceShapeCollection.addChild(bitmap);
             }
-            avatar.stage.update();
+//            avatar.stage.update(); //Overdraws canvas direct adds
         }
         return bitmap;
     }

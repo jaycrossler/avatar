@@ -1,5 +1,5 @@
 var content_pack_data = {
-    image: '../js/content_packs/mouths_1/25468547-vector-lips-and-mouth-silhouette-and-glossy-open-and-close-up-man-and-woman-face-parts.jpg',
+    image: '../js/content_packs/mouths_1/25468547-vector-lips-and-mouth-silhouette-and-glossy-open-and-close-up-man-and-woman-face-parts-tran.png',
     frames: [
         {name: '1 lips closed', x: 57, y: 70, width: 254, height: 126, filter: {},
             coordinates: [
@@ -186,7 +186,7 @@ var content_pack_data = {
         }
     ],
     animations: {},
-    removeBackgroundColor: '#e0d9c8',
+    removeBackgroundColor: '#E5D9C8',
     removeBackgroundNoise: 20
 };
 

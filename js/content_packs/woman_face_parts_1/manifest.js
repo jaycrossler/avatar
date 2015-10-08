@@ -1,4 +1,4 @@
-var image = '../js/content_packs/woman_face_parts_1/woman-face-parts-eye-glasses-hat-lips-hair-head-character-40398911.jpg'
+var image = '../js/content_packs/woman_face_parts_1/woman-face-parts-eye-glasses-hat-lips-hair-head-character-40398911-tran.png'
 var content_pack_data_glasses = {
     image: image,
     frames: [

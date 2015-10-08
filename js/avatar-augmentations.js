@@ -3,7 +3,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'augmentations', ren
     var shapes = [];
 
     var augmentations = avatar.face_options.augmentations || [];
-    _.each (augmentations, function(item){
+    _.each (augmentations || [], function(item){
 
         item.style = item.style || layer.style;
 
@@ -27,9 +27,10 @@ new Avatar('add_render_function', {style: 'lines', feature: 'augmentations', ren
                 shapes = shapes.concat(feature_shapes);
             }
             console.log("Added Augmentation - " + item.feature);
+            avatar.logMessage("Added Augmentation - " + item.feature);
         } else {
             console.log("Couldn't find Augmentation - " + item.feature);
-
+            avatar.logMessage("Couldn't find Augmentation - " + item.feature);
         }
     });
 

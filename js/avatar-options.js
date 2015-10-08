@@ -32,7 +32,7 @@
 
         emotionality: 0,
         emotion_shown: 'none', //TODO: Have an array of current emotions?
-        augmentations: [],
+        augmentations: null,
 
         //----------------------------------------
         //DNA settings that don't change easily
@@ -195,6 +195,13 @@
         wrinkle_mouth_height_options: "Far Up,Up,Middle,Down,Far Down".split(","),
 
         forehead_height_options: "Under,Low,Less,Normal,Above,Raised,High,Floating".split(","),
+
+        augmentations_options: [
+            [],[],[],[], //NOTE:Quick way to reduce chance of augmentations
+            [{feature: 'glasses', name: '3 goggles', options: {color: 'blue'}, ignore_filters:true}],
+            [{feature: 'glasses', ignore_filters:true}],
+            [{feature: 'scar', name: 'right cheek cut'},{feature: 'glasses'}]
+        ],
 
         decorations: [
             {name: "box-behind", type: 'rectangle', p1: 'facezone topleft', p2: 'facezone bottomright',

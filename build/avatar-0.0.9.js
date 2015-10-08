@@ -1,6 +1,6 @@
 /*
 -----------------------------------------------------------------------------------
--- avatar.js - v0.0.9 - Built on 2015-10-07 by Jay Crossler using Grunt.js
+-- avatar.js - v0.0.9 - Built on 2015-10-08 by Jay Crossler using Grunt.js
 -----------------------------------------------------------------------------------
 -- Packaged with color.js - Copyright (c) 2008-2013, Andrew Brehaut, Tim Baumann, 
 --                          Matt Wilson, Simon Heimler, Michel Vielmetter
@@ -1691,6 +1691,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //TODO: Zones should work by polygons
     //TODO: Zones specify color zones that can be shifted or have image effects applied
     //TODO: Zones to have oval like eye be white
+    //TODO: Have packs use three standard dots for neck size? and height to scale clothing
 
     //TODO: Scars and Jewelery
     //TODO: Sag wrinkles when older
@@ -1916,7 +1917,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
     //-----------------------------
     //Supporting functions
-    AvatarClass.prototype.log = function (showToConsole) {
+    AvatarClass.prototype.log = function (showToConsole, showHTML) {
         var log = "Avatar: [seed:" + this.face_options.rand_seed + " #" + this.times_avatar_drawn + "]";
         _.each(this.timing_log, function (log_item) {
             if (log_item.name == 'exception') {
@@ -1935,7 +1936,13 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         });
 
         if (showToConsole) console.log(log);
+        if (showHTML) log = log.replace(/\n/g, '<br/>');
         return log;
+    };
+    AvatarClass.prototype.logMessage = function (msg) {
+        if (_.isString(msg)) msg = {name:msg};
+
+        this.timing_log.push(msg);
     };
     AvatarClass.prototype.lastTimeDrawn = function () {
         var time_drawn = 0;
@@ -2101,7 +2108,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             option_name = key.split('_options')[0];
             currentVal = this.face_options[option_name];
 
-            if (!dontForceSetting || (dontForceSetting && !this.face_options[option_name])) {
+            if (!dontForceSetting || (dontForceSetting && !currentVal)) {
                 //Set a random option
                 result = randOption(options, this.face_options, currentVal);
                 this.face_options[option_name] = result;
@@ -3651,7 +3658,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'augmentations', ren
     var shapes = [];
 
     var augmentations = avatar.face_options.augmentations || [];
-    _.each (augmentations, function(item){
+    _.each (augmentations || [], function(item){
 
         item.style = item.style || layer.style;
 
@@ -3675,9 +3682,10 @@ new Avatar('add_render_function', {style: 'lines', feature: 'augmentations', ren
                 shapes = shapes.concat(feature_shapes);
             }
             console.log("Added Augmentation - " + item.feature);
+            avatar.logMessage("Added Augmentation - " + item.feature);
         } else {
             console.log("Couldn't find Augmentation - " + item.feature);
-
+            avatar.logMessage("Couldn't find Augmentation - " + item.feature);
         }
     });
 
@@ -4402,8 +4410,9 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mustache', renderer
         if (!avatar.no_local_editing) {
             try {
                 //Get the image data and remove background color (with a range)
+
+                //getImageData throws an exception if there is a security problem
                 var imageData = context.getImageData(0, 0, frame.width, frame.height);
-                var data = imageData.data;
 
                 if (pack.data.removeBackgroundNoise || pack.data.removeBackgroundColor) {
                     // iterate over all pixels
@@ -4418,8 +4427,12 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mustache', renderer
             } catch (ex) {
                 if (ex.name == "SecurityError") {
                     avatar.no_local_editing = true;
-                    console.error("Can't apply image complex transforms because images need to be served from a web url on the same server");
+                    var error = "Can't apply image complex transforms because images need to be served from a web url on the same server";
+                    console.error(error);
+                    avatar.logMessage({msg:error, name:'exception'});
+
                 } else {
+                    //Some other exception
                     debugger;
                 }
             }
@@ -4445,10 +4458,14 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mustache', renderer
             var dHeight = canvas_from_image_frame_cutout.height;
             var main_context = avatar.stage.canvas.getContext('2d');
             main_context.globalCompositeOperation = 'multiply';
-            main_context.drawImage(canvas_from_image_frame_cutout, 0, 0,
-                dWidth, dHeight,
-                matrix[4], matrix[5], dWidth * matrix[0], dHeight * matrix[3]
-            );
+            try {
+                main_context.drawImage(canvas_from_image_frame_cutout, 0, 0,
+                    dWidth, dHeight,
+                    matrix[4], matrix[5], dWidth * matrix[0], dHeight * matrix[3]
+                );
+            } catch (ex) {
+                avatar.logMessage({ex:ex, name:'exception'});
+            }
             main_context.globalCompositeOperation = 'normal';
 
         } else {
@@ -4459,7 +4476,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mustache', renderer
                 avatar.drawOnStage(bitmap, avatar.stage);
                 avatar.faceShapeCollection.addChild(bitmap);
             }
-            avatar.stage.update();
+//            avatar.stage.update(); //Overdraws canvas direct adds
         }
         return bitmap;
     }
@@ -6916,7 +6933,7 @@ new Avatar('add_render_function', {style: 'circles', feature: 'mouth', renderer:
 
         emotionality: 0,
         emotion_shown: 'none', //TODO: Have an array of current emotions?
-        augmentations: [],
+        augmentations: null,
 
         //----------------------------------------
         //DNA settings that don't change easily
@@ -7079,6 +7096,13 @@ new Avatar('add_render_function', {style: 'circles', feature: 'mouth', renderer:
         wrinkle_mouth_height_options: "Far Up,Up,Middle,Down,Far Down".split(","),
 
         forehead_height_options: "Under,Low,Less,Normal,Above,Raised,High,Floating".split(","),
+
+        augmentations_options: [
+            [],[],[],[], //NOTE:Quick way to reduce chance of augmentations
+            [{feature: 'glasses', name: '3 goggles', options: {color: 'blue'}, ignore_filters:true}],
+            [{feature: 'glasses', ignore_filters:true}],
+            [{feature: 'scar', name: 'right cheek cut'},{feature: 'glasses'}]
+        ],
 
         decorations: [
             {name: "box-behind", type: 'rectangle', p1: 'facezone topleft', p2: 'facezone bottomright',
@@ -7422,7 +7446,7 @@ new Avatar('register_content_pack', 'female_eyes_1', {
 
 
 var content_pack_data = {
-    image: '../js/content_packs/mouths_1/25468547-vector-lips-and-mouth-silhouette-and-glossy-open-and-close-up-man-and-woman-face-parts.jpg',
+    image: '../js/content_packs/mouths_1/25468547-vector-lips-and-mouth-silhouette-and-glossy-open-and-close-up-man-and-woman-face-parts-tran.png',
     frames: [
         {name: '1 lips closed', x: 57, y: 70, width: 254, height: 126, filter: {},
             coordinates: [
@@ -7609,7 +7633,7 @@ var content_pack_data = {
         }
     ],
     animations: {},
-    removeBackgroundColor: '#e0d9c8',
+    removeBackgroundColor: '#E5D9C8',
     removeBackgroundNoise: 20
 };
 
@@ -7619,7 +7643,7 @@ new Avatar('register_content_pack', 'mouths_1', {
 });
 
 
-var image = '../js/content_packs/woman_face_parts_1/woman-face-parts-eye-glasses-hat-lips-hair-head-character-40398911.jpg'
+var image = '../js/content_packs/woman_face_parts_1/woman-face-parts-eye-glasses-hat-lips-hair-head-character-40398911-tran.png'
 var content_pack_data_glasses = {
     image: image,
     frames: [

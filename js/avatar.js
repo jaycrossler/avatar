@@ -14,6 +14,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
     //TODO: Zones should work by polygons
     //TODO: Zones specify color zones that can be shifted or have image effects applied
     //TODO: Zones to have oval like eye be white
+    //TODO: Have packs use three standard dots for neck size? and height to scale clothing
 
     //TODO: Scars and Jewelery
     //TODO: Sag wrinkles when older
@@ -239,7 +240,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
     //-----------------------------
     //Supporting functions
-    AvatarClass.prototype.log = function (showToConsole) {
+    AvatarClass.prototype.log = function (showToConsole, showHTML) {
         var log = "Avatar: [seed:" + this.face_options.rand_seed + " #" + this.times_avatar_drawn + "]";
         _.each(this.timing_log, function (log_item) {
             if (log_item.name == 'exception') {
@@ -258,7 +259,13 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         });
 
         if (showToConsole) console.log(log);
+        if (showHTML) log = log.replace(/\n/g, '<br/>');
         return log;
+    };
+    AvatarClass.prototype.logMessage = function (msg) {
+        if (_.isString(msg)) msg = {name:msg};
+
+        this.timing_log.push(msg);
     };
     AvatarClass.prototype.lastTimeDrawn = function () {
         var time_drawn = 0;
@@ -424,7 +431,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
             option_name = key.split('_options')[0];
             currentVal = this.face_options[option_name];
 
-            if (!dontForceSetting || (dontForceSetting && !this.face_options[option_name])) {
+            if (!dontForceSetting || (dontForceSetting && !currentVal)) {
                 //Set a random option
                 result = randOption(options, this.face_options, currentVal);
                 this.face_options[option_name] = result;
