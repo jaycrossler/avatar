@@ -8,7 +8,8 @@ var pack_render_type;
 var point_names = {
     mouth: ['left mouth wedge', 'right mouth wedge', 'mouth bottom middle', "{ all: true, color: 'lip_color'}"],
     eyes: ['left eye center', 'right eye center', 'eyebrow midpoint', ''],
-    glasses: ['left eye center', 'right eye center', 'eyebrow midpoint', '']
+    glasses: ['left eye center', 'right eye center', 'eyebrow midpoint', ''],
+    scar: ['right mouth wedge', 'right cheek', 'face boundary #1', '']
 };
 
 //----------------
@@ -26,6 +27,7 @@ function loadImageToCanvas(canvas, pack) {
     img.onload = function () {
 
         var context = canvas.getContext('2d');
+        context.clearRect(0,0, canvas.width, canvas.height);
         context.drawImage(img, 0, 0);//img.width, img.height);
 
         context.lineWidth = 3;

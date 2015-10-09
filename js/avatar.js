@@ -33,7 +33,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
     //-----------------------------
     //Private Global variables
-    var version = '0.0.9',
+    var version = '0.0.10',
         summary = 'Procedurally render people on HTML5 canvas.',
         author = 'Jay Crossler - http://github.com/jaycrossler',
         file_name = 'avatar.js';

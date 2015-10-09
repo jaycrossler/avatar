@@ -197,10 +197,11 @@
         forehead_height_options: "Under,Low,Less,Normal,Above,Raised,High,Floating".split(","),
 
         augmentations_options: [
-            [],[],[],[], //NOTE:Quick way to reduce chance of augmentations
+            [], //NOTE:Quick way to reduce chance of augmentations
             [{feature: 'glasses', name: '3 goggles', options: {color: 'blue'}, ignore_filters:true}],
             [{feature: 'glasses', ignore_filters:true}],
-            [{feature: 'scar', name: 'right cheek cut'},{feature: 'glasses'}]
+            [{feature: 'scar'}],
+            [{feature: 'scar', name: 'sewn right cheek wound'},{feature: 'glasses'}]
         ],
 
         decorations: [

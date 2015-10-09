@@ -1,6 +1,6 @@
 /*
 -----------------------------------------------------------------------------------
--- avatar.js - v0.0.9 - Built on 2015-10-08 by Jay Crossler using Grunt.js
+-- avatar.js - v0.0.10 - Built on 2015-10-08 by Jay Crossler using Grunt.js
 -----------------------------------------------------------------------------------
 -- Packaged with color.js - Copyright (c) 2008-2013, Andrew Brehaut, Tim Baumann, 
 --                          Matt Wilson, Simon Heimler, Michel Vielmetter
@@ -1710,7 +1710,7 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
 
     //-----------------------------
     //Private Global variables
-    var version = '0.0.9',
+    var version = '0.0.10',
         summary = 'Procedurally render people on HTML5 canvas.',
         author = 'Jay Crossler - http://github.com/jaycrossler',
         file_name = 'avatar.js';
