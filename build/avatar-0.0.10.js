@@ -7098,10 +7098,11 @@ new Avatar('add_render_function', {style: 'circles', feature: 'mouth', renderer:
         forehead_height_options: "Under,Low,Less,Normal,Above,Raised,High,Floating".split(","),
 
         augmentations_options: [
-            [],[],[],[], //NOTE:Quick way to reduce chance of augmentations
+            [], //NOTE:Quick way to reduce chance of augmentations
             [{feature: 'glasses', name: '3 goggles', options: {color: 'blue'}, ignore_filters:true}],
             [{feature: 'glasses', ignore_filters:true}],
-            [{feature: 'scar', name: 'right cheek cut'},{feature: 'glasses'}]
+            [{feature: 'scar'}],
+            [{feature: 'scar', name: 'sewn right cheek wound'},{feature: 'glasses'}]
         ],
 
         decorations: [
@@ -7544,9 +7545,17 @@ var content_pack_data = {
 
         {name: 'sewn right cheek wound', x: 41, y: 12, width: 253, height: 101, filter: {},
          coordinates: [
-             {point: 'right mouth wedge', x: 49, y: 115},
+             {point: 'right mouth wedge', x: 49, y: 135},
              {point: 'right cheek', x: 290, y: 95},
-             {point: 'face boundary #1', x: 106, y: 16}
+             {point: 'face boundary #1', x: 206, y: 0}
+         ], zones: []
+        },
+
+        {name: 'sewn left cheek wound', x: 41, y: 12, width: 253, height: 101, filter: {},
+         coordinates: [
+             {point: 'left mouth wedge', x: 49, y: 135},
+             {point: 'left cheek', x: 290, y: 95},
+             {point: 'face boundary #7', x: 206, y: 0}
          ], zones: []
         }
     ]

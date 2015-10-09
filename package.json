@@ -1,7 +1,7 @@
 {
   "name": "avatar",
   "summary": "Procedurally render people on HTML5 canvas.",
-  "description": "Create a procedurally-generated avatar face via JavaScript. Show how avatars grow over time, see what their offspring would look like, change details of clothing or decorations or hairstyles.  Tons of variables that are extensible as content packs.",
+  "description": "Create procedurally-generated avatars via JavaScript. Show how they grow over time, see what their offspring look like, change details of clothing or wounds or hairstyles.  Tons of variables that are extensible as content packs.",
   "author": "Jay Crossler",
   "repository": {
     "private": true
