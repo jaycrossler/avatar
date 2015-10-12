@@ -909,32 +909,72 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         method = method || 'above';
         var return_line = [];
 
+        var lowest_compare_point, highest_compare_point;
         if (method == 'above') {
-            var highest_compare_point = Number.MAX_VALUE;
-            _.each(compare_line, function (point) {
-                if (point.y < highest_compare_point) {
-                    highest_compare_point = point.y;
-                }
-            });
-
+            if (_.isNumber(compare_line)) {
+                lowest_compare_point = compare_line;
+            } else {
+                highest_compare_point = Number.MAX_VALUE;
+                _.each(compare_line, function (point) {
+                    if (point.y < highest_compare_point) {
+                        highest_compare_point = point.y;
+                    }
+                });
+            }
             _.each(source_line, function (point) {
                 if ((point.y + level_adjust) <= highest_compare_point) {
                     return_line.push(point);
                 }
             })
         } else if (method == 'below') {
-            var lowest_compare_point = Number.MIN_VALUE;
-            _.each(compare_line, function (point) {
-                if (point.y > lowest_compare_point) {
-                    lowest_compare_point = point.y;
-                }
-            });
-
+            if (_.isNumber(compare_line)) {
+                lowest_compare_point = compare_line;
+            } else {
+                lowest_compare_point = Number.MIN_VALUE;
+                _.each(compare_line, function (point) {
+                    if (point.y > lowest_compare_point) {
+                        lowest_compare_point = point.y;
+                    }
+                });
+            }
             _.each(source_line, function (point) {
                 if ((point.y - level_adjust) >= lowest_compare_point) {
                     return_line.push(point);
                 }
             })
+        } else if (method == 'left') {
+            if (_.isNumber(compare_line)) {
+                lowest_compare_point = compare_line;
+            } else {
+                lowest_compare_point = Number.MAX_VALUE;
+                _.each(compare_line, function (point) {
+                    if (point.x < lowest_compare_point) {
+                        lowest_compare_point = point.x;
+                    }
+                });
+            }
+            _.each(source_line, function (point) {
+                if ((point.x - level_adjust) <= lowest_compare_point) {
+                    return_line.push(point);
+                }
+            })
+        } else if (method == 'right') {
+            if (_.isNumber(compare_line)) {
+                highest_compare_point = compare_line;
+            } else {
+                highest_compare_point = Number.MIN_VALUE;
+                _.each(compare_line, function (point) {
+                    if (point.x > highest_compare_point) {
+                        highest_compare_point = point.x;
+                    }
+                });
+            }
+            _.each(source_line, function (point) {
+                if ((point.x + level_adjust) >= highest_compare_point) {
+                    return_line.push(point);
+                }
+            })
+
         }
         return return_line;
     }
@@ -1205,6 +1245,35 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
                         var intersect = checkLineIntersection(current_point, next_point,
                             {x: cardinality, y: current_point.y}, {x: cardinality, y: next_point.y});
                         result = intersect.y;
+                    }
+                    break;
+                }
+            }
+            if (result == null) {
+                result = existing_list[existing_list.length - 1].y;
+            }
+
+        } else if (attribute == 'crosses y') {
+            for (var d = 0; d < existing_list.length; d++) {
+                var current_point = existing_list[d];
+                var next_point;
+                if (d < existing_list.length - 1) {
+                    next_point = existing_list[d + 1];
+                } else {
+                    next_point = existing_list[d];
+                }
+
+                if ((current_point.y <= cardinality && next_point.y >= cardinality) ||
+                    (current_point.y >= cardinality && next_point.y <= cardinality)) {
+                    //This line segment crosses the desired y
+                    if (current_point.y == next_point.y) {
+                        result = current_point.x;
+                    } else if (current_point.x == next_point.x) {
+                        result = current_point.x;
+                    } else {
+                        var intersect = checkLineIntersection(current_point, next_point,
+                            {y: cardinality, x: current_point.x}, {y: cardinality, x: next_point.x});
+                        result = intersect.x;
                     }
                     break;
                 }

@@ -140,6 +140,7 @@
             var matching_pack = matching_frame.pack;
 
             render_layer = matching_pack;
+            render_layer.frame = matching_frame;
 
             render_layer.renderer = function (face_zones, avatar, layer, options) {
                 avatar.content_packs_used = avatar.content_packs_used || {};

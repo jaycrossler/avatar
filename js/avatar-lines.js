@@ -78,13 +78,13 @@ new Avatar('add_render_function', {style: 'lines', feature: 'face', renderer: fu
     var face_line = a.transformShapeLine(options, face_options);
 
     // Draw some points to help track boundaries later when mapping overlay images
-    options.steps = 16;
-    var face_line_low_res = a.transformShapeLine(options, face_options);
-    _.each(face_line_low_res, function(face_point, i){
-        var x = zone.x + (face_point.x * radius_x /10);
-        var y = zone.y + (face_point.y * radius_y /10);
-        a.namePoint(avatar, 'face boundary #'+i, {x: x, y: y});
-    });
+//    options.steps = 16;
+//    var face_line_low_res = a.transformShapeLine(options, face_options);
+//    _.each(face_line_low_res, function(face_point, i){
+//        var x = zone.x + (face_point.x * radius_x /10);
+//        var y = zone.y + (face_point.y * radius_y /10);
+//        a.namePoint(avatar, 'face boundary #'+i, {x: x, y: y});
+//    });
 
     var skin_lighter = net.brehaut.Color(face_options.skin_colors.skin).lightenByRatio(0.05).toString();
     var skin_bright = net.brehaut.Color(face_options.skin_colors.skin).lightenByRatio(0.1).toString();
@@ -289,8 +289,11 @@ new Avatar('add_render_function', {style: 'lines', feature: 'neck', renderer: fu
 
         lines.push({name: 'neck', line: neck_line, shape: neck});
         shapes = shapes.concat(neck);
+
     }
 
+    x = zone.x;
+    y = zone.y + (f.thick_unit * 225);
     if (face_options.gender == 'Male') {
         var darker_skin = net.brehaut.Color(face_options.skin_colors.skin).darkenByRatio(0.2).toString();
         var neck_apple_line = a.transformShapeLine({type: 'circle', radius: 0.5}, face_options);
@@ -298,12 +301,21 @@ new Avatar('add_render_function', {style: 'lines', feature: 'neck', renderer: fu
         scale_y = (zone.bottom - zone.top) * apple_height;
 
         var neck_apple = a.createPathFromLocalCoordinates(neck_apple_line, {close_line: true, line_color: face_options.skin_colors.skin, fill_color: darker_skin}, scale_x, scale_y);
-        neck_apple.x = zone.x;
-        neck_apple.y = zone.y + (f.thick_unit * 225);
+        neck_apple.x = x;
+        neck_apple.y = y;
         neck_apple.alpha = apple_transparency;
-        lines.push({name: 'neck_apple', line: neck_apple_line, shape: neck_apple, scale_x: scale_x, scale_y: scale_y, x: zone.x, y: zone.y + (f.thick_unit * 225)});
+        lines.push({name: 'neck_apple', line: neck_apple_line, shape: neck_apple, scale_x: scale_x, scale_y: scale_y, x: x, y: y});
         shapes.push(neck_apple);
     }
+    a.namePoint(avatar, 'middle neck adams apple', {x: x, y: y});
+
+
+    var neck_x = a.comparePoints(neck_line, 'crosses y', y);
+    a.namePoint(avatar, 'neck mid left', {x: neck_x, y: y});
+
+    var neck_line_left = a.lineSegmentCompared(neck_line, x, 'right');
+    neck_x = a.comparePoints(neck_line_left, 'crosses y', y);
+    a.namePoint(avatar, 'neck mid right', {x: neck_x, y: y});
 
     return shapes;
 }});
@@ -1198,6 +1210,17 @@ new Avatar('add_render_function', {style: 'lines', feature: 'nose', renderer: fu
     a.namePoint(avatar, 'nose right line flaring point', {x: inner_point_x, y: inner_point_y});
 
 
+    //Add point from nose point intersects face
+    var face_line = a.transformLineToGlobalCoordinates(lines, 'face');
+    var nose_face_x = a.comparePoints(face_line, 'crosses y', inner_point_y);
+    a.namePoint(avatar, 'nose - face right point', {x: nose_face_x, y: inner_point_y});
+
+    var mid_face_x = a.comparePoints(face_line, 'x', 'middle');
+    var face_line_left = a.lineSegmentCompared(face_line, mid_face_x, 'left');
+    nose_face_x = a.comparePoints(face_line_left, 'crosses y', inner_point_y);
+    a.namePoint(avatar, 'nose - face left point', {x: nose_face_x, y: inner_point_y});
+
+
     //TODO: These should connect to nose
     var mouth_high_left_line = [
         {x: -3.5, y: -4},
@@ -1904,6 +1927,14 @@ new Avatar('add_render_function', {style: 'lines', feature: 'chin', renderer: fu
         }
     }
 
+    //Add point from nose point intersects face
+    var face_line = a.transformLineToGlobalCoordinates(lines, 'face');
+    var chin_bottom = a.comparePoints(face_line, 'y', 'highest', true);
+
+    a.namePoint(avatar, 'chin bottom point', {x: x, y:chin_bottom.y});
+
+
+
     return shapes;
 }});
 
@@ -2102,6 +2133,18 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mouth', renderer: f
     a.namePoint(avatar, 'left mouth wedge', mouth_left_point);
     a.namePoint(avatar, 'right mouth wedge', mouth_right_point);
     a.namePoint(avatar, 'mouth bottom middle', {x: mouth_mid_x, y:mouth_mid_y});
+
+
+    //Add point from nose point intersects face
+    var face_line = a.transformLineToGlobalCoordinates(lines, 'face');
+    var mouth_face_x = a.comparePoints(face_line, 'crosses y', mouth_right_point.y);
+    a.namePoint(avatar, 'mouth - face right point', {x: mouth_face_x, y: mouth_right_point.y});
+
+    var mid_face_x = a.comparePoints(face_line, 'x', 'middle');
+    var face_line_left = a.lineSegmentCompared(face_line, mid_face_x, 'left');
+    mouth_face_x = a.comparePoints(face_line_left, 'crosses y', mouth_left_point.y);
+    a.namePoint(avatar, 'mouth - face left point', {x: mouth_face_x, y: mouth_left_point.y});
+
 
     var tongue_line = a.transformShapeLine({type: 'midline of loop'}, face_options, mouth_top_line);
     var l2 = a.createPathFromLocalCoordinates(tongue_line, {close_line: false, thickness: 1, color: face_options.skin_colors.deepshadow}, width, height);

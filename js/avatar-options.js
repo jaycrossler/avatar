@@ -104,13 +104,13 @@
             {feature: "chin", style: "lines"}, //Uses: chin mid line, face
             {feature: "mouth", style: "lines", hide:true}, //NOTE: Shown twice to predraw positions
             {feature: "wrinkles", style: "lines"}, //Uses: face, left eye, right eye, lips, full nose, chin top line
+            {feature: "augmentations", style: "lines"},
             {feature: "beard", style: "lines"}, //Uses: face, left eye
             {feature: "mouth", style: "lines"},
             {feature: "mustache", style: "lines"},
             {feature: "eyes", style: "lines"},
             {feature: "hair", style: "lines"}, //Uses: face, left eye
             {feature: "ears", style: "lines"},
-            {feature: "augmentations", style: "lines"},
             {decoration: "name-plate"}
         ],
         use_content_packs: ['all'],
@@ -197,11 +197,12 @@
         forehead_height_options: "Under,Low,Less,Normal,Above,Raised,High,Floating".split(","),
 
         augmentations_options: [
-            [], //NOTE:Quick way to reduce chance of augmentations
-            [{feature: 'glasses', name: '3 goggles', options: {color: 'blue'}, ignore_filters:true}],
-            [{feature: 'glasses', ignore_filters:true}],
-            [{feature: 'scar'}],
-            [{feature: 'scar', name: 'sewn right cheek wound'},{feature: 'glasses'}]
+//            [],
+//            [],[],[],[], //NOTE:Quick way to reduce chance of augmentations
+//            [{feature: 'glasses', name: '3 goggles', options: {color: 'blue'}, ignore_filters:true}],
+//            [{feature: 'glasses', ignore_filters:true}],
+            [{feature: 'scar'}]
+//            [{feature: 'scar', name: 'sewn right cheek wound'},{feature: 'glasses'}]
         ],
 
         decorations: [

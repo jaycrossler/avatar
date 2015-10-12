@@ -9,8 +9,9 @@ var point_names = {
     mouth: ['left mouth wedge', 'right mouth wedge', 'mouth bottom middle', "{ all: true, color: 'lip_color'}"],
     eyes: ['left eye center', 'right eye center', 'eyebrow midpoint', ''],
     glasses: ['left eye center', 'right eye center', 'eyebrow midpoint', ''],
-    scar: ['right mouth wedge', 'right cheek', 'face boundary #1', '']
+    scar: ['right mouth wedge', 'nose - face right point', 'mouth - face right point', '']
 };
+var color_point_options = ['#f80','#0f0','#00f'];
 
 //----------------
 
@@ -53,14 +54,25 @@ function loadImageToCanvas(canvas, pack) {
                 context.closePath();
             });
 
-            _.each(frame.coordinates, function (coord) {
+            _.each(frame.coordinates, function (coord, i) {
                 context.strokeStyle = "#ffffff";
-                context.fillStyle = "#0000ff";
+                context.fillStyle = color_point_options[i];
                 context.beginPath();
                 context.arc(coord.x, coord.y, 6, 0, 2 * Math.PI);
                 context.fill();
                 context.stroke();
             });
+
+            context.strokeStyle = "rgba(200,100,0,.4)";
+            context.beginPath();
+            _.each(frame.coordinates, function (coord) {
+                context.lineTo(coord.x, coord.y);
+            });
+            var first = frame.coordinates[0];
+            context.lineTo(first.x, first.y);
+            context.stroke();
+            context.closePath();
+
 
             context.strokeStyle = "rgba(255,0,0,1)";
             context.strokeRect(frame.x, frame.y, frame.width, frame.height);
@@ -109,6 +121,7 @@ function initDraw(canvas) {
         return {x: mx, y: my};
     }
 
+    var context = canvas.getContext('2d');
 
     canvas.onmousemove = function (e) {
 //        setMousePosition();
@@ -122,13 +135,69 @@ function initDraw(canvas) {
         }
     };
 
+    var clickFunction = function (e) {
+        var mouseX = getMousePos(canvas, e).x;
+        var mouseY = getMousePos(canvas, e).y;
+
+        var point_name_prompt = '';
+
+        if (saved_box) {
+            var point_num = saved_points.length;
+            saved_points.push({x: mouseX, y: mouseY});
+
+            context.strokeStyle = "#ffffff";
+            context.fillStyle = color_point_options[point_num];
+
+            context.beginPath();
+            context.arc(mouseX, mouseY, 6, 0, 2 * Math.PI);
+            context.fill();
+            context.stroke();
+
+            if (pack_render_type) {
+                point_name_prompt = point_names[pack_render_type][saved_points.length];
+            }
+            next_collect_method = 'point ' + (saved_points.length + 1) + ': ' + point_name_prompt;
+            $status_text.text(next_collect_method);
+
+            var build_text = buildText();
+            $("#new_frame").text(build_text);
+            if (saved_points.length > 2) {
+                var $add_data = $('#add_data');
+                var current_text = $add_data.text();
+                $add_data.text(current_text + "\n" + build_text);
+                saved_box = null;
+                saved_points = [];
+                next_collect_method = 'Draw a rectangle';
+            }
+
+        } else {
+            canvas.style.cursor = "default";
+            var x = parseInt(element.style.left);
+            var y = parseInt(element.style.top);
+            var w = parseInt(element.style.width);
+            var h = parseInt(element.style.height);
+            saved_box = {x: x, y: y, w: w, h: h};
+            $("#new_frame").text(buildText());
+            element = null;
+
+            if (pack_render_type) {
+                point_name_prompt = point_names[pack_render_type][saved_points.length];
+            }
+            next_collect_method = 'point ' + (saved_points.length + 1) + ': ' + point_name_prompt;
+            $status_text.text(next_collect_method);
+
+        }
+        $status_text.text(next_collect_method);
+    };
+
     var $status_text = $('#status_text');
     canvas.onclick = function (e) {
-        var context = canvas.getContext('2d');
         if (element !== null) {
-            console.log("shouldn't get here...")
+//
         } else {
             if (saved_box) {
+                clickFunction(e);
+
 //                saved_points.push({x:mouse.x, y:mouse.y});
 //                $("#new_frame").text(buildText());
 
@@ -140,58 +209,7 @@ function initDraw(canvas) {
                 element.className = 'rectangle';
                 element.style.left = startX + 'px';
                 element.style.top = startY + 'px';
-                element.onclick = function (e) {
-                    var mouseX = getMousePos(canvas, e).x;
-                    var mouseY = getMousePos(canvas, e).y;
-
-                    var point_name_prompt = '';
-
-                    if (saved_box) {
-                        saved_points.push({x: mouseX, y: mouseY});
-
-                        context.strokeStyle = "#ffffff";
-                        context.fillStyle = "#0000ff";
-                        context.beginPath();
-                        context.arc(mouseX, mouseY, 6, 0, 2 * Math.PI);
-                        context.fill();
-                        context.stroke();
-
-                        if (pack_render_type) {
-                            point_name_prompt = point_names[pack_render_type][saved_points.length];
-                        }
-                        next_collect_method = 'point ' + (saved_points.length + 1) + ': ' + point_name_prompt;
-                        $status_text.text(next_collect_method);
-
-                        var build_text = buildText();
-                        $("#new_frame").text(build_text);
-                        if (saved_points.length > 2) {
-                            var $add_data = $('#add_data');
-                            var current_text = $add_data.text();
-                            $add_data.text(current_text + "\n" + build_text);
-                            saved_box = null;
-                            saved_points = [];
-                            next_collect_method = 'Draw a rectangle';
-                        }
-
-                    } else {
-                        canvas.style.cursor = "default";
-                        var x = parseInt(element.style.left);
-                        var y = parseInt(element.style.top);
-                        var w = parseInt(element.style.width);
-                        var h = parseInt(element.style.height);
-                        saved_box = {x: x, y: y, w: w, h: h};
-                        $("#new_frame").text(buildText());
-                        element = null;
-
-                        if (pack_render_type) {
-                            point_name_prompt = point_names[pack_render_type][saved_points.length];
-                        }
-                        next_collect_method = 'point ' + (saved_points.length + 1) + ': ' + point_name_prompt;
-                        $status_text.text(next_collect_method);
-
-                    }
-                    $status_text.text(next_collect_method);
-                };
+                element.onclick = clickFunction;
 
                 canvas.parentElement.appendChild(element);
                 canvas.style.cursor = "crosshair";

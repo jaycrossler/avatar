@@ -1,6 +1,6 @@
 /*
 -----------------------------------------------------------------------------------
--- avatar.js - v0.0.10 - Built on 2015-10-08 by Jay Crossler using Grunt.js
+-- avatar.js - v0.0.10 - Built on 2015-10-12 by Jay Crossler using Grunt.js
 -----------------------------------------------------------------------------------
 -- Packaged with color.js - Copyright (c) 2008-2013, Andrew Brehaut, Tim Baumann, 
 --                          Matt Wilson, Simon Heimler, Michel Vielmetter
@@ -2586,32 +2586,72 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
         method = method || 'above';
         var return_line = [];
 
+        var lowest_compare_point, highest_compare_point;
         if (method == 'above') {
-            var highest_compare_point = Number.MAX_VALUE;
-            _.each(compare_line, function (point) {
-                if (point.y < highest_compare_point) {
-                    highest_compare_point = point.y;
-                }
-            });
-
+            if (_.isNumber(compare_line)) {
+                lowest_compare_point = compare_line;
+            } else {
+                highest_compare_point = Number.MAX_VALUE;
+                _.each(compare_line, function (point) {
+                    if (point.y < highest_compare_point) {
+                        highest_compare_point = point.y;
+                    }
+                });
+            }
             _.each(source_line, function (point) {
                 if ((point.y + level_adjust) <= highest_compare_point) {
                     return_line.push(point);
                 }
             })
         } else if (method == 'below') {
-            var lowest_compare_point = Number.MIN_VALUE;
-            _.each(compare_line, function (point) {
-                if (point.y > lowest_compare_point) {
-                    lowest_compare_point = point.y;
-                }
-            });
-
+            if (_.isNumber(compare_line)) {
+                lowest_compare_point = compare_line;
+            } else {
+                lowest_compare_point = Number.MIN_VALUE;
+                _.each(compare_line, function (point) {
+                    if (point.y > lowest_compare_point) {
+                        lowest_compare_point = point.y;
+                    }
+                });
+            }
             _.each(source_line, function (point) {
                 if ((point.y - level_adjust) >= lowest_compare_point) {
                     return_line.push(point);
                 }
             })
+        } else if (method == 'left') {
+            if (_.isNumber(compare_line)) {
+                lowest_compare_point = compare_line;
+            } else {
+                lowest_compare_point = Number.MAX_VALUE;
+                _.each(compare_line, function (point) {
+                    if (point.x < lowest_compare_point) {
+                        lowest_compare_point = point.x;
+                    }
+                });
+            }
+            _.each(source_line, function (point) {
+                if ((point.x - level_adjust) <= lowest_compare_point) {
+                    return_line.push(point);
+                }
+            })
+        } else if (method == 'right') {
+            if (_.isNumber(compare_line)) {
+                highest_compare_point = compare_line;
+            } else {
+                highest_compare_point = Number.MIN_VALUE;
+                _.each(compare_line, function (point) {
+                    if (point.x > highest_compare_point) {
+                        highest_compare_point = point.x;
+                    }
+                });
+            }
+            _.each(source_line, function (point) {
+                if ((point.x + level_adjust) >= highest_compare_point) {
+                    return_line.push(point);
+                }
+            })
+
         }
         return return_line;
     }
@@ -2882,6 +2922,35 @@ var Avatar = (function ($, _, net, createjs, Helpers, maths) {
                         var intersect = checkLineIntersection(current_point, next_point,
                             {x: cardinality, y: current_point.y}, {x: cardinality, y: next_point.y});
                         result = intersect.y;
+                    }
+                    break;
+                }
+            }
+            if (result == null) {
+                result = existing_list[existing_list.length - 1].y;
+            }
+
+        } else if (attribute == 'crosses y') {
+            for (var d = 0; d < existing_list.length; d++) {
+                var current_point = existing_list[d];
+                var next_point;
+                if (d < existing_list.length - 1) {
+                    next_point = existing_list[d + 1];
+                } else {
+                    next_point = existing_list[d];
+                }
+
+                if ((current_point.y <= cardinality && next_point.y >= cardinality) ||
+                    (current_point.y >= cardinality && next_point.y <= cardinality)) {
+                    //This line segment crosses the desired y
+                    if (current_point.y == next_point.y) {
+                        result = current_point.x;
+                    } else if (current_point.x == next_point.x) {
+                        result = current_point.x;
+                    } else {
+                        var intersect = checkLineIntersection(current_point, next_point,
+                            {y: cardinality, x: current_point.x}, {y: cardinality, x: next_point.x});
+                        result = intersect.x;
                     }
                     break;
                 }
@@ -3653,6 +3722,10 @@ Avatar.initializeOptions = function (face_options_basic, human_data_options) {
     var av_pointer = new Avatar('');
     av_pointer.initializeOptions(face_options_basic, human_data_options);
 };
+//TODO: Need to indicate that it should be under some layer (scar under beard)
+//TODO: Builder should have some drag and drop and rotate/move
+//TODO: Should work with 1 or 2 or 4? points
+
 new Avatar('add_render_function', {style: 'lines', feature: 'augmentations', renderer: function (face_zones, avatar, layer) {
     var a = avatar._private_functions;
     var shapes = [];
@@ -3681,10 +3754,11 @@ new Avatar('add_render_function', {style: 'lines', feature: 'augmentations', ren
             if (!layer.hide) {
                 shapes = shapes.concat(feature_shapes);
             }
-            console.log("Added Augmentation - " + item.feature);
-            avatar.logMessage("Added Augmentation - " + item.feature);
+            var log = "Added Augmentation - type: " + item.feature + ', pack: ' + render_pack.name + ', item: ' + render_pack.frame.name;
+//            console.log(log);
+            avatar.logMessage(log);
         } else {
-            console.log("Couldn't find Augmentation - " + item.feature);
+//            console.log("Couldn't find Augmentation - " + item.feature);
             avatar.logMessage("Couldn't find Augmentation - " + item.feature);
         }
     });
@@ -4249,6 +4323,7 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mustache', renderer
             var matching_pack = matching_frame.pack;
 
             render_layer = matching_pack;
+            render_layer.frame = matching_frame;
 
             render_layer.renderer = function (face_zones, avatar, layer, options) {
                 avatar.content_packs_used = avatar.content_packs_used || {};
@@ -4729,13 +4804,13 @@ new Avatar('add_render_function', {style: 'lines', feature: 'face', renderer: fu
     var face_line = a.transformShapeLine(options, face_options);
 
     // Draw some points to help track boundaries later when mapping overlay images
-    options.steps = 16;
-    var face_line_low_res = a.transformShapeLine(options, face_options);
-    _.each(face_line_low_res, function(face_point, i){
-        var x = zone.x + (face_point.x * radius_x /10);
-        var y = zone.y + (face_point.y * radius_y /10);
-        a.namePoint(avatar, 'face boundary #'+i, {x: x, y: y});
-    });
+//    options.steps = 16;
+//    var face_line_low_res = a.transformShapeLine(options, face_options);
+//    _.each(face_line_low_res, function(face_point, i){
+//        var x = zone.x + (face_point.x * radius_x /10);
+//        var y = zone.y + (face_point.y * radius_y /10);
+//        a.namePoint(avatar, 'face boundary #'+i, {x: x, y: y});
+//    });
 
     var skin_lighter = net.brehaut.Color(face_options.skin_colors.skin).lightenByRatio(0.05).toString();
     var skin_bright = net.brehaut.Color(face_options.skin_colors.skin).lightenByRatio(0.1).toString();
@@ -4940,8 +5015,11 @@ new Avatar('add_render_function', {style: 'lines', feature: 'neck', renderer: fu
 
         lines.push({name: 'neck', line: neck_line, shape: neck});
         shapes = shapes.concat(neck);
+
     }
 
+    x = zone.x;
+    y = zone.y + (f.thick_unit * 225);
     if (face_options.gender == 'Male') {
         var darker_skin = net.brehaut.Color(face_options.skin_colors.skin).darkenByRatio(0.2).toString();
         var neck_apple_line = a.transformShapeLine({type: 'circle', radius: 0.5}, face_options);
@@ -4949,12 +5027,21 @@ new Avatar('add_render_function', {style: 'lines', feature: 'neck', renderer: fu
         scale_y = (zone.bottom - zone.top) * apple_height;
 
         var neck_apple = a.createPathFromLocalCoordinates(neck_apple_line, {close_line: true, line_color: face_options.skin_colors.skin, fill_color: darker_skin}, scale_x, scale_y);
-        neck_apple.x = zone.x;
-        neck_apple.y = zone.y + (f.thick_unit * 225);
+        neck_apple.x = x;
+        neck_apple.y = y;
         neck_apple.alpha = apple_transparency;
-        lines.push({name: 'neck_apple', line: neck_apple_line, shape: neck_apple, scale_x: scale_x, scale_y: scale_y, x: zone.x, y: zone.y + (f.thick_unit * 225)});
+        lines.push({name: 'neck_apple', line: neck_apple_line, shape: neck_apple, scale_x: scale_x, scale_y: scale_y, x: x, y: y});
         shapes.push(neck_apple);
     }
+    a.namePoint(avatar, 'middle neck adams apple', {x: x, y: y});
+
+
+    var neck_x = a.comparePoints(neck_line, 'crosses y', y);
+    a.namePoint(avatar, 'neck mid left', {x: neck_x, y: y});
+
+    var neck_line_left = a.lineSegmentCompared(neck_line, x, 'right');
+    neck_x = a.comparePoints(neck_line_left, 'crosses y', y);
+    a.namePoint(avatar, 'neck mid right', {x: neck_x, y: y});
 
     return shapes;
 }});
@@ -5849,6 +5936,17 @@ new Avatar('add_render_function', {style: 'lines', feature: 'nose', renderer: fu
     a.namePoint(avatar, 'nose right line flaring point', {x: inner_point_x, y: inner_point_y});
 
 
+    //Add point from nose point intersects face
+    var face_line = a.transformLineToGlobalCoordinates(lines, 'face');
+    var nose_face_x = a.comparePoints(face_line, 'crosses y', inner_point_y);
+    a.namePoint(avatar, 'nose - face right point', {x: nose_face_x, y: inner_point_y});
+
+    var mid_face_x = a.comparePoints(face_line, 'x', 'middle');
+    var face_line_left = a.lineSegmentCompared(face_line, mid_face_x, 'left');
+    nose_face_x = a.comparePoints(face_line_left, 'crosses y', inner_point_y);
+    a.namePoint(avatar, 'nose - face left point', {x: nose_face_x, y: inner_point_y});
+
+
     //TODO: These should connect to nose
     var mouth_high_left_line = [
         {x: -3.5, y: -4},
@@ -6555,6 +6653,14 @@ new Avatar('add_render_function', {style: 'lines', feature: 'chin', renderer: fu
         }
     }
 
+    //Add point from nose point intersects face
+    var face_line = a.transformLineToGlobalCoordinates(lines, 'face');
+    var chin_bottom = a.comparePoints(face_line, 'y', 'highest', true);
+
+    a.namePoint(avatar, 'chin bottom point', {x: x, y:chin_bottom.y});
+
+
+
     return shapes;
 }});
 
@@ -6753,6 +6859,18 @@ new Avatar('add_render_function', {style: 'lines', feature: 'mouth', renderer: f
     a.namePoint(avatar, 'left mouth wedge', mouth_left_point);
     a.namePoint(avatar, 'right mouth wedge', mouth_right_point);
     a.namePoint(avatar, 'mouth bottom middle', {x: mouth_mid_x, y:mouth_mid_y});
+
+
+    //Add point from nose point intersects face
+    var face_line = a.transformLineToGlobalCoordinates(lines, 'face');
+    var mouth_face_x = a.comparePoints(face_line, 'crosses y', mouth_right_point.y);
+    a.namePoint(avatar, 'mouth - face right point', {x: mouth_face_x, y: mouth_right_point.y});
+
+    var mid_face_x = a.comparePoints(face_line, 'x', 'middle');
+    var face_line_left = a.lineSegmentCompared(face_line, mid_face_x, 'left');
+    mouth_face_x = a.comparePoints(face_line_left, 'crosses y', mouth_left_point.y);
+    a.namePoint(avatar, 'mouth - face left point', {x: mouth_face_x, y: mouth_left_point.y});
+
 
     var tongue_line = a.transformShapeLine({type: 'midline of loop'}, face_options, mouth_top_line);
     var l2 = a.createPathFromLocalCoordinates(tongue_line, {close_line: false, thickness: 1, color: face_options.skin_colors.deepshadow}, width, height);
@@ -7005,13 +7123,13 @@ new Avatar('add_render_function', {style: 'circles', feature: 'mouth', renderer:
             {feature: "chin", style: "lines"}, //Uses: chin mid line, face
             {feature: "mouth", style: "lines", hide:true}, //NOTE: Shown twice to predraw positions
             {feature: "wrinkles", style: "lines"}, //Uses: face, left eye, right eye, lips, full nose, chin top line
+            {feature: "augmentations", style: "lines"},
             {feature: "beard", style: "lines"}, //Uses: face, left eye
             {feature: "mouth", style: "lines"},
             {feature: "mustache", style: "lines"},
             {feature: "eyes", style: "lines"},
             {feature: "hair", style: "lines"}, //Uses: face, left eye
             {feature: "ears", style: "lines"},
-            {feature: "augmentations", style: "lines"},
             {decoration: "name-plate"}
         ],
         use_content_packs: ['all'],
@@ -7098,11 +7216,12 @@ new Avatar('add_render_function', {style: 'circles', feature: 'mouth', renderer:
         forehead_height_options: "Under,Low,Less,Normal,Above,Raised,High,Floating".split(","),
 
         augmentations_options: [
-            [], //NOTE:Quick way to reduce chance of augmentations
-            [{feature: 'glasses', name: '3 goggles', options: {color: 'blue'}, ignore_filters:true}],
-            [{feature: 'glasses', ignore_filters:true}],
-            [{feature: 'scar'}],
-            [{feature: 'scar', name: 'sewn right cheek wound'},{feature: 'glasses'}]
+//            [],
+//            [],[],[],[], //NOTE:Quick way to reduce chance of augmentations
+//            [{feature: 'glasses', name: '3 goggles', options: {color: 'blue'}, ignore_filters:true}],
+//            [{feature: 'glasses', ignore_filters:true}],
+            [{feature: 'scar'}]
+//            [{feature: 'scar', name: 'sewn right cheek wound'},{feature: 'glasses'}]
         ],
 
         decorations: [
@@ -7544,25 +7663,57 @@ var content_pack_data = {
     frames: [
 
         {name: 'sewn right cheek wound', x: 41, y: 12, width: 253, height: 101, filter: {},
-         coordinates: [
-             {point: 'right mouth wedge', x: 49, y: 135},
-             {point: 'right cheek', x: 290, y: 95},
-             {point: 'face boundary #1', x: 206, y: 0}
-         ], zones: []
+            coordinates: [
+                {point: 'right mouth wedge', x: 49, y: 135},
+                {point: 'right cheek', x: 290, y: 95},
+                {point: 'nose - face right point', x: 206, y: 0}
+            ], zones: []
         },
 
         {name: 'sewn left cheek wound', x: 41, y: 12, width: 253, height: 101, filter: {},
+            coordinates: [
+                {point: 'left mouth wedge', x: 49, y: 135},
+                {point: 'left cheek', x: 290, y: 95},
+                {point: 'nose - face left point', x: 206, y: 0}
+            ], zones: []
+        },
+
+        {name: 'bite mark right cheek', x: 433, y: 277, width: 148, height: 149, filter: {},
+            coordinates: [
+                {point: 'right mouth wedge', x: 300, y: 300},
+                {point: 'right cheek', x: 578, y: 294},
+                {point: 'nose - face right point', x: 571, y: 500}
+            ], zones: []
+        },
+        {name: 'bite mark left cheek', x: 433, y: 277, width: 148, height: 149, filter: {},
+            coordinates: [
+                {point: 'left mouth wedge', x: 300, y: 300},
+                {point: 'left cheek', x: 578, y: 294},
+                {point: 'nose - face left point', x: 571, y: 500}
+            ], zones: []
+        },
+
+        {name: 'bloody point right cheek', x: 437, y: 482, width: 152, height: 43, filter: {},
          coordinates: [
-             {point: 'left mouth wedge', x: 49, y: 135},
-             {point: 'left cheek', x: 290, y: 95},
-             {point: 'face boundary #7', x: 206, y: 0}
+             {point: 'right mouth wedge', x: 569, y: 685},
+             {point: 'nose - face right point', x: 671, y: 385},
+             {point: 'mouth - face right point', x: 360, y: 379}
+         ], zones: []
+        },
+
+        {name: 'bloody point right neck', x: 437, y: 482, width: 152, height: 43, filter: {},
+         coordinates: [
+             {point: 'middle neck adams apple', x: 680, y: 685},
+             {point: 'mouth - face right point', x: 671, y: 335},
+             {point: 'neck mid right', x: 360, y: 379}
          ], zones: []
         }
+
     ]
 };
 
 new Avatar('register_content_pack', 'scars_1', {
-    style: 'lines', replace_features: ['scar'], use_frequency: 0.5, filter: {},
+    style: 'lines', replace_features: ['scar'], use_frequency: 1, filter: {},
     data: content_pack_data
 });
 
